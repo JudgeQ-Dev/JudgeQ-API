@@ -1,6 +1,6 @@
 {
   "name": "hznuoj-v3-api",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "The 3th generation HZNUOJ Server",
   "author": "Dup4",
   "private": true,
