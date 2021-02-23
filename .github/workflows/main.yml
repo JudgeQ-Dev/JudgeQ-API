@@ -23,9 +23,6 @@ jobs:
       - name: Install
         run: yarn
 
-      - name: Check Style
-        run: yarn check-style
-
       - name: Test
         run: yarn test
 
