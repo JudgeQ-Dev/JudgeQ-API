@@ -1,9 +1,9 @@
 {
   "name": "hznuoj-v3-api",
-  "version": "0.0.10",
+  "version": "0.0.11",
   "description": "The 3th generation HZNUOJ Server",
+  "repository": "https://github.com/HZNU-OJ/HZNUOJ-V3-API",
   "author": "Dup4",
-  "private": true,
   "license": "MIT",
   "scripts": {
     "prebuild": "rimraf dist",
