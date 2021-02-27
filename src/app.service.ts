@@ -7,6 +7,7 @@ export class AppService {
   getHello(): string {
     return "Hello World!";
   }
+
   getVersion(): string {
     return Package.version;
   }
