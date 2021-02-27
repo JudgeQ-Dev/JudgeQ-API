@@ -11,18 +11,10 @@ export class AppController {
     return this.appService.getHello();
   }
 
-  @Get("h")
-  getH(): string {
-    return "h";
-  }
-
-  @Get("hh")
-  getHH(): string {
-    return "hh";
-  }
-
   @Get("version")
   getVersion(): string {
-    return this.appService.getVersion();
+    return JSON.stringify({
+      version: this.appService.getVersion(),
+    });
   }
 }

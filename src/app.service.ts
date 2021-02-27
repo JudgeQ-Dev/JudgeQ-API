@@ -1,7 +1,5 @@
 import { Injectable } from "@nestjs/common";
 
-import pkg from "@/package.json";
-
 @Injectable()
 export class AppService {
   getHello(): string {
@@ -9,6 +7,7 @@ export class AppService {
   }
 
   getVersion(): string {
-    return pkg.version;
+    const packageInfo = require("./package.json");
+    return packageInfo.version;
   }
 }
