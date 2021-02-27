@@ -17,4 +17,14 @@ export class AppController {
       version: this.appService.getVersion(),
     });
   }
+
+  @Get("md")
+  getMd(): string {
+    return this.appService.getMd();
+  }
+
+  @Get("md2json")
+  md2json(): string {
+    return this.appService.md2json();
+  }
 }
