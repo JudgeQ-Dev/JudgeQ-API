@@ -41,6 +41,7 @@ export class AppService {
   }
 
   getMd(): string {
+    mdJson.content = encodeHtml(mdJson.content);
     return JSON.stringify(mdJson);
   }
 }

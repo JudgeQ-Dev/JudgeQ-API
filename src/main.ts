@@ -4,12 +4,21 @@ import { Logger } from "@nestjs/common";
 import { NestExpressApplication } from "@nestjs/platform-express";
 import { Request, Response, json } from "express";
 
+import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
+
 import { AppModule } from "./app.module";
 
-async function initialize() {
-  const packageInfo = require("./package.json");
+import packageInfo from "./package.json";
 
-  return packageInfo;
+async function initialize(app: NestExpressApplication) {
+  const options = new DocumentBuilder()
+    .setTitle(packageInfo.name)
+    .setDescription(packageInfo.description)
+    .setVersion(packageInfo.version)
+    .addBearerAuth()
+    .build();
+  const document = SwaggerModule.createDocument(app, options);
+  SwaggerModule.setup("/api/docs", app, document);
 }
 
 async function startApp(packageInfo: any, app: NestExpressApplication) {
@@ -23,10 +32,10 @@ async function startApp(packageInfo: any, app: NestExpressApplication) {
 }
 
 async function bootstrap() {
-  const packageInfo = await initialize();
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.setGlobalPrefix("api");
   app.use(json({ limit: "1024mb" }));
+  await initialize(app);
 
   await startApp(packageInfo, app);
 }

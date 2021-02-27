@@ -1,6 +1,6 @@
 {
   "name": "hznuoj-v3-api",
-  "version": "0.0.12",
+  "version": "0.0.13",
   "description": "The 3th generation HZNUOJ Server",
   "repository": "https://github.com/HZNU-OJ/HZNUOJ-V3-API",
   "author": "Dup4",
@@ -21,7 +21,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
-  "gitHooks": {
+  "gitHook": {
     "pre-commit": "lint-staged"
   },
   "lint-staged": {
