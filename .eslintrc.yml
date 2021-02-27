@@ -14,6 +14,8 @@ settings:
   import/resolver:
     typescript:
       alwaysTryTypes: true
+  import/extensions:
+    extensions: ["*.json"]
 plugins:
   - "@typescript-eslint"
 rules:
