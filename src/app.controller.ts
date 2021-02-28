@@ -1,4 +1,4 @@
-import { Controller, Get } from "@nestjs/common";
+import { Controller, Get, Redirect, Query } from "@nestjs/common";
 
 import { AppService } from "./app.service";
 
@@ -26,5 +26,15 @@ export class AppController {
   @Get("md2json")
   md2json(): string {
     return this.appService.md2json();
+  }
+
+  @Get('/getDocs')
+  @Redirect('https://nestjs.com', 301)
+  getDocs(
+    @Query('version') version
+  ) {
+    if (version && version === '5') {
+      return { url: 'https://docs.nestjs.com/v5/' };
+    }
   }
 }

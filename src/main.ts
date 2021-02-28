@@ -4,21 +4,39 @@ import { Logger } from "@nestjs/common";
 import { NestExpressApplication } from "@nestjs/platform-express";
 import { Request, Response, json } from "express";
 
-import { SwaggerModule, DocumentBuilder } from "@nestjs/swagger";
+import { SwaggerModule, DocumentBuilder, SwaggerDocumentOptions } from "@nestjs/swagger";
 
 import { AppModule } from "./app.module";
 
+import path from "path";
+
 import packageInfo from "./package.json";
 
-async function initialize(app: NestExpressApplication) {
-  const options = new DocumentBuilder()
+const GlobalPrefix = "api";
+
+async function initSwaggerDocument(app: NestExpressApplication) {
+  const config = new DocumentBuilder()
     .setTitle(packageInfo.name)
     .setDescription(packageInfo.description)
     .setVersion(packageInfo.version)
     .addBearerAuth()
     .build();
-  const document = SwaggerModule.createDocument(app, options);
-  SwaggerModule.setup("/api/docs", app, document);
+
+  const options: SwaggerDocumentOptions = {
+    ignoreGlobalPrefix: false,
+    operationIdFactory: (
+      controllerKey: string,
+      methodKey: string
+    ) => methodKey
+  };
+  
+  const document = SwaggerModule.createDocument(app, config, options);
+
+  SwaggerModule.setup(path.join(GlobalPrefix, "docs"), app, document);
+}
+
+async function initialize(app: NestExpressApplication) {
+  initSwaggerDocument(app);
 }
 
 async function startApp(packageInfo: any, app: NestExpressApplication) {
@@ -33,7 +51,7 @@ async function startApp(packageInfo: any, app: NestExpressApplication) {
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-  app.setGlobalPrefix("api");
+  app.setGlobalPrefix(GlobalPrefix);
   app.use(json({ limit: "1024mb" }));
   await initialize(app);
 
