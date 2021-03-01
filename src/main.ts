@@ -1,3 +1,4 @@
+import util from "util";
 import { NestFactory } from "@nestjs/core";
 
 import { NestExpressApplication } from "@nestjs/platform-express";
@@ -16,6 +17,10 @@ import path from "path";
 import packageInfo from "./package.json";
 
 const GlobalPrefix = "api";
+
+String.prototype.format = function format(...args) {
+  return util.format.call(undefined, this, ...args);
+};
 
 async function initSwaggerDocument(app: NestExpressApplication) {
   const config = new DocumentBuilder()
