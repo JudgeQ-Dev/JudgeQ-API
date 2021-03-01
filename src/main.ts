@@ -32,7 +32,7 @@ async function initSwaggerDocument(app: NestExpressApplication) {
       methodKey: string
     ) => methodKey
   };
-  
+
   const document = SwaggerModule.createDocument(app, config, options);
 
   SwaggerModule.setup(path.join(GlobalPrefix, "docs"), app, document);
