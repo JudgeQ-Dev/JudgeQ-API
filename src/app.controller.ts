@@ -1,10 +1,8 @@
 import { Controller, Get, Redirect, Query } from "@nestjs/common";
 
-import { ApiTags } from "@nestjs/swagger";
+import { ApiTags, ApiProperty } from "@nestjs/swagger";
 
 import { AppService } from "./app.service";
-
-import { ApiProperty } from "@nestjs/swagger";
 
 class GetVersionDto {
   @ApiProperty()
