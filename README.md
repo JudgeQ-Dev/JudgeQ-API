@@ -29,7 +29,7 @@ Then fill the database connection information in the configuration file.
 
 ## Run
 
-By default this app listens on `127.0.0.1:3000`. You can change this in the configuration file. You can use nginx as reversed proxy to access the app with a domain name like `hznuoj-v3.test`.
+By default this app listens on `127.0.0.1:3000`. You can change this in the configuration file. You can use nginx as reversed proxy to access the app with a domain name like `hznuoj-v3.ac`.
 
 ```bash
 $ HZNUOJ_V3_CONFIG_FILE=./config.yaml yarn start
