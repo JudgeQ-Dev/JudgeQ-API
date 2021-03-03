@@ -16,7 +16,6 @@ class GetMdDto {
   content: string;
 }
 
-
 @ApiTags("App")
 @Controller()
 export class AppController {
