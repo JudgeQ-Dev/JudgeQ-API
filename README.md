@@ -38,7 +38,7 @@ $ HZNUOJ_V3_CONFIG_FILE=./config.yaml yarn start
 Add `HZNUOJ_V3_LOG_SQL` to enable TypeORM logging:
 
 ```bash
-$ SYZOJ_NG_LOG_SQL=1 HZNUOJ_V3_CONFIG_FILE=./config.yaml yarn start
+$ HZNUOJ_V3_LOG_SQL=1 HZNUOJ_V3_CONFIG_FILE=./config.yaml yarn start
 ```
 
 ## License
