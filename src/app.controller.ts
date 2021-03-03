@@ -4,6 +4,19 @@ import { ApiTags } from "@nestjs/swagger";
 
 import { AppService } from "./app.service";
 
+import { ApiProperty } from "@nestjs/swagger";
+
+class GetVersionDto {
+  @ApiProperty()
+  version: string;
+}
+
+class GetMdDto {
+  @ApiProperty()
+  content: string;
+}
+
+
 @ApiTags("App")
 @Controller()
 export class AppController {
@@ -11,35 +24,22 @@ export class AppController {
     private readonly appService: AppService
   ) {}
 
-  @Get()
-  getHello(): string {
-    return this.appService.getHello();
-  }
-
   @Get("version")
-  getVersion(): string {
-    return JSON.stringify({
-      version: this.appService.getVersion(),
-    });
+  async getVersion(): Promise<GetVersionDto> {
+    return {version: this.appService.getVersion()};
   }
 
   @Get("md")
-  getMd(): string {
-    return this.appService.getMd();
+  async getMd(): Promise<GetMdDto> {
+    return {
+      content: this.appService.getMd(),
+    };
   }
 
   @Get("md2json")
-  md2json(): string {
-    return this.appService.md2json();
-  }
-
-  @Get('/getDocs')
-  @Redirect('https://nestjs.com', 301)
-  getDocs(
-    @Query('version') version
-  ) {
-    if (version && version === '5') {
-      return { url: 'https://docs.nestjs.com/v5/' };
-    }
+  async md2json(): Promise<GetMdDto> {
+    return {
+      content: this.appService.md2json(),
+    };
   }
 }

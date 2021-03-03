@@ -2,6 +2,8 @@ import { ExceptionFilter, Catch, ArgumentsHost, HttpException, Logger } from "@n
 
 import { Response } from "express"; // eslint-disable-line import/no-extraneous-dependencies
 
+import { RequestWithSession } from "./auth/auth.middleware";
+
 const logger = new Logger("ErrorFilter");
 
 @Catch()
@@ -10,6 +12,26 @@ export class ErrorFilter implements ExceptionFilter {
 
   catch(error: Error, host: ArgumentsHost) {
     const contextType = host.getType();
+    let request: RequestWithSession;
+    if (contextType === "http") {
+      request = host.switchToHttp().getRequest<RequestWithSession>();
+      const response = host.switchToHttp().getResponse<Response>();
+      if (error instanceof HttpException) response.status(error.getStatus()).send(error.getResponse());
+      else
+        response.status(500).send({
+          error: String(error),
+          stack: error?.stack
+        });
+    }
+
+    if (!(error instanceof HttpException)) {
+      if (error instanceof Error) {
+        if (this.isignoredError(error)) return;
+
+        logger.error(error.message, error.stack);
+      } else logger.error(error);
+
+    }
   }
 
   isignoredError(error: Error) {

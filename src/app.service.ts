@@ -22,9 +22,6 @@ const encodeHtml = function (s: string) {
 
 @Injectable()
 export class AppService {
-  getHello(): string {
-    return "Hello World!";
-  }
 
   getVersion(): string {
     return packageInfo.version;
@@ -35,13 +32,11 @@ export class AppService {
       path.join(__dirname, "../src", "./a.md"),
       "utf8",
     );
-    return JSON.stringify({
-      content: encodeHtml(mdContent),
-    });
+
+    return mdContent;
   }
 
   getMd(): string {
-    mdJson.content = encodeHtml(mdJson.content);
-    return JSON.stringify(mdJson);
+    return mdJson.content;
   }
 }
