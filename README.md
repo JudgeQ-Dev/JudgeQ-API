@@ -1,7 +1,7 @@
 # HZNUOJ V3 API
 
 
-[![Build](https://github.com/HZNU-OJ/HZNUOJ-V3-API/actions/workflows/main.yml/badge.svg)](https://github.com/HZNU-OJ/HZNUOJ-V3-API/actions/workflows/main.yml)
+[![Build Status](https://img.shields.io/github/workflow/status/HZNU-OJ/HZNUOJ-V3-API/Build?style=flat-square)](https://github.com/HZNU-OJ/HZNUOJ-V3-API/actions?query=workflow%3ACI)
 [![Dependencies](https://img.shields.io/david/HZNU-OJ/HZNUOJ-V3-API?style=flat-square)](https://david-dm.org/HZNU-OJ/HZNUOJ-V3-API)
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
 [![License](https://img.shields.io/github/license/syzoj/syzoj-ng?style=flat-square)](LICENSE)
