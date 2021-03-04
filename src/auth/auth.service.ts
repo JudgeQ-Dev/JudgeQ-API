@@ -2,7 +2,8 @@ import { Injectable, Inject, forwardRef } from "@nestjs/common";
 import { InjectRepository, InjectConnection } from "@nestjs/typeorm";
 
 import { Repository, Connection, EntityManager } from "typeorm";
-import * as bcrypt from "bcrypt";
+// import * as bcrypt from "bcrypt";
+import * as bcrypt from "bcryptjs";
 
 import { UserEntity } from "@/user/user.entity";
 import { UserService } from "@/user/user.service";
