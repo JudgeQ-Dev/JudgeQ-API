@@ -1,4 +1,4 @@
-# HZNUOJ V3
+# HZNUOJ V3 API
 
 
 [![Build](https://github.com/HZNU-OJ/HZNUOJ-V3-API/actions/workflows/main.yml/badge.svg)](https://github.com/HZNU-OJ/HZNUOJ-V3-API/actions/workflows/main.yml)
