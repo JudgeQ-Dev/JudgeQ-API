@@ -2,6 +2,9 @@ import { Injectable, Inject, forwardRef } from "@nestjs/common";
 import { InjectRepository, InjectConnection } from "@nestjs/typeorm";
 
 import { Repository, Connection, EntityManager } from "typeorm";
+
+// DO NOT USE bcrypt, REPLACE it with bcryptjs
+// https://stackoverflow.com/questions/34546272/cannot-find-module-bcrypt/41878322
 // import * as bcrypt from "bcrypt";
 import * as bcrypt from "bcryptjs";
 
