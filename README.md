@@ -47,7 +47,6 @@ Add `:debug` to enable Hot Module Replacement.
 $ HZNUOJ_V3_LOG_SQL=1 HZNUOJ_V3_CONFIG_FILE=./config.yaml yarn start:debug 
 ```
 
-
 ## License
 
 Nest is [MIT licensed](LICENSE).
