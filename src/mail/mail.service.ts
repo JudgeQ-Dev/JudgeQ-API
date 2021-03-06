@@ -2,7 +2,7 @@ import { join } from "path";
 
 import { Injectable } from "@nestjs/common";
 
-import nodemailer from "nodemailer";
+import nodemailer, {TransportOptions} from "nodemailer";
 import ejs from "ejs";
 
 import { ConfigService } from "@/config/config.service";
