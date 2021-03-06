@@ -215,13 +215,11 @@ export class AuthController {
       };
 
     let code = await this.authEmailVerificationCodeService.generate(request.email);
-    console.log(code);
-    if (!code) code = "123456";
-    // if (!code) {
-    //   return {
-    //     error: SendEmailVerificationCodeResponseError.RATE_LIMITED
-    //   };
-    // }
+    if (!code) {
+      return {
+        error: SendEmailVerificationCodeResponseError.RATE_LIMITED
+      };
+    }
 
     const sendMailErrorMessage = await this.mailService.sendMail(
       {
