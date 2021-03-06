@@ -34,12 +34,6 @@ import {
   GetUserProfileRequestDto,
   GetUserProfileResponseDto,
   GetUserProfileResponseError,
-  GetUserPreferenceRequestDto,
-  GetUserPreferenceResponseDto,
-  GetUserPreferenceResponseError,
-  UpdateUserPreferenceRequestDto,
-  UpdateUserPreferenceResponseDto,
-  UpdateUserPreferenceResponseError,
   GetUserSecuritySettingsRequestDto,
   GetUserSecuritySettingsResponseDto,
   GetUserSecuritySettingsResponseError,
@@ -354,74 +348,6 @@ export class UserController {
         github: userInformation.github
       }
     };
-  }
-
-  @Post("getUserPreference")
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: "Get a user's meta and preference for user profile edit page."
-  })
-  async getUserPreference(
-    @CurrentUser() currentUser: UserEntity,
-    @Body() request: GetUserPreferenceRequestDto
-  ): Promise<GetUserPreferenceResponseDto> {
-    if (!currentUser)
-      return {
-        error: GetUserPreferenceResponseError.PERMISSION_DENIED
-      };
-
-    const user = request.username
-      ? await this.userService.findUserByUsername(request.username)
-      : await this.userService.findUserById(request.userId);
-    if (!user)
-      return {
-        error: GetUserPreferenceResponseError.NO_SUCH_USER
-      };
-
-    if (
-      currentUser.id !== user.id &&
-      !(await this.userPrivilegeService.userHasPrivilege(currentUser, UserPrivilegeType.ManageUser))
-    )
-      return {
-        error: GetUserPreferenceResponseError.PERMISSION_DENIED
-      };
-
-    return {
-      meta: await this.userService.getUserMeta(user, currentUser)
-    };
-  }
-
-  @Post("updateUserPreference")
-  @ApiBearerAuth()
-  @ApiOperation({
-    summary: "Update a user's preference."
-  })
-  async updateUserPreference(
-    @CurrentUser() currentUser: UserEntity,
-    @Body() request: UpdateUserPreferenceRequestDto
-  ): Promise<UpdateUserPreferenceResponseDto> {
-    if (!currentUser)
-      return {
-        error: UpdateUserPreferenceResponseError.PERMISSION_DENIED
-      };
-
-    const user = await this.userService.findUserById(request.userId);
-    if (!user)
-      return {
-        error: UpdateUserPreferenceResponseError.NO_SUCH_USER
-      };
-
-    if (
-      currentUser.id !== user.id &&
-      !(await this.userPrivilegeService.userHasPrivilege(currentUser, UserPrivilegeType.ManageUser))
-    )
-      return {
-        error: UpdateUserPreferenceResponseError.PERMISSION_DENIED
-      };
-
-    await this.userService.updateUserPreference(user, request.preference);
-
-    return {};
   }
 
   @Post("getUserSecuritySettings")

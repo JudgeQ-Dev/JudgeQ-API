@@ -4,8 +4,7 @@ import { UserPrivilegeType } from "@/user/user-privilege.service";
 
 import { PreferenceConfig } from "@/config/config.schema";
 
-import { UserMetaDto, UserPreferenceDto } from "@/user/dto";
-
+import { UserMetaDto } from "@/user/dto";
 
 export class GetSessionInfoResponseDto {
   @ApiProperty()
@@ -14,8 +13,8 @@ export class GetSessionInfoResponseDto {
   @ApiProperty({ enum: UserPrivilegeType, isArray: true })
   userPrivileges?: UserPrivilegeType[];
 
-  @ApiProperty()
-  userPreference?: UserPreferenceDto;
+  // @ApiProperty()
+  // userPreference?: UserPreferenceDto;
 
   @ApiProperty()
   serverPreference: PreferenceConfig;

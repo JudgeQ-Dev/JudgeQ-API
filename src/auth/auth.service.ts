@@ -11,7 +11,6 @@ import * as bcrypt from "bcryptjs";
 import { UserEntity } from "@/user/user.entity";
 import { UserService } from "@/user/user.service";
 import { UserInformationEntity } from "@/user/user-information.entity";
-import { UserPreferenceEntity } from "@/user/user-preference.entity";
 import { ConfigService } from "@/config/config.service";
 import { delay, DELAY_FOR_SECURITY } from "@/common/delay";
 
@@ -93,9 +92,6 @@ export class AuthService {
         userInformation.github = "";
         await transactionalEntityManager.save(userInformation);
 
-        const userPreference = new UserPreferenceEntity();
-        userPreference.userId = user.id;
-        await transactionalEntityManager.save(userPreference);
       });
 
       if (this.configService.config.preference.security.requireEmailVerification) {
