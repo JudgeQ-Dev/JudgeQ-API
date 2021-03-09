@@ -4,7 +4,8 @@ import fs from "fs";
 import path from "path";
 
 import packageInfo from "./package.json";
-import mdJson from "./a.json";
+import mdAJson from "./a.json";
+import mdBJson from "./b.json";
 
 const encodeHtml = function (s: string) {
   const REGX_HTML_ENCODE = /“|&|’|<|>|[\x00-\x20]|[\x7F-\xFF]|[\u0100-\u2700]/g;
@@ -27,16 +28,20 @@ export class AppService {
     return packageInfo.version;
   }
 
-  md2json(): string {
+  md2json(id: string): string {
     const mdContent = fs.readFileSync(
-      path.join(__dirname, "../src", "./a.md"),
+      path.join(__dirname, "../src", `./${id}.md`),
       "utf8",
     );
 
     return mdContent;
   }
 
-  getMd(): string {
-    return mdJson.content;
+  getMd(id: string): string {
+    if (id === "a") {
+      return mdAJson.content;
+    } else {
+      return mdBJson.content;
+    }
   }
 }

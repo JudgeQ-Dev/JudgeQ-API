@@ -1,4 +1,4 @@
-import { Controller, Get, Redirect, Query } from "@nestjs/common";
+import { Controller, Get, Redirect, Query, Param, Post, Body } from "@nestjs/common";
 
 import { ApiTags, ApiProperty } from "@nestjs/swagger";
 import { AppService } from "./app.service";
@@ -13,6 +13,11 @@ class GetMdDto {
   content: string;
 }
 
+class getIdDto {
+  @ApiProperty()
+  id: string;
+}
+
 @ApiTags("App")
 @Controller()
 export class AppController {
@@ -25,17 +30,21 @@ export class AppController {
     return {version: this.appService.getVersion()};
   }
 
-  @Get("md")
-  async getMd(): Promise<GetMdDto> {
+  @Post("md")
+  async getMd(
+    @Body() params: getIdDto
+  ): Promise<GetMdDto> {
     return {
-      content: this.appService.getMd(),
+      content: this.appService.getMd(params.id),
     };
   }
 
-  @Get("md2json")
-  async md2json(): Promise<GetMdDto> {
+  @Get("md2json/:id")
+  async md2json(
+    @Param() params: getIdDto
+  ): Promise<GetMdDto> {
     return {
-      content: this.appService.md2json(),
+      content: this.appService.md2json(params.id),
     };
   }
 }
