@@ -105,7 +105,7 @@ async function initialize(): Promise<[configService: ConfigService, app: NestExp
   app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }));
   app.use(json({ limit: "1024mb" }));
 
-  if (configService.config.security.rateLimit) {
+  if (false && configService.config.security.rateLimit) {
     const clusterService = app.get(ClusterService);
     const rateLimiterConfig: IRateLimiterOptions = {
       points: configService.config.security.rateLimit.maxRequests,
@@ -122,6 +122,7 @@ async function initialize(): Promise<[configService: ConfigService, app: NestExp
       }
     } else rateLimiter = new RateLimiterMemory(rateLimiterConfig);
 
+    // disable rateLimiter
     app.use((req: Request, res: Response, next: () => void) => {
       rateLimiter
         .consume(req.ip)
@@ -132,6 +133,7 @@ async function initialize(): Promise<[configService: ConfigService, app: NestExp
           res.status(429).send("Too Many Requests");
         });
     });
+
   }
 
   app.set("trust proxy", configService.config.server.trustProxy);
