@@ -5,6 +5,7 @@ import { UserModule } from "@/user/user.module";
 import { AuditModule } from "@/audit/audit.module";
 import { PermissionModule } from "@/permission/permission.module";
 import { RedisModule } from "@/redis/redis.module";
+import { GroupModule } from "@/group/group.module";
 import { ProblemModule } from "@/problem/problem.module";
 
 import { DiscussionService } from "./discussion.service";
@@ -23,6 +24,7 @@ import { DiscussionReplyReactionEntity } from "./discussion-reply-reaction.entit
     TypeOrmModule.forFeature([DiscussionReactionEntity]),
     TypeOrmModule.forFeature([DiscussionReplyReactionEntity]),
     forwardRef(() => UserModule),
+    forwardRef(() => GroupModule),
     forwardRef(() => AuditModule),
     forwardRef(() => PermissionModule),
     forwardRef(() => ProblemModule),

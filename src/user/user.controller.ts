@@ -7,6 +7,7 @@ import { ConfigService } from "@/config/config.service";
 import { SubmissionService } from "@/submission/submission.service";
 import { AuditLogObjectType, AuditService } from "@/audit/audit.service";
 import { AuthIpLocationService } from "@/auth/auth-ip-location.service";
+import { UserMigrationService } from "@/migration/user-migration.service";
 
 import { UserEntity } from "./user.entity";
 import { UserService } from "./user.service";
@@ -34,6 +35,12 @@ import {
   GetUserProfileRequestDto,
   GetUserProfileResponseDto,
   GetUserProfileResponseError,
+  GetUserPreferenceRequestDto,
+  GetUserPreferenceResponseDto,
+  GetUserPreferenceResponseError,
+  UpdateUserPreferenceRequestDto,
+  UpdateUserPreferenceResponseDto,
+  UpdateUserPreferenceResponseError,
   GetUserSecuritySettingsRequestDto,
   GetUserSecuritySettingsResponseDto,
   GetUserSecuritySettingsResponseError,
@@ -60,6 +67,7 @@ export class UserController {
     private readonly submissionService: SubmissionService,
     private readonly auditService: AuditService,
     private readonly authIpLocationService: AuthIpLocationService,
+    private readonly userMigrationService: UserMigrationService
   ) {}
 
   @Get("searchUser")
@@ -350,6 +358,75 @@ export class UserController {
     };
   }
 
+  @Post("getUserPreference")
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: "Get a user's meta and preference for user profile edit page."
+  })
+  async getUserPreference(
+    @CurrentUser() currentUser: UserEntity,
+    @Body() request: GetUserPreferenceRequestDto
+  ): Promise<GetUserPreferenceResponseDto> {
+    if (!currentUser)
+      return {
+        error: GetUserPreferenceResponseError.PERMISSION_DENIED
+      };
+
+    const user = request.username
+      ? await this.userService.findUserByUsername(request.username)
+      : await this.userService.findUserById(request.userId);
+    if (!user)
+      return {
+        error: GetUserPreferenceResponseError.NO_SUCH_USER
+      };
+
+    if (
+      currentUser.id !== user.id &&
+      !(await this.userPrivilegeService.userHasPrivilege(currentUser, UserPrivilegeType.ManageUser))
+    )
+      return {
+        error: GetUserPreferenceResponseError.PERMISSION_DENIED
+      };
+
+    return {
+      meta: await this.userService.getUserMeta(user, currentUser),
+      preference: await this.userService.getUserPreference(user)
+    };
+  }
+
+  @Post("updateUserPreference")
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: "Update a user's preference."
+  })
+  async updateUserPreference(
+    @CurrentUser() currentUser: UserEntity,
+    @Body() request: UpdateUserPreferenceRequestDto
+  ): Promise<UpdateUserPreferenceResponseDto> {
+    if (!currentUser)
+      return {
+        error: UpdateUserPreferenceResponseError.PERMISSION_DENIED
+      };
+
+    const user = await this.userService.findUserById(request.userId);
+    if (!user)
+      return {
+        error: UpdateUserPreferenceResponseError.NO_SUCH_USER
+      };
+
+    if (
+      currentUser.id !== user.id &&
+      !(await this.userPrivilegeService.userHasPrivilege(currentUser, UserPrivilegeType.ManageUser))
+    )
+      return {
+        error: UpdateUserPreferenceResponseError.PERMISSION_DENIED
+      };
+
+    await this.userService.updateUserPreference(user, request.preference);
+
+    return {};
+  }
+
   @Post("getUserSecuritySettings")
   @ApiBearerAuth()
   @ApiOperation({
@@ -493,7 +570,12 @@ export class UserController {
         };
     }
 
-    await this.authService.changePassword(userAuth, request.password);
+    if (this.authService.checkUserMigrated(userAuth)) await this.authService.changePassword(userAuth, request.password);
+    else {
+      // If the user has NOT been migrated, change its "password in old system"
+      const userMigrationInfo = await this.userMigrationService.findUserMigrationInfoByUserId(user.id);
+      await this.userMigrationService.changeOldPassword(userMigrationInfo, request.password);
+    }
 
     if (request.userId === user.id) {
       await this.auditService.log("auth.change_password");

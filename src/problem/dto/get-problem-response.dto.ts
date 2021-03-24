@@ -12,6 +12,7 @@ import { LocalizedProblemTagDto } from "./localized-problem-tag.dto";
 import { ProblemTagWithAllLocalesDto } from "./get-all-problem-tags-of-all-locales-response.dto";
 
 import { UserMetaDto } from "@/user/dto";
+import { GroupMetaDto } from "@/group/dto";
 import { SubmissionBasicMetaDto } from "@/submission/dto";
 
 import { ProblemJudgeInfo } from "../problem-judge-info.interface";
@@ -29,9 +30,20 @@ class ProblemUserPermissionDto {
   permissionLevel: ProblemPermissionLevel;
 }
 
+class ProblemGroupPermissionDto {
+  @ApiProperty()
+  group: GroupMetaDto;
+
+  @ApiProperty({ enum: Object.values(ProblemPermissionLevel).filter(x => typeof x === "number") })
+  permissionLevel: ProblemPermissionLevel;
+}
+
 class ProblemPermissionsDto {
   @ApiProperty({ type: [ProblemUserPermissionDto] })
   userPermissions: ProblemUserPermissionDto[];
+
+  @ApiProperty({ type: [ProblemGroupPermissionDto] })
+  groupPermissions: ProblemGroupPermissionDto[];
 }
 
 class ProblemLastSubmissionDto {

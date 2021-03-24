@@ -15,6 +15,16 @@ class SetDiscussionPermissionsRequestUserPermissionDto {
   permissionLevel: DiscussionPermissionLevel;
 }
 
+class SetDiscussionPermissionsRequestGroupPermissionDto {
+  @ApiProperty()
+  @IsInt()
+  groupId: number;
+
+  @ApiProperty({ enum: Object.values(DiscussionPermissionLevel).filter(x => typeof x === "number") })
+  @IsEnum(DiscussionPermissionLevel)
+  permissionLevel: DiscussionPermissionLevel;
+}
+
 export class SetDiscussionPermissionsRequestDto {
   @ApiProperty()
   @IsInt()
@@ -25,4 +35,8 @@ export class SetDiscussionPermissionsRequestDto {
   @Type(() => SetDiscussionPermissionsRequestUserPermissionDto)
   userPermissions: SetDiscussionPermissionsRequestUserPermissionDto[];
 
+  @ApiProperty({ type: SetDiscussionPermissionsRequestGroupPermissionDto, isArray: true })
+  @ValidateNested({ each: true })
+  @Type(() => SetDiscussionPermissionsRequestGroupPermissionDto)
+  groupPermissions: SetDiscussionPermissionsRequestGroupPermissionDto[];
 }

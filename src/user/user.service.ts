@@ -19,6 +19,8 @@ import { UserEntity } from "./user.entity";
 import { UserPrivilegeService, UserPrivilegeType } from "./user-privilege.service";
 import { UserInformationDto } from "./dto/user-information.dto";
 import { UserInformationEntity } from "./user-information.entity";
+import { UserPreference } from "./user-preference.interface";
+import { UserPreferenceEntity } from "./user-preference.entity";
 
 import {
   UpdateUserProfileResponseError,
@@ -37,6 +39,8 @@ export class UserService {
     private readonly userRepository: Repository<UserEntity>,
     @InjectRepository(UserInformationEntity)
     private readonly userInformationRepository: Repository<UserInformationEntity>,
+    @InjectRepository(UserPreferenceEntity)
+    private readonly userPreferenceRepository: Repository<UserPreferenceEntity>,
     @Inject(forwardRef(() => AuthEmailVerificationCodeService))
     private readonly authEmailVerificationCodeService: AuthEmailVerificationCodeService,
     @Inject(forwardRef(() => LockService))
@@ -335,4 +339,14 @@ export class UserService {
     );
   }
 
+  async getUserPreference(user: UserEntity): Promise<UserPreference> {
+    const userPreference = await this.userPreferenceRepository.findOne({ userId: user.id });
+    return userPreference.preference;
+  }
+
+  async updateUserPreference(user: UserEntity, preference: UserPreference): Promise<void> {
+    const userPreference = await this.userPreferenceRepository.findOne({ userId: user.id });
+    userPreference.preference = preference;
+    await this.userPreferenceRepository.save(userPreference);
+  }
 }

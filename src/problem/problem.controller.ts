@@ -5,9 +5,11 @@ import { Recaptcha } from "@nestlab/google-recaptcha";
 
 import { ConfigService } from "@/config/config.service";
 import { UserService } from "@/user/user.service";
+import { GroupService } from "@/group/group.service";
 import { AlternativeUrlFor, FileService } from "@/file/file.service";
 import { CurrentUser } from "@/common/user.decorator";
 import { UserEntity } from "@/user/user.entity";
+import { GroupEntity } from "@/group/group.entity";
 import { UserPrivilegeService, UserPrivilegeType } from "@/user/user-privilege.service";
 import { Locale } from "@/common/locale.type";
 import { SubmissionService } from "@/submission/submission.service";
@@ -88,6 +90,7 @@ export class ProblemController {
     private readonly problemService: ProblemService,
     private readonly userService: UserService,
     private readonly userPrivilegeService: UserPrivilegeService,
+    private readonly groupService: GroupService,
     private readonly fileService: FileService,
     private readonly submissionService: SubmissionService,
     private readonly auditService: AuditService,
@@ -448,12 +451,18 @@ export class ProblemController {
     if (request.permissions) {
       promises.push(
         (async () => {
-          const userPermissions = await this.problemService.getProblemPermissions(problem);
+          const [userPermissions, groupPermissions] = await this.problemService.getProblemPermissions(problem);
 
           result.permissions = {
             userPermissions: await Promise.all(
               userPermissions.map(async ([user, permissionLevel]) => ({
                 user: await this.userService.getUserMeta(user, currentUser),
+                permissionLevel
+              }))
+            ),
+            groupPermissions: await Promise.all(
+              groupPermissions.map(async ([group, permissionLevel]) => ({
+                group: await this.groupService.getGroupMeta(group),
                 permissionLevel
               }))
             )
@@ -496,7 +505,7 @@ export class ProblemController {
   @Post("setProblemPermissions")
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "Set who have permission to read / write this problem."
+    summary: "Set who and which groups have permission to read / write this problem."
   })
   async setProblemPermissions(
     @CurrentUser() currentUser: UserEntity,
@@ -539,19 +548,39 @@ export class ProblemController {
           userPermissions.push([users[i], permissionLevel]);
         }
 
+        const groups = await this.groupService.findGroupsByExistingIds(
+          request.groupPermissions.map(groupPermission => groupPermission.groupId)
+        );
+        const groupPermissions: [GroupEntity, ProblemPermissionLevel][] = [];
+        for (const i of request.groupPermissions.keys()) {
+          const { groupId, permissionLevel } = request.groupPermissions[i];
+          if (!groups[i])
+            return {
+              error: SetProblemPermissionsResponseError.NO_SUCH_GROUP,
+              errorObjectId: groupId
+            };
+
+          groupPermissions.push([groups[i], permissionLevel]);
+        }
+
         const oldPermissions = await this.problemService.getProblemPermissionsWithId(problem);
 
-        await this.problemService.setProblemPermissions(problem, userPermissions);
+        await this.problemService.setProblemPermissions(problem, userPermissions, groupPermissions);
 
         await this.auditService.log("problem.set_permissions", AuditLogObjectType.Problem, problem.id, {
           oldPermissions: {
-            userPermissions: oldPermissions.map(([userId, permissionLevel]) => ({
+            userPermissions: oldPermissions[0].map(([userId, permissionLevel]) => ({
               userId,
+              permissionLevel
+            })),
+            groupPermissions: oldPermissions[1].map(([groupId, permissionLevel]) => ({
+              groupId,
               permissionLevel
             }))
           },
           newPermissions: {
-            userPermissions: request.userPermissions
+            userPermissions: request.userPermissions,
+            groupPermissions: request.groupPermissions
           }
         });
 

@@ -2,15 +2,12 @@ import { Injectable, Inject, forwardRef } from "@nestjs/common";
 import { InjectRepository, InjectConnection } from "@nestjs/typeorm";
 
 import { Repository, Connection, EntityManager } from "typeorm";
-
-// DO NOT USE bcrypt, REPLACE it with bcryptjs
-// https://stackoverflow.com/questions/34546272/cannot-find-module-bcrypt/41878322
-// import * as bcrypt from "bcrypt";
-import * as bcrypt from "bcryptjs";
+import * as bcrypt from "bcrypt";
 
 import { UserEntity } from "@/user/user.entity";
 import { UserService } from "@/user/user.service";
 import { UserInformationEntity } from "@/user/user-information.entity";
+import { UserPreferenceEntity } from "@/user/user-preference.entity";
 import { ConfigService } from "@/config/config.service";
 import { delay, DELAY_FOR_SECURITY } from "@/common/delay";
 
@@ -92,6 +89,10 @@ export class AuthService {
         userInformation.github = "";
         await transactionalEntityManager.save(userInformation);
 
+        const userPreference = new UserPreferenceEntity();
+        userPreference.userId = user.id;
+        userPreference.preference = {};
+        await transactionalEntityManager.save(userPreference);
       });
 
       if (this.configService.config.preference.security.requireEmailVerification) {
@@ -113,6 +114,10 @@ export class AuthService {
 
   async checkPassword(userAuth: UserAuthEntity, password: string): Promise<boolean> {
     return await bcrypt.compare(password, userAuth.password);
+  }
+
+  checkUserMigrated(userAuth: UserAuthEntity): boolean {
+    return userAuth.password != null;
   }
 
   async changePassword(

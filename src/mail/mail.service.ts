@@ -19,18 +19,6 @@ export class MailService {
   private readonly transporter: nodemailer.Transporter;
 
   constructor(private readonly configService: ConfigService) {
-  //   this.transporter = nodemailer.createTransport({
-  //     host: "host", 
-  //     secure: false,  
-  //     port: 587, 
-  //     auth: {
-  //         user: "username",
-  //         pass: "password"
-  //     },
-  //     tls: {
-  //       rejectUnauthorized: false
-  //     }
-  // });
     this.transporter = nodemailer.createTransport(this.configService.config.services.mail.transport);
   }
 

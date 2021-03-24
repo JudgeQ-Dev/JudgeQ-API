@@ -12,6 +12,7 @@ import { DatabaseModule } from "./database/database.module";
 import { UserModule } from "./user/user.module";
 import { AuthModule } from "./auth/auth.module";
 import { CorsModule } from "./cors/cors.module";
+import { GroupModule } from "./group/group.module";
 import { ProblemModule } from "./problem/problem.module";
 import { ProblemTypeModule } from "./problem-type/problem-type.module";
 import { LocalizedContentModule } from "./localized-content/localized-content.module";
@@ -20,7 +21,9 @@ import { FileModule } from "./file/file.module";
 import { SubmissionModule } from "./submission/submission.module";
 import { JudgeModule } from "./judge/judge.module";
 import { DiscussionModule } from "./discussion/discussion.module";
+import { MigrationModule } from "./migration/migration.module";
 import { EventReportModule } from "./event-report/event-report.module";
+import { HomepageModule } from "./homepage/homepage.module";
 
 @Module({
   imports: [
@@ -30,6 +33,7 @@ import { EventReportModule } from "./event-report/event-report.module";
     forwardRef(() => UserModule),
     forwardRef(() => AuthModule),
     forwardRef(() => CorsModule),
+    forwardRef(() => GroupModule),
     forwardRef(() => ProblemModule),
     forwardRef(() => ProblemTypeModule),
     forwardRef(() => LocalizedContentModule),
@@ -39,6 +43,8 @@ import { EventReportModule } from "./event-report/event-report.module";
     forwardRef(() => JudgeModule),
     forwardRef(() => DiscussionModule),
     forwardRef(() => EventReportModule),
+    forwardRef(() => HomepageModule),
+    forwardRef(() => MigrationModule)
   ],
   controllers: [AppController],
   providers: [AppService, ErrorFilter, RecaptchaFilter]

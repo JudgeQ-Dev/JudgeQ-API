@@ -10,6 +10,8 @@ import { UserService } from "@/user/user.service";
 import { UserPrivilegeService, UserPrivilegeType } from "@/user/user-privilege.service";
 import { AuditLogObjectType, AuditService } from "@/audit/audit.service";
 import { ProblemPermissionType, ProblemService } from "@/problem/problem.service";
+import { GroupEntity } from "@/group/group.entity";
+import { GroupService } from "@/group/group.service";
 import { isEmoji } from "@/common/validators";
 
 import {
@@ -80,6 +82,7 @@ export class DiscussionController {
     private readonly configService: ConfigService,
     private readonly userService: UserService,
     private readonly userPrivilegeService: UserPrivilegeService,
+    private readonly groupService: GroupService,
     private readonly auditService: AuditService
   ) {
     this.reactionEmojisBlacklist = [
@@ -333,7 +336,7 @@ export class DiscussionController {
   @Post("getDiscussionPermissions")
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "Get which users and groups which permissions of the discussion."
+    summary: "Get which users and groups have which permissions of the discussion."
   })
   async getDiscussionPermissions(
     @CurrentUser() currentUser: UserEntity,
@@ -350,7 +353,7 @@ export class DiscussionController {
         error: GetDiscussionPermissionsResponseError.PERMISSION_DENIED
       };
 
-    const userPermissions = await this.discussionService.getDiscussionPermissions(discussion);
+    const [userPermissions, groupPermissions] = await this.discussionService.getDiscussionPermissions(discussion);
 
     return {
       permissions: {
@@ -360,6 +363,12 @@ export class DiscussionController {
             permissionLevel
           }))
         ),
+        groupPermissions: await Promise.all(
+          groupPermissions.map(async ([group, permissionLevel]) => ({
+            group: await this.groupService.getGroupMeta(group),
+            permissionLevel
+          }))
+        )
       },
       haveManagePermissionsPermission: await this.discussionService.userHasPermission(
         currentUser,
@@ -799,7 +808,7 @@ export class DiscussionController {
   @Post("setDiscussionPermissions")
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "Set who have permission to read / write this discussion."
+    summary: "Set who and which groups have permission to read / write this discussion."
   })
   async setDiscussionPermissions(
     @CurrentUser() currentUser: UserEntity,
@@ -846,19 +855,39 @@ export class DiscussionController {
           userPermissions.push([users[i], permissionLevel]);
         }
 
+        const groups = await this.groupService.findGroupsByExistingIds(
+          request.groupPermissions.map(groupPermission => groupPermission.groupId)
+        );
+        const groupPermissions: [GroupEntity, DiscussionPermissionLevel][] = [];
+        for (const i of request.groupPermissions.keys()) {
+          const { groupId, permissionLevel } = request.groupPermissions[i];
+          if (!groups[i])
+            return {
+              error: SetDiscussionPermissionsResponseError.NO_SUCH_GROUP,
+              errorObjectId: groupId
+            };
+
+          groupPermissions.push([groups[i], permissionLevel]);
+        }
+
         const oldPermissions = await this.discussionService.getDiscussionPermissionsWithId(discussion);
 
-        await this.discussionService.setDiscussionPermissions(discussion, userPermissions);
+        await this.discussionService.setDiscussionPermissions(discussion, userPermissions, groupPermissions);
 
         await this.auditService.log("discussion.set_permissions", AuditLogObjectType.Discussion, discussion.id, {
           oldPermissions: {
-            userPermissions: oldPermissions.map(([userId, permissionLevel]) => ({
+            userPermissions: oldPermissions[0].map(([userId, permissionLevel]) => ({
               userId,
+              permissionLevel
+            })),
+            groupPermissions: oldPermissions[1].map(([groupId, permissionLevel]) => ({
+              groupId,
               permissionLevel
             }))
           },
           newPermissions: {
-            userPermissions: request.userPermissions
+            userPermissions: request.userPermissions,
+            groupPermissions: request.groupPermissions
           }
         });
 

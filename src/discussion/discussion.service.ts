@@ -9,6 +9,8 @@ import { AuditLogObjectType, AuditService } from "@/audit/audit.service";
 import { ConfigService } from "@/config/config.service";
 import { UserPrivilegeService, UserPrivilegeType } from "@/user/user-privilege.service";
 import { PermissionObjectType, PermissionService } from "@/permission/permission.service";
+import { GroupEntity } from "@/group/group.entity";
+import { GroupService } from "@/group/group.service";
 import { ProblemEntity } from "@/problem/problem.entity";
 import { LockService } from "@/redis/lock.service";
 import { escapeLike } from "@/database/database.utils";
@@ -65,6 +67,7 @@ export class DiscussionService {
     private readonly discussionReplyReactionRepository: Repository<DiscussionReplyReactionEntity>,
     @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
+    private readonly groupService: GroupService,
     private readonly configService: ConfigService,
     private readonly auditService: AuditService,
     private readonly userPrivilegeService: UserPrivilegeService,
@@ -147,7 +150,7 @@ export class DiscussionService {
           return (
             await Promise.all([
               hasViewProblemPermission(),
-              this.permissionService.userHavePermission(
+              this.permissionService.userOrItsGroupsHavePermission(
                 user,
                 discussion.id,
                 PermissionObjectType.Discussion,
@@ -164,7 +167,7 @@ export class DiscussionService {
           return (
             await Promise.all([
               hasViewProblemPermission(),
-              this.permissionService.userHavePermission(
+              this.permissionService.userOrItsGroupsHavePermission(
                 user,
                 discussion.id,
                 PermissionObjectType.Discussion,
@@ -204,7 +207,7 @@ export class DiscussionService {
     if (hasPrivilege ?? (await this.userPrivilegeService.userHasPrivilege(user, UserPrivilegeType.ManageDiscussion)))
       return Object.values(DiscussionPermissionType);
 
-    const permissionLevel = await this.permissionService.getUserMaxPermissionLevel<DiscussionPermissionLevel>(
+    const permissionLevel = await this.permissionService.getUserOrItsGroupsMaxPermissionLevel<DiscussionPermissionLevel>(
       user,
       discussion.id,
       PermissionObjectType.Discussion
@@ -442,16 +445,18 @@ export class DiscussionService {
   async setDiscussionPermissions(
     discussion: DiscussionEntity,
     userPermissions: [user: UserEntity, permission: DiscussionPermissionLevel][],
+    groupPermissions: [group: GroupEntity, permission: DiscussionPermissionLevel][]
   ): Promise<void> {
     await this.lockDiscussionById(
       discussion.id,
       "Read",
       // eslint-disable-next-line @typescript-eslint/no-shadow
       async discussion =>
-        await this.permissionService.replaceUsersPermissionForObject(
+        await this.permissionService.replaceUsersAndGroupsPermissionForObject(
           discussion.id,
           PermissionObjectType.Discussion,
           userPermissions,
+          groupPermissions
         )
     );
   }
@@ -459,9 +464,12 @@ export class DiscussionService {
   async getDiscussionPermissionsWithId(
     discussion: DiscussionEntity
   ): Promise<
-      [userId: number, permission: DiscussionPermissionLevel][]
+    [
+      [userId: number, permission: DiscussionPermissionLevel][],
+      [groupId: number, permission: DiscussionPermissionLevel][]
+    ]
   > {
-    return await this.permissionService.getUserPermissionListOfObject<DiscussionPermissionLevel>(
+    return await this.permissionService.getUserAndGroupPermissionListOfObject<DiscussionPermissionLevel>(
       discussion.id,
       PermissionObjectType.Discussion
     );
@@ -470,17 +478,30 @@ export class DiscussionService {
   async getDiscussionPermissions(
     discussion: DiscussionEntity
   ): Promise<
-      [user: UserEntity, permission: DiscussionPermissionLevel][]
+    [
+      [user: UserEntity, permission: DiscussionPermissionLevel][],
+      [group: GroupEntity, permission: DiscussionPermissionLevel][]
+    ]
   > {
-    const userPermissionList = await this.getDiscussionPermissionsWithId(discussion);
-    return await Promise.all(
-      userPermissionList.map(
-        async ([userId, permission]): Promise<[user: UserEntity, permission: DiscussionPermissionLevel]> => [
-          await this.userService.findUserById(userId),
-          permission
-        ]
+    const [userPermissionList, groupPermissionList] = await this.getDiscussionPermissionsWithId(discussion);
+    return [
+      await Promise.all(
+        userPermissionList.map(
+          async ([userId, permission]): Promise<[user: UserEntity, permission: DiscussionPermissionLevel]> => [
+            await this.userService.findUserById(userId),
+            permission
+          ]
+        )
+      ),
+      await Promise.all(
+        groupPermissionList.map(
+          async ([groupId, permission]): Promise<[group: GroupEntity, discussion: DiscussionPermissionLevel]> => [
+            await this.groupService.findGroupById(groupId),
+            permission
+          ]
+        )
       )
-    );
+    ];
   }
 
   private async updateSortTime(discussionId: number, transactionalEntityManager: EntityManager, editTime?: Date) {
@@ -665,9 +686,10 @@ export class DiscussionService {
   async deleteDiscussion(discussion: DiscussionEntity): Promise<void> {
     await this.connection.transaction("READ COMMITTED", async transactionalEntityManager => {
       // delete permissions
-      await this.permissionService.replaceUsersPermissionForObject(
+      await this.permissionService.replaceUsersAndGroupsPermissionForObject(
         discussion.id,
         PermissionObjectType.Discussion,
+        [],
         [],
         transactionalEntityManager
       );

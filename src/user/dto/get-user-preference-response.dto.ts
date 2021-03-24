@@ -1,6 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 
 import { UserMetaDto } from "./user-meta.dto";
+import { UserPreferenceDto } from "./user-preference.dto";
 
 export enum GetUserPreferenceResponseError {
   NO_SUCH_USER = "NO_SUCH_USER",
@@ -14,4 +15,6 @@ export class GetUserPreferenceResponseDto {
   @ApiProperty()
   meta?: UserMetaDto;
 
+  @ApiProperty()
+  preference?: UserPreferenceDto;
 }

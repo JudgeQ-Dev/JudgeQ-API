@@ -4,14 +4,14 @@ import { InjectConnection, InjectRepository } from "@nestjs/typeorm";
 import { Connection, Repository, EntityManager, Brackets, In } from "typeorm";
 
 import { UserEntity } from "@/user/user.entity";
+import { GroupEntity } from "@/group/group.entity";
+import { LocalizedContentService } from "@/localized-content/localized-content.service";
+import { LocalizedContentEntity, LocalizedContentType } from "@/localized-content/localized-content.entity";
 import { Locale } from "@/common/locale.type";
 import { UserPrivilegeService, UserPrivilegeType } from "@/user/user-privilege.service";
 import { PermissionService, PermissionObjectType } from "@/permission/permission.service";
-
-import { LocalizedContentService } from "@/localized-content/localized-content.service";
-import { LocalizedContentEntity, LocalizedContentType } from "@/localized-content/localized-content.entity";
-
 import { UserService } from "@/user/user.service";
+import { GroupService } from "@/group/group.service";
 import { FileService } from "@/file/file.service";
 import { ConfigService } from "@/config/config.service";
 import { RedisService } from "@/redis/redis.service";
@@ -84,6 +84,7 @@ export class ProblemService {
     private readonly userPrivilegeService: UserPrivilegeService,
     @Inject(forwardRef(() => UserService))
     private readonly userService: UserService,
+    private readonly groupService: GroupService,
     private readonly permissionService: PermissionService,
     private readonly fileService: FileService,
     @Inject(forwardRef(() => SubmissionService))
@@ -161,7 +162,7 @@ export class ProblemService {
         if (hasPrivilege ?? (await this.userPrivilegeService.userHasPrivilege(user, UserPrivilegeType.ManageProblem)))
           return true;
         else
-          return await this.permissionService.userHavePermission(
+          return await this.permissionService.userOrItsGroupsHavePermission(
             user,
             problem.id,
             PermissionObjectType.Problem,
@@ -180,7 +181,7 @@ export class ProblemService {
           return true;
         else
           return (
-            (await this.permissionService.userHavePermission(
+            (await this.permissionService.userOrItsGroupsHavePermission(
               user,
               problem.id,
               PermissionObjectType.Problem,
@@ -239,7 +240,7 @@ export class ProblemService {
     if (await this.userPrivilegeService.userHasPrivilege(user, UserPrivilegeType.ManageProblem))
       return Object.values(ProblemPermissionType);
 
-    const permissionLevel = await this.permissionService.getUserMaxPermissionLevel<ProblemPermissionLevel>(
+    const permissionLevel = await this.permissionService.getUserOrItsGroupsMaxPermissionLevel<ProblemPermissionLevel>(
       user,
       problem.id,
       PermissionObjectType.Problem
@@ -569,16 +570,18 @@ export class ProblemService {
   async setProblemPermissions(
     problem: ProblemEntity,
     userPermissions: [user: UserEntity, permission: ProblemPermissionLevel][],
+    groupPermissions: [group: GroupEntity, permission: ProblemPermissionLevel][]
   ): Promise<void> {
     await this.lockProblemById(
       problem.id,
       "Read",
       // eslint-disable-next-line @typescript-eslint/no-shadow
       async problem =>
-        await this.permissionService.replaceUsersPermissionForObject(
+        await this.permissionService.replaceUsersAndGroupsPermissionForObject(
           problem.id,
           PermissionObjectType.Problem,
-          userPermissions
+          userPermissions,
+          groupPermissions
         )
     );
   }
@@ -586,9 +589,9 @@ export class ProblemService {
   async getProblemPermissionsWithId(
     problem: ProblemEntity
   ): Promise<
-    [userId: number, permission: ProblemPermissionLevel][]
+    [[userId: number, permission: ProblemPermissionLevel][], [groupId: number, permission: ProblemPermissionLevel][]]
   > {
-    return await this.permissionService.getUserPermissionListOfObject<ProblemPermissionLevel>(
+    return await this.permissionService.getUserAndGroupPermissionListOfObject<ProblemPermissionLevel>(
       problem.id,
       PermissionObjectType.Problem
     );
@@ -597,18 +600,30 @@ export class ProblemService {
   async getProblemPermissions(
     problem: ProblemEntity
   ): Promise<
-      [user: UserEntity, permission: ProblemPermissionLevel][]
+    [
+      [user: UserEntity, permission: ProblemPermissionLevel][],
+      [group: GroupEntity, permission: ProblemPermissionLevel][]
+    ]
   > {
-    const userPermissionList = await this.getProblemPermissionsWithId(problem);
-    
-    return await Promise.all(
-      userPermissionList.map(
-        async ([userId, permission]): Promise<[user: UserEntity, permission: ProblemPermissionLevel]> => [
-          await this.userService.findUserById(userId),
-          permission
-        ]
+    const [userPermissionList, groupPermissionList] = await this.getProblemPermissionsWithId(problem);
+    return [
+      await Promise.all(
+        userPermissionList.map(
+          async ([userId, permission]): Promise<[user: UserEntity, permission: ProblemPermissionLevel]> => [
+            await this.userService.findUserById(userId),
+            permission
+          ]
+        )
+      ),
+      await Promise.all(
+        groupPermissionList.map(
+          async ([groupId, permission]): Promise<[group: GroupEntity, problem: ProblemPermissionLevel]> => [
+            await this.groupService.findGroupById(groupId),
+            permission
+          ]
+        )
       )
-    );
+    ];
   }
 
   async setProblemDisplayId(problem: ProblemEntity, displayId: number): Promise<boolean> {
@@ -1043,9 +1058,10 @@ export class ProblemService {
       await transactionalEntityManager.remove(problemFiles);
 
       // delete permissions
-      await this.permissionService.replaceUsersPermissionForObject(
+      await this.permissionService.replaceUsersAndGroupsPermissionForObject(
         problem.id,
         PermissionObjectType.Problem,
+        [],
         [],
         transactionalEntityManager
       );

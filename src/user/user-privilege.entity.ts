@@ -6,7 +6,7 @@ export enum UserPrivilegeType {
   // Management privileges
   EditHomepage = "EditHomepage",
   ManageUser = "ManageUser",
-  // ManageUserGroup = "ManageUserGroup",
+  ManageUserGroup = "ManageUserGroup",
   ManageProblem = "ManageProblem",
   ManageContest = "ManageContest",
   ManageDiscussion = "ManageDiscussion",

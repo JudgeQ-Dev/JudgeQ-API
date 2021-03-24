@@ -3,13 +3,17 @@ import { ApiOperation, ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 
 import { Recaptcha } from "@nestlab/google-recaptcha";
 
+import { appGitRepoInfo } from "@/main";
 import { ConfigService } from "@/config/config.service";
 import { UserService } from "@/user/user.service";
 import { CurrentUser } from "@/common/user.decorator";
 import { UserEntity } from "@/user/user.entity";
 import { MailService, MailTemplate } from "@/mail/mail.service";
 import { UserPrivilegeService, UserPrivilegeType } from "@/user/user-privilege.service";
+import { GroupService } from "@/group/group.service";
 import { AuditLogObjectType, AuditService } from "@/audit/audit.service";
+import { UserMigrationService } from "@/migration/user-migration.service";
+import { UserMigrationInfoEntity } from "@/migration/user-migration-info.entity";
 import { delay, DELAY_FOR_SECURITY } from "@/common/delay";
 
 import { AuthEmailVerificationCodeService, EmailVerificationCodeType } from "./auth-email-verification-code.service";
@@ -53,11 +57,13 @@ export class AuthController {
     private readonly userService: UserService,
     private readonly userPrivilegeService: UserPrivilegeService,
     private readonly authService: AuthService,
+    private readonly groupService: GroupService,
     private readonly authEmailVerificationCodeService: AuthEmailVerificationCodeService,
     private readonly mailService: MailService,
     private readonly authSessionService: AuthSessionService,
     private readonly authIpLocationService: AuthIpLocationService,
     private readonly auditService: AuditService,
+    private readonly userMigrationService: UserMigrationService
   ) {}
 
   @Get("getSessionInfo")
@@ -70,11 +76,17 @@ export class AuthController {
 
     const result: GetSessionInfoResponseDto = {
       serverPreference: this.configService.preferenceConfigToBeSentToUser,
+      serverVersion: {
+        hash: appGitRepoInfo.abbreviatedSha,
+        date: appGitRepoInfo.committerDate
+      }
     };
 
     if (user) {
       result.userMeta = await this.userService.getUserMeta(user, user);
+      result.joinedGroupsCount = await this.groupService.getUserJoinedGroupsCount(user);
       result.userPrivileges = await this.userPrivilegeService.getUserPrivileges(user.id);
+      result.userPreference = await this.userService.getUserPreference(user);
     }
 
     if (request.jsonp)
@@ -85,10 +97,12 @@ export class AuthController {
     return result;
   }
 
+  @Recaptcha()
   @Post("login")
   @ApiBearerAuth()
   @ApiOperation({
     summary: "Login with given credentials.",
+    description: "Recaptcha required. Return session token if success."
   })
   async login(
     @Req() req: RequestWithSession,
@@ -100,11 +114,37 @@ export class AuthController {
         error: LoginResponseError.ALREADY_LOGGEDIN
       };
 
+    const checkNonMigratedUserPassword = async (
+      userMigrationInfo: UserMigrationInfoEntity
+    ): Promise<LoginResponseDto> => {
+      if (!(await this.userMigrationService.checkOldPassword(userMigrationInfo, request.password))) {
+        await this.auditService.log(userMigrationInfo.userId, "auth.login_failed.wrong_password");
+
+        return { error: LoginResponseError.WRONG_PASSWORD };
+      }
+
+      return { error: LoginResponseError.USER_NOT_MIGRATED, username: userMigrationInfo.oldUsername };
+    };
+
     const user = request.username
       ? await this.userService.findUserByUsername(request.username)
       : await this.userService.findUserByEmail(request.email);
+    if (!user) {
+      if (request.username) {
+        // The username may be a non-migrated old user
+        const userMigrationInfo = await this.userMigrationService.findUserMigrationInfoByOldUsername(request.username);
+        if (userMigrationInfo) return await checkNonMigratedUserPassword(userMigrationInfo);
+      }
+
+      return {
+        error: LoginResponseError.NO_SUCH_USER
+      };
+    }
 
     const userAuth = await this.authService.findUserAuthByUserId(user.id);
+
+    if (!this.authService.checkUserMigrated(userAuth))
+      return await checkNonMigratedUserPassword(await this.userMigrationService.findUserMigrationInfoByUserId(user.id));
 
     if (!(await this.authService.checkPassword(userAuth, request.password))) {
       await this.auditService.log(user.id, "auth.login_failed.wrong_password");
@@ -214,12 +254,11 @@ export class AuthController {
         errorMessage: "Email verification code disabled."
       };
 
-    let code = await this.authEmailVerificationCodeService.generate(request.email);
-    if (!code) {
+    const code = await this.authEmailVerificationCodeService.generate(request.email);
+    if (!code)
       return {
         error: SendEmailVerificationCodeResponseError.RATE_LIMITED
       };
-    }
 
     const sendMailErrorMessage = await this.mailService.sendMail(
       {
@@ -314,6 +353,13 @@ export class AuthController {
         error: ResetPasswordResponseError.INVALID_EMAIL_VERIFICATION_CODE
       };
 
+    if (this.authService.checkUserMigrated(userAuth))
+      await this.authService.changePassword(userAuth, request.newPassword);
+    else {
+      // If the user has NOT been migrated, change its "password in old system"
+      const userMigrationInfo = await this.userMigrationService.findUserMigrationInfoByUserId(user.id);
+      await this.userMigrationService.changeOldPassword(userMigrationInfo, request.newPassword);
+    }
     await this.authEmailVerificationCodeService.revoke(request.email, request.emailVerificationCode);
 
     // Revoke ALL previous sessions
