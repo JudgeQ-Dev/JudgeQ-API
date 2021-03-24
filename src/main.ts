@@ -80,6 +80,7 @@ async function initialize(): Promise<[configService: ConfigService, app: NestExp
   app.useGlobalFilters(app.get(ErrorFilter), app.get(RecaptchaFilter));
   app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }));
   app.use(json({ limit: "1024mb" }));
+  app.get(ClusterService);
 
   if (false && configService.config.security.rateLimit) {
     const clusterService = app.get(ClusterService);
