@@ -12,6 +12,7 @@ import { DatabaseModule } from "./database/database.module";
 import { UserModule } from "./user/user.module";
 import { AuthModule } from "./auth/auth.module";
 import { CorsModule } from "./cors/cors.module";
+import { ClusterModule } from "./cluster/cluster.module";
 import { ProblemModule } from "./problem/problem.module";
 import { ProblemTypeModule } from "./problem-type/problem-type.module";
 import { LocalizedContentModule } from "./localized-content/localized-content.module";
@@ -29,6 +30,7 @@ import { DiscussionModule } from "./discussion/discussion.module";
     forwardRef(() => UserModule),
     forwardRef(() => AuthModule),
     forwardRef(() => CorsModule),
+    forwardRef(() => ClusterModule),
     forwardRef(() => ProblemModule),
     forwardRef(() => ProblemTypeModule),
     forwardRef(() => LocalizedContentModule),
