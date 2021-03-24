@@ -100,7 +100,8 @@ export class JudgeGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleConnection(client: Socket): Promise<void> {
     // Maybe Error
-    const key = (client.handshake.query.key as String).split(" ").pop();
+    const key = client.handshake.query.key.split(" ").pop();
+    // const key = (client.handshake.query.key as String).split(" ").pop();
     const judgeClient = await this.judgeClientService.findJudgeClientByKey(key);
 
     if (!judgeClient) {

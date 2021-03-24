@@ -25,12 +25,13 @@ import { DiscussionModule } from "./discussion/discussion.module";
 @Module({
   imports: [
     SharedModule,
+    ClusterModule,
     forwardRef(() => DatabaseModule),
     forwardRef(() => RedisModule),
     forwardRef(() => UserModule),
     forwardRef(() => AuthModule),
     forwardRef(() => CorsModule),
-    forwardRef(() => ClusterModule),
+    // forwardRef(() => ClusterModule),
     forwardRef(() => ProblemModule),
     forwardRef(() => ProblemTypeModule),
     forwardRef(() => LocalizedContentModule),
