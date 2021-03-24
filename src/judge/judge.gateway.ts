@@ -138,7 +138,7 @@ export class JudgeGateway implements OnGatewayConnection, OnGatewayDisconnect {
     logger.log(message);
     if ((await this.redis.del(REDIS_KEY_JUDGE_CLIENT_TEMPORARILY_DISCONNENTED.format(judgeClient.id))) === 0) {
       // If the judge client is NOT temporarily disconnected, report it with event-reporter
-      // TODO
+      // TODO:
     }
   }
 
@@ -183,7 +183,7 @@ export class JudgeGateway implements OnGatewayConnection, OnGatewayDisconnect {
     );
     setTimeout(async () => {
       if (!(await this.judgeClientService.isJudgeClientOnline(state.judgeClient))) {
-        // TODO 
+        // TODO:
       }
     }, JUDGE_CLIENT_TEMPORARILY_DISCONNENTED_MAX_TIME * 1000);
   }
