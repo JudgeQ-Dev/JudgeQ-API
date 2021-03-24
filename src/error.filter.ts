@@ -3,12 +3,13 @@ import { ExceptionFilter, Catch, ArgumentsHost, HttpException, Logger } from "@n
 import { Response } from "express"; // eslint-disable-line import/no-extraneous-dependencies
 
 import { RequestWithSession } from "./auth/auth.middleware";
+import { EventReportService, EventReportType } from "./event-report/event-report.service";
 
 const logger = new Logger("ErrorFilter");
 
 @Catch()
 export class ErrorFilter implements ExceptionFilter {
-  constructor() {}
+  constructor(private readonly eventReportService: EventReportService) {}
 
   catch(error: Error, host: ArgumentsHost) {
     const contextType = host.getType();
@@ -31,6 +32,12 @@ export class ErrorFilter implements ExceptionFilter {
         logger.error(error.message, error.stack);
       } else logger.error(error);
 
+      this.eventReportService.report({
+        type: EventReportType.Error,
+        error,
+        request,
+        message: "ErrorFilter has caught a uncaught exception."
+      });
     }
   }
 
