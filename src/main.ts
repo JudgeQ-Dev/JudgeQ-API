@@ -57,30 +57,6 @@ async function initSwaggerDocument(app: NestExpressApplication) {
   SwaggerModule.setup(path.join(GlobalPrefix, "docs"), app, document);
 }
 
-// async function initialize(): Promise<[configService: ConfigService, app: NestExpressApplication]> {
-//   const app = await NestFactory.create<NestExpressApplication>(AppModule);
-//   const configService = app.get(ConfigService);
-//   app.setGlobalPrefix(GlobalPrefix);
-//   app.useGlobalFilters(app.get(ErrorFilter));
-//   // app.useGlobalPipes(new ValidationPipe({ transform: true, whitelist: true, forbidNonWhitelisted: true }));
-//   app.use(json({ limit: "1024mb" }));
-//   initSwaggerDocument(app);
-//   return [configService, app];
-// }
-
-// async function startApp(app: NestExpressApplication, configService: ConfigService) {
-//   await app.listen(configService.config.server.port);
-//   Logger.log(
-//     `${packageInfo.name} is listening on ${configService.config.server.hostname}:${configService.config.server.port}`,
-//     "Bootstrap",
-//   );
-// }
-
-// async function bootstrap() {
-//   const [configService, app] = await initialize();
-//   await startApp(app, configService);
-// }
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function initialize(): Promise<[configService: ConfigService, app: NestExpressApplication]> {
 
@@ -122,7 +98,6 @@ async function initialize(): Promise<[configService: ConfigService, app: NestExp
       }
     } else rateLimiter = new RateLimiterMemory(rateLimiterConfig);
 
-    // disable rateLimiter
     app.use((req: Request, res: Response, next: () => void) => {
       rateLimiter
         .consume(req.ip)

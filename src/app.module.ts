@@ -12,7 +12,6 @@ import { DatabaseModule } from "./database/database.module";
 import { UserModule } from "./user/user.module";
 import { AuthModule } from "./auth/auth.module";
 import { CorsModule } from "./cors/cors.module";
-import { ClusterModule } from "./cluster/cluster.module";
 import { ProblemModule } from "./problem/problem.module";
 import { ProblemTypeModule } from "./problem-type/problem-type.module";
 import { LocalizedContentModule } from "./localized-content/localized-content.module";
@@ -21,17 +20,16 @@ import { FileModule } from "./file/file.module";
 import { SubmissionModule } from "./submission/submission.module";
 import { JudgeModule } from "./judge/judge.module";
 import { DiscussionModule } from "./discussion/discussion.module";
+import { EventReportModule } from "./event-report/event-report.module";
 
 @Module({
   imports: [
     SharedModule,
-    ClusterModule,
     forwardRef(() => DatabaseModule),
     forwardRef(() => RedisModule),
     forwardRef(() => UserModule),
     forwardRef(() => AuthModule),
     forwardRef(() => CorsModule),
-    // forwardRef(() => ClusterModule),
     forwardRef(() => ProblemModule),
     forwardRef(() => ProblemTypeModule),
     forwardRef(() => LocalizedContentModule),
@@ -40,6 +38,7 @@ import { DiscussionModule } from "./discussion/discussion.module";
     forwardRef(() => SubmissionModule),
     forwardRef(() => JudgeModule),
     forwardRef(() => DiscussionModule),
+    forwardRef(() => EventReportModule),
   ],
   controllers: [AppController],
   providers: [AppService, ErrorFilter, RecaptchaFilter]

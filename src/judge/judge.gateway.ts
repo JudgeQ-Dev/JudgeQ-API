@@ -17,6 +17,7 @@ import { logger } from "@/logger";
 import { AlternativeUrlFor, FileService } from "@/file/file.service";
 import { SubmissionProgress } from "@/submission/submission-progress.interface";
 import { ConfigService } from "@/config/config.service";
+import { EventReportService, EventReportType } from "@/event-report/event-report.service";
 import { RedisService } from "@/redis/redis.service";
 import { LockService } from "@/redis/lock.service";
 
@@ -62,6 +63,8 @@ export class JudgeGateway implements OnGatewayConnection, OnGatewayDisconnect {
     private readonly judgeQueueService: JudgeQueueService,
     private readonly fileService: FileService,
     private readonly configService: ConfigService,
+    @Inject(forwardRef(() => EventReportService))
+    private readonly eventReportService: EventReportService,
     private readonly redisService: RedisService,
     private readonly lockService: LockService
   ) {
@@ -99,9 +102,7 @@ export class JudgeGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   async handleConnection(client: Socket): Promise<void> {
-    // Maybe Error
     const key = client.handshake.query.key.split(" ").pop();
-    // const key = (client.handshake.query.key as String).split(" ").pop();
     const judgeClient = await this.judgeClientService.findJudgeClientByKey(key);
 
     if (!judgeClient) {
@@ -139,7 +140,10 @@ export class JudgeGateway implements OnGatewayConnection, OnGatewayDisconnect {
     logger.log(message);
     if ((await this.redis.del(REDIS_KEY_JUDGE_CLIENT_TEMPORARILY_DISCONNENTED.format(judgeClient.id))) === 0) {
       // If the judge client is NOT temporarily disconnected, report it with event-reporter
-      // TODO:
+      this.eventReportService.report({
+        type: EventReportType.Success,
+        message
+      });
     }
   }
 
@@ -184,7 +188,10 @@ export class JudgeGateway implements OnGatewayConnection, OnGatewayDisconnect {
     );
     setTimeout(async () => {
       if (!(await this.judgeClientService.isJudgeClientOnline(state.judgeClient))) {
-        // TODO:
+        this.eventReportService.report({
+          type: EventReportType.Warning,
+          message
+        });
       }
     }, JUDGE_CLIENT_TEMPORARILY_DISCONNENTED_MAX_TIME * 1000);
   }

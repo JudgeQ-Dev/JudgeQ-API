@@ -1,6 +1,6 @@
 {
   "name": "hznuoj-v3-api",
-  "version": "0.0.32.3",
+  "version": "0.0.33.4",
   "description": "The 3th generation HZNUOJ API Server",
   "repository": "https://github.com/HZNU-OJ/HZNUOJ-V3-API",
   "author": "Dup4",
@@ -61,6 +61,7 @@
     "mysql2": "^2.2.5",
     "nodemailer": "^6.5.0",
     "object-path": "^0.11.5",
+    "proxy-agent": "^4.0.1",
     "randomstring": "^1.1.5",
     "rate-limiter-flexible": "^2.2.1",
     "reflect-metadata": "^0.1.13",
@@ -71,6 +72,7 @@
     "socket.io-redis": "^6.0.1",
     "streamsaver": "^2.0.5",
     "swagger-ui-express": "^4.1.6",
+    "telegraf": "^4.3.0",
     "tempy": "^1.0.1",
     "terser": "^5.6.0",
     "toposort": "^2.0.2",
