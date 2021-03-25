@@ -3,7 +3,7 @@ import { Module, forwardRef, NestModule, MiddlewareConsumer, RequestMethod } fro
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import { ErrorFilter } from "./error.filter";
-import { RecaptchaFilter } from "./recaptcha.filter";
+// import { RecaptchaFilter } from "./recaptcha.filter";
 import { AuthMiddleware } from "./auth/auth.middleware";
 
 import { SharedModule } from "./shared.module";
@@ -41,7 +41,7 @@ import { EventReportModule } from "./event-report/event-report.module";
     forwardRef(() => EventReportModule),
   ],
   controllers: [AppController],
-  providers: [AppService, ErrorFilter, RecaptchaFilter]
+  providers: [AppService, ErrorFilter]
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {

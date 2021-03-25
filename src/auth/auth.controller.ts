@@ -214,7 +214,7 @@ export class AuthController {
         errorMessage: "Email verification code disabled."
       };
 
-    let code = await this.authEmailVerificationCodeService.generate(request.email);
+    const code = await this.authEmailVerificationCodeService.generate(request.email);
     if (!code) {
       return {
         error: SendEmailVerificationCodeResponseError.RATE_LIMITED

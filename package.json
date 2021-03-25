@@ -1,6 +1,6 @@
 {
   "name": "hznuoj-v3-api",
-  "version": "0.0.33.7",
+  "version": "0.0.34",
   "description": "The 3th generation HZNUOJ API Server",
   "repository": "https://github.com/HZNU-OJ/HZNUOJ-V3-API",
   "author": "Dup4",
@@ -49,6 +49,7 @@
     "ejs": "^3.1.6",
     "fs-extra": "^9.1.0",
     "git-repo-info": "^2.1.1",
+    "highlight.js": "10.5.0",
     "ioredis": "^4.23.0",
     "ip2region": "^2.1.1",
     "js-yaml": "^4.0.0",
