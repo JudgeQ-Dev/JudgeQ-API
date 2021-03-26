@@ -381,6 +381,9 @@ export class ProblemService {
       problem.acceptedSubmissionCount = 0;
       await transactionalEntityManager.save(problem);
 
+      problem.displayId = problem.id;
+      await transactionalEntityManager.save(problem);
+
       const problemJudgeInfo = new ProblemJudgeInfoEntity();
       problemJudgeInfo.problemId = problem.id;
       problemJudgeInfo.judgeInfo = this.problemTypeFactoryService.type(type).getDefaultJudgeInfo();
@@ -600,7 +603,7 @@ export class ProblemService {
       [user: UserEntity, permission: ProblemPermissionLevel][]
   > {
     const userPermissionList = await this.getProblemPermissionsWithId(problem);
-    
+
     return await Promise.all(
       userPermissionList.map(
         async ([userId, permission]): Promise<[user: UserEntity, permission: ProblemPermissionLevel]> => [
