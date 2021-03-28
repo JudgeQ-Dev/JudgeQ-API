@@ -325,7 +325,8 @@ export class SubmissionService implements JudgeTaskService<SubmissionProgress, S
   > {
     const problemTypeService = this.problemTypeFactoryService.type(problem.type);
 
-    await new Promise(r => setTimeout(r, 10000));
+    // TODO: Don't know why to do this.
+    // await new Promise(r => setTimeout(r, 10000));
 
     const validationError = await problemTypeService.validateSubmissionContent(content);
     if (validationError && validationError.length > 0) return [validationError, null, null];
