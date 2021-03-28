@@ -8,16 +8,6 @@ class GetVersionDto {
   version: string;
 }
 
-class GetMdDto {
-  @ApiProperty()
-  content: string;
-}
-
-class getIdDto {
-  @ApiProperty()
-  id: string;
-}
-
 @ApiTags("App")
 @Controller()
 export class AppController {
@@ -30,21 +20,4 @@ export class AppController {
     return {version: this.appService.getVersion()};
   }
 
-  @Post("md")
-  async getMd(
-    @Body() params: getIdDto
-  ): Promise<GetMdDto> {
-    return {
-      content: this.appService.getMd(params.id),
-    };
-  }
-
-  @Get("md2json/:id")
-  async md2json(
-    @Param() params: getIdDto
-  ): Promise<GetMdDto> {
-    return {
-      content: this.appService.md2json(params.id),
-    };
-  }
 }
