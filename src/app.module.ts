@@ -13,6 +13,7 @@ import { UserModule } from "./user/user.module";
 import { AuthModule } from "./auth/auth.module";
 import { CorsModule } from "./cors/cors.module";
 import { ProblemModule } from "./problem/problem.module";
+import { ContestModule } from "./contest/contest.module";
 import { ProblemTypeModule } from "./problem-type/problem-type.module";
 import { LocalizedContentModule } from "./localized-content/localized-content.module";
 import { PermissionModule } from "./permission/permission.module";
@@ -31,6 +32,7 @@ import { EventReportModule } from "./event-report/event-report.module";
     forwardRef(() => AuthModule),
     forwardRef(() => CorsModule),
     forwardRef(() => ProblemModule),
+    forwardRef(() => ContestModule),
     forwardRef(() => ProblemTypeModule),
     forwardRef(() => LocalizedContentModule),
     forwardRef(() => PermissionModule),

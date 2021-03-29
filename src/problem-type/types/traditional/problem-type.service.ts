@@ -136,7 +136,11 @@ export class ProblemTypeTraditionalService
         for (const subtask of submissionProgress.subtasks) {
           for (const testcase of subtask.testcases) {
             if (!testcase?.testcaseHash) continue;
-            result.timeUsed += submissionProgress.testcaseResult[testcase.testcaseHash].time;
+            result.timeUsed = Math.max(
+              result.timeUsed,
+              submissionProgress.testcaseResult[testcase.testcaseHash].time
+            );
+            // result.timeUsed += submissionProgress.testcaseResult[testcase.testcaseHash].time;
             result.memoryUsed = Math.max(
               result.memoryUsed,
               submissionProgress.testcaseResult[testcase.testcaseHash].memory
