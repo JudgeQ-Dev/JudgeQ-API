@@ -311,7 +311,8 @@ export class SubmissionService implements JudgeTaskService<SubmissionProgress, S
     submitter: UserEntity,
     problem: ProblemEntity,
     content: SubmissionContent,
-    uploadInfo: FileUploadInfoDto
+    uploadInfo: FileUploadInfoDto,
+    contestId?: number,
   ): Promise<
     [
       errors: ValidationError[],

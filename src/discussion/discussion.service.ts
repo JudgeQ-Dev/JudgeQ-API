@@ -254,7 +254,8 @@ export class DiscussionService {
     publisher: UserEntity,
     title: string,
     content: string,
-    problem: ProblemEntity
+    problem: ProblemEntity,
+    isPublic?: boolean,
   ): Promise<DiscussionEntity> {
     return await this.connection.transaction("READ COMMITTED", async transactionalEntityManager => {
       const now = new Date();
@@ -264,7 +265,7 @@ export class DiscussionService {
       discussion.publishTime = now;
       discussion.sortTime = now;
       discussion.replyCount = 0;
-      discussion.isPublic = this.configService.config.preference.security.discussionDefaultPublic;
+      discussion.isPublic = isPublic ?? this.configService.config.preference.security.discussionDefaultPublic;
       discussion.publisherId = publisher.id;
       discussion.problemId = problem?.id;
       await transactionalEntityManager.save(discussion);

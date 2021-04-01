@@ -1,8 +1,18 @@
-import { Entity, PrimaryGeneratedColumn, Index, ManyToOne, Column, JoinColumn, OneToOne } from "typeorm";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Index,
+  ManyToOne,
+  ManyToMany,
+  Column,
+  JoinColumn,
+  OneToOne
+} from "typeorm";
 
 import { UserEntity } from "@/user/user.entity";
 import { Locale } from "@/common/locale.type";
 
+import { ContestEntity } from "@/contest/contest.entity";
 import { ProblemJudgeInfoEntity } from "./problem-judge-info.entity";
 import { ProblemSampleEntity } from "./problem-sample.entity";
 
@@ -61,4 +71,7 @@ export class ProblemEntity {
 
   @OneToOne(() => ProblemJudgeInfoEntity, problemJudgeInfo => problemJudgeInfo.problem)
   judgeInfo: Promise<ProblemJudgeInfoEntity>;
+
+  @ManyToMany(() => ContestEntity, contest => contest.problems)
+  contests?: ContestEntity[];
 }

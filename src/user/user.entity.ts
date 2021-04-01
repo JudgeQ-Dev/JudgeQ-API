@@ -1,6 +1,15 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToOne, Index } from "typeorm";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToOne,
+  ManyToMany,
+  JoinTable,
+  Index
+} from "typeorm";
 
 import { UserAuthEntity } from "@/auth/user-auth.entity";
+import { ContestEntity } from "@/contest/contest.entity";
 
 @Entity("user")
 export class UserEntity {
@@ -35,6 +44,9 @@ export class UserEntity {
   @Column({ type: "boolean" })
   isAdmin: boolean;
 
+  @Column({ type: "boolean" })
+  isContestUser: boolean;
+
   @Column({ type: "integer" })
   acceptedProblemCount: number;
 
@@ -52,4 +64,7 @@ export class UserEntity {
 
   @OneToOne(() => UserAuthEntity, userAuth => userAuth.user)
   userAuth: Promise<UserAuthEntity>;
+
+  @ManyToMany(() => ContestEntity, (contest) => contest.users)
+  contests?: ContestEntity[];
 }

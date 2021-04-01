@@ -76,10 +76,12 @@ export class SubmissionController {
   @ApiBearerAuth()
   @Post("submit")
   async submit(@CurrentUser() currentUser: UserEntity, @Body() request: SubmitRequestDto): Promise<SubmitResponseDto> {
-    if (!currentUser)
+
+    if (!currentUser) {
       return {
         error: SubmitResponseError.PERMISSION_DENIED
       };
+    }
 
     return await this.problemService.lockProblemById<SubmitResponseDto>(request.problemId, "Read", async problem => {
       if (!problem)
@@ -103,7 +105,8 @@ export class SubmissionController {
         currentUser,
         problem,
         request.content,
-        request.uploadInfo
+        request.uploadInfo,
+        request.contestId,
       );
 
       if (validationError && validationError.length > 0) throw new BadRequestException(validationError);

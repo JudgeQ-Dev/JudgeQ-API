@@ -1,6 +1,14 @@
-import { Entity, PrimaryGeneratedColumn, Index, ManyToOne, Column, JoinColumn, OneToOne } from "typeorm";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Index, ManyToOne,
+  Column,
+  JoinColumn,
+  OneToOne,
+} from "typeorm";
 
 import { UserEntity } from "@/user/user.entity";
+import { ContestEntity } from "@/contest/contest.entity";
 import { ProblemEntity } from "@/problem/problem.entity";
 
 import { SubmissionStatus } from "./submission-status.enum";
@@ -80,4 +88,5 @@ export class SubmissionEntity {
 
   @OneToOne(() => SubmissionDetailEntity, submissionDetail => submissionDetail.submission)
   detail: Promise<SubmissionDetailEntity>;
+
 }

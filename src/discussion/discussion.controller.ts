@@ -123,7 +123,8 @@ export class DiscussionController {
       currentUser,
       request.title,
       request.content,
-      problem
+      problem,
+      request.isPublic,
     );
 
     return {
