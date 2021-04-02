@@ -104,6 +104,12 @@ export class AuthController {
       ? await this.userService.findUserByUsername(request.username)
       : await this.userService.findUserByEmail(request.email);
 
+    if (!user) {
+      return {
+        error: LoginResponseError.NO_SUCH_USER
+      }
+    }
+
     const userAuth = await this.authService.findUserAuthByUserId(user.id);
 
     if (!(await this.authService.checkPassword(userAuth, request.password))) {
