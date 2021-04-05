@@ -464,6 +464,65 @@ export class SubmissionService implements JudgeTaskService<SubmissionProgress, S
     return result;
   }
 
+  async getAllRecentlySubmissionCountPerDay(
+    days: number,
+    timezone: string,
+    now: string,
+    status?: SubmissionStatus[],
+  ): Promise<number[]> {
+    if (!moment.tz.zone(timezone)) timezone = "UTC";
+
+    const startDate = moment(now)
+      .tz(timezone)
+      .startOf("day")
+      .subtract(days - 1, "day");
+
+    const localTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const getConvertTimezoneExpression = (valueToBeConverted: string) =>
+      timezone === localTimezone ? valueToBeConverted : `CONVERT_TZ(${valueToBeConverted}, :localTimezone, :timezone)`;
+
+    const queryBuilder = this.submissionRepository.createQueryBuilder();
+
+    queryBuilder.select(`DATE(${getConvertTimezoneExpression("submitTime")})`, "submitDate")
+                .addSelect("COUNT(*)", "count")
+                .where(`submitTime >= DATE_SUB(${getConvertTimezoneExpression(":now")}, INTERVAL :offsetDays DAY)`, {
+                  now,
+                  offsetDays: days - 1
+                });
+
+    if (status) {
+      status.forEach((status) => {
+        queryBuilder.andWhere(`status = :status`, {status});
+      })
+    }
+
+    queryBuilder.groupBy("submitDate")
+                .setParameters({
+                  localTimezone,
+                  timezone
+                });
+
+    const queryResult: { submitDate: Date; count: string }[] = await queryBuilder.getRawMany();
+
+    // The database doesn't support timezone
+    if (queryResult.length === 1 && queryResult[0].submitDate === null) return new Array(days).fill(0);
+
+    const map = new Map(
+      queryResult.map(row => [
+        // Get the timestemp of result datetime
+        // 1. Get the date string of result datetime
+        // 2. Get the moment() object in requested timezone of the date
+        // 3. Get its timestamp
+        moment.tz(moment(row.submitDate).format("YYYY-MM-DD"), timezone).valueOf(),
+        Number(row.count)
+      ])
+    );
+
+    const result = [...new Array(days).keys()].map(i => map.get(startDate.clone().add(i, "day").valueOf()) || 0);
+
+    return result;
+  }
+
   /**
    * @param submission Must be locked (or just created, ID not exposed to user).
    */

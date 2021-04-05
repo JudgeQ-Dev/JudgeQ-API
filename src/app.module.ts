@@ -16,6 +16,7 @@ import { ProblemModule } from "./problem/problem.module";
 import { ContestModule } from "./contest/contest.module";
 import { ProblemTypeModule } from "./problem-type/problem-type.module";
 import { LocalizedContentModule } from "./localized-content/localized-content.module";
+import { HomepageModule } from "./homepage/homepage.module";
 import { PermissionModule } from "./permission/permission.module";
 import { FileModule } from "./file/file.module";
 import { SubmissionModule } from "./submission/submission.module";
@@ -35,6 +36,7 @@ import { EventReportModule } from "./event-report/event-report.module";
     forwardRef(() => ContestModule),
     forwardRef(() => ProblemTypeModule),
     forwardRef(() => LocalizedContentModule),
+    forwardRef(() => HomepageModule),
     forwardRef(() => PermissionModule),
     forwardRef(() => FileModule),
     forwardRef(() => SubmissionModule),
