@@ -229,7 +229,7 @@ export class ContestService {
     return await bcrypt.hash(password, 10);
   }
 
-  async importUser(
+  async importContestUsers(
     username: string,
     nickname: string,
     password: string,

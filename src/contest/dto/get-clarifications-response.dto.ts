@@ -9,8 +9,4 @@ export enum GetClarificationsResponseError {
 export class GetClarificationsResponseDto {
   @ApiProperty({ enum: GetClarificationsResponseError })
   error?: GetClarificationsResponseError;
-
-
-
-
 }

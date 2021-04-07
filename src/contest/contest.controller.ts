@@ -14,8 +14,11 @@ import {
   EditContestRequestDto,
   EditContestResponseDto,
   EditContestResponseError,
-  ImportUserRequestDto,
-  ImportUserResponseDto,
+  GetContestMetaRequestDto,
+  GetContestMetaResponseDto,
+  GetContestMetaResponseDtoError,
+  ImportContestUsersRequestDto,
+  ImportContestUsersResponseDto,
   GetClarificationsRequestDto,
   GetClarificationsResponseDto,
   GetClarificationsResponseError,
@@ -97,6 +100,36 @@ export class ContestController {
   }
 
   @ApiBasicAuth()
+  @Post("getContestMeta")
+  @ApiOperation({
+    summary: "Get a contest's metadata."
+  })
+  async getContestMeta(
+    @CurrentUser() currentUser: UserEntity,
+    @Body() request: GetContestMetaRequestDto,
+  ): Promise<GetContestMetaResponseDto> {
+    const contest = await this.contestService.findContestById(request.id);
+
+    if (!contest) {
+      return {
+        error: GetContestMetaResponseDtoError.NO_SUCH_CONTEST
+      };
+    }
+
+    if (!contest.isPublic &&
+      (!currentUser || currentUser.isAdmin === false)) {
+      return {
+        error: GetContestMetaResponseDtoError.PERMISSION_DENIED
+      };
+    }
+
+    return {
+      contestMeta: contest
+    };
+
+  }
+
+  @ApiBasicAuth()
   @Post("getContestList")
   @ApiOperation({
     summary: "Get a contest list."
@@ -144,12 +177,13 @@ export class ContestController {
     return {};
   }
 
-  @Post("importUser")
-  async importUser(
-    @Body() request: ImportUserRequestDto,
-  ): Promise<ImportUserResponseDto> {
+  @Post("importContestUsers")
+  async importContestUsers(
+    @CurrentUser() currentUser: UserEntity,
+    @Body() request: ImportContestUsersRequestDto,
+  ): Promise<ImportContestUsersResponseDto> {
 
-    await this.contestService.importUser(
+    await this.contestService.importContestUsers(
       request.username,
       request.nickname,
       request.password,
