@@ -2,7 +2,9 @@ import { CurrentUser } from "@/common/user.decorator";
 import { UserEntity } from "@/user/user.entity";
 import { Controller, Get, Redirect, Query, Param, Post, Body } from "@nestjs/common";
 
-import { ApiTags, ApiProperty, ApiBearerAuth } from "@nestjs/swagger";
+import { ApiTags, ApiProperty, ApiBearerAuth, ApiBasicAuth, ApiOperation } from "@nestjs/swagger";
+
+import { ConfigService } from "@/config/config.service";
 import { ContestService, ContestPermissionType, ContestStatusType } from "./contest.service";
 
 import {
@@ -17,6 +19,9 @@ import {
   GetClarificationsRequestDto,
   GetClarificationsResponseDto,
   GetClarificationsResponseError,
+  GetContestListRequestDto,
+  GetContestListResponseDto,
+  GetContestListResponseError,
 } from "./dto";
 
 class GetContentDto {
@@ -28,11 +33,15 @@ class GetContentDto {
 @Controller("contest")
 export class ContestController {
   constructor(
-    private readonly contestService: ContestService
+    private readonly contestService: ContestService,
+    private readonly configService: ConfigService,
   ) {}
 
   @ApiBearerAuth()
   @Post("createContest")
+  @ApiOperation({
+    summary: "Create a contest."
+  })
   async createContest(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: CreateContestRequestDto,
@@ -60,6 +69,9 @@ export class ContestController {
 
   @ApiBearerAuth()
   @Post("editContest")
+  @ApiOperation({
+    summary: "Edit a contest."
+  })
   async editContest(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: EditContestRequestDto,
@@ -84,6 +96,35 @@ export class ContestController {
     return {};
   }
 
+  @ApiBasicAuth()
+  @Post("getContestList")
+  @ApiOperation({
+    summary: "Get a contest list."
+  })
+  async getContestList(
+    @CurrentUser() currentUser: UserEntity,
+    @Body() request: GetContestListRequestDto,
+  ): Promise<GetContestListResponseDto> {
+    if (request.takeCount > this.configService.config.queryLimit.contestList) {
+      return {
+        error: GetContestListResponseError.TAKE_TOO_MANY
+      };
+    }
+
+    let hasPrivate = request.hasPrivate;
+    if (!currentUser || currentUser.isAdmin === false) {
+      hasPrivate = false;
+    }
+
+    const [contests, count] = await this.contestService.getContestList(request.hasPrivate, request.skipCount, request.takeCount);
+
+    return {
+      contestMetas: await Promise.all(contests.map(contest => this.contestService.getContestMeta(contest))),
+      count
+    };
+
+  }
+
   @ApiBearerAuth()
   @Post("getClarifications")
   async getClarifications(
@@ -97,12 +138,11 @@ export class ContestController {
     //   };
     // }
 
-    this.contestService.listClarification(1, 4);
+    this.contestService.getClarificationList(1, 4);
 
 
     return {};
   }
-
 
   @Post("importUser")
   async importUser(
@@ -117,7 +157,6 @@ export class ContestController {
 
     return {};
   }
-
 
   @Get("config")
   async getConfig(): Promise<GetContentDto> {

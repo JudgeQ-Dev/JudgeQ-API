@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { InjectRepository, InjectConnection } from "@nestjs/typeorm";
 
-import { Repository, Connection, QueryBuilder } from "typeorm";
+import { Repository, Connection, QueryBuilder, FindManyOptions } from "typeorm";
 
 import { UserAuthEntity } from "@/auth/user-auth.entity";
 import { ContestEntity } from "./contest.entity";
@@ -17,6 +17,7 @@ import config from "./config.json";
 import team from "./team.json";
 import run from "./run.json";
 import { UserEntity } from "@/user/user.entity";
+import { ContestMetaDto } from "./dto";
 
 export type DateType = Date | string | number;
 
@@ -65,7 +66,7 @@ export class ContestService {
     });
   }
 
-  async findContestStatus(contest: ContestEntity): Promise<ContestStatusType> {
+  async getContestStatus(contest: ContestEntity): Promise<ContestStatusType> {
     const now = new Date();
     if (now < contest.startTime) {
       return ContestStatusType.Pending;
@@ -83,6 +84,18 @@ export class ContestService {
 
     return ContestStatusType.Running;
 
+  }
+
+  async getContestMeta(contest: ContestEntity): Promise<ContestMetaDto> {
+    return {
+      id: contest.id,
+      contestName: contest.contestName,
+      startTime: contest.startTime,
+      endTime: contest.endTime,
+      frozenStartTime: contest.frozenStartTime,
+      frozenEndTime: contest.frozenEndTime,
+      isPublic: contest.isPublic,
+    };
   }
 
   async createContest(
@@ -126,6 +139,28 @@ export class ContestService {
     await this.contestRepository.save(contest);
   }
 
+  async getContestList(
+    hasNonPublic: boolean,
+    skipCount: number,
+    takeCount: number,
+  ): Promise<[contests: ContestEntity[], count: number]> {
+    let findParams = <FindManyOptions<ContestEntity>>{
+      order: {
+        id: "DESC"
+      },
+      skip: skipCount,
+      take: takeCount,
+    };
+
+    if (!hasNonPublic) {
+      findParams["where"] = {
+        isPublic: true,
+      };
+    }
+
+    return await this.contestRepository.findAndCount(findParams);
+  }
+
   async userHasPermission(
     user: UserEntity,
     type: ContestPermissionType,
@@ -137,7 +172,7 @@ export class ContestService {
         if (!user) return false;
         if (user.isAdmin) return true;
         if (contest.users.includes(user)) {
-          if (await this.findContestStatus(contest) !== ContestStatusType.Pending) {
+          if (await this.getContestStatus(contest) !== ContestStatusType.Pending) {
             return true;
           } else {
             return false;
@@ -171,7 +206,7 @@ export class ContestService {
 
   }
 
-  async listClarification(contestId: number, publisherId: number): Promise<ClarificationEntity[]> {
+  async getClarificationList(contestId: number, publisherId: number): Promise<ClarificationEntity[]> {
     const queryBuilder = this.clarificationRepository.createQueryBuilder("clarification").select("*");
     // queryBuilder.leftJoinAndSelect("publisherId", "clarification.publisherId");
     queryBuilder.leftJoinAndSelect("clarification.publisher", "user");
@@ -233,7 +268,6 @@ export class ContestService {
       await transactionalEntityManager.save(userInformation);
     });
   }
-
 
   getConfig(): string {
     return JSON.stringify(config);

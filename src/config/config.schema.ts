@@ -255,6 +255,12 @@ class PreferenceConfigPagination {
 
   @IsInt()
   @Min(1)
+  @ConfigRelation("queryLimit.contestList", ConfigRelationType.LessThanOrEqual)
+  @ApiProperty()
+  readonly contestList: number;
+
+  @IsInt()
+  @Min(1)
   @ConfigRelation("queryLimit.discussions", ConfigRelationType.LessThanOrEqual)
   @ApiProperty()
   readonly discussions: number;
@@ -443,6 +449,10 @@ class QueryLimitConfig {
   @IsInt()
   @Min(1)
   readonly userAuditLogs: number;
+
+  @IsInt()
+  @Min(1)
+  readonly contestList: number;
 
   @IsInt()
   @Min(1)
