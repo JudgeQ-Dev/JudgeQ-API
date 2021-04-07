@@ -256,10 +256,14 @@ export class UserService {
 
   async getUserList(
     sortBy: "acceptedProblemCount" | "rating",
+    hasContestUser: boolean,
     skipCount: number,
     takeCount: number
   ): Promise<[users: UserEntity[], count: number]> {
     return await this.userRepository.findAndCount({
+      where: {
+        isContestUser: hasContestUser,
+      },
       order: {
         [sortBy]: "DESC"
       },

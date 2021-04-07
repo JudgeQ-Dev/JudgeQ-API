@@ -252,7 +252,7 @@ export class UserController {
         error: GetUserListResponseError.TAKE_TOO_MANY
       };
 
-    const [users, count] = await this.userService.getUserList(request.sortBy, request.skipCount, request.takeCount);
+    const [users, count] = await this.userService.getUserList(request.sortBy, request.hasContestUser, request.skipCount, request.takeCount);
 
     return {
       userMetas: await Promise.all(users.map(user => this.userService.getUserMeta(user, currentUser))),

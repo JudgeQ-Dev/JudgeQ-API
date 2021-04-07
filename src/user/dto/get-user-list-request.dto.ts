@@ -1,11 +1,15 @@
 import { ApiProperty } from "@nestjs/swagger";
 
-import { IsIn, IsInt, Min } from "class-validator";
+import { IsBoolean, IsIn, IsInt, Min } from "class-validator";
 
 export class GetUserListRequestDto {
   @ApiProperty({ enum: ["acceptedProblemCount", "rating"] })
   @IsIn(["acceptedProblemCount", "rating"])
   sortBy: "acceptedProblemCount" | "rating";
+
+  @ApiProperty()
+  @IsBoolean()
+  hasContestUser: boolean;
 
   @ApiProperty()
   @IsInt()
