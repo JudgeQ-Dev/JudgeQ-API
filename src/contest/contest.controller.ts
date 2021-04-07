@@ -116,7 +116,7 @@ export class ContestController {
       hasPrivate = false;
     }
 
-    const [contests, count] = await this.contestService.getContestList(request.hasPrivate, request.skipCount, request.takeCount);
+    const [contests, count] = await this.contestService.getContestList(hasPrivate, request.skipCount, request.takeCount);
 
     return {
       contestMetas: await Promise.all(contests.map(contest => this.contestService.getContestMeta(contest))),

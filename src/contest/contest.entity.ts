@@ -24,10 +24,10 @@ export class ContestEntity {
   @Index({ unique: false })
   contestName: string;
 
-  @Column({ type: "datetime", nullable: true })
+  @Column({ type: "datetime" })
   startTime: Date;
 
-  @Column({ type: "datetime", nullable: true })
+  @Column({ type: "datetime" })
   endTime: Date;
 
   @Column({ type: "datetime", nullable: true })
