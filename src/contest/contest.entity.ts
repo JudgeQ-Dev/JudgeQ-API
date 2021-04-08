@@ -40,11 +40,9 @@ export class ContestEntity {
   isPublic: boolean;
 
   @ManyToMany(() => UserEntity, (user) => user.contests)
-  @JoinTable()
   users?: UserEntity[];
 
   @ManyToMany(() => ProblemEntity, (problem) => problem.contests)
-  @JoinTable()
   problems?: ProblemEntity[];
 
 }

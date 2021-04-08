@@ -1,23 +1,32 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Inject, forwardRef } from "@nestjs/common";
 import { InjectRepository, InjectConnection } from "@nestjs/typeorm";
-
 import { Repository, Connection, QueryBuilder, FindManyOptions } from "typeorm";
-
-import { UserAuthEntity } from "@/auth/user-auth.entity";
-import { ContestEntity } from "./contest.entity";
-import { UserInformationEntity } from "@/user/user-information.entity";
-import { ClarificationEntity } from "./clarification.entity";
 
 // DO NOT USE bcrypt, REPLACE it with bcryptjs
 // https://stackoverflow.com/questions/34546272/cannot-find-module-bcrypt/41878322
 // import * as bcrypt from "bcrypt";
 import * as bcrypt from "bcryptjs";
 
+import { UserEntity } from "@/user/user.entity";
+import { UserAuthEntity } from "@/auth/user-auth.entity";
+import { ContestEntity } from "./contest.entity";
+import { ContestProblemEntity } from "./contest-problem.entity";
+import { UserInformationEntity } from "@/user/user-information.entity";
+import { ClarificationEntity } from "./clarification.entity";
+import { ProblemService } from "@/problem/problem.service";
+import { ProblemEntity } from "@/problem/problem.entity";
+
+import { LocalizedContentService } from "@/localized-content/localized-content.service";
+import { LocalizedContentEntity, LocalizedContentType } from "@/localized-content/localized-content.entity";
+
 import config from "./config.json";
 import team from "./team.json";
 import run from "./run.json";
-import { UserEntity } from "@/user/user.entity";
-import { ContestMetaDto } from "./dto";
+
+import {
+  ContestMetaDto,
+  ProblemMetaDto
+} from "./dto";
 
 export type DateType = Date | string | number;
 
@@ -54,10 +63,45 @@ export class ContestService {
     private readonly userAuthRepository: Repository<UserAuthEntity>,
     @InjectRepository(ContestEntity)
     private readonly contestRepository: Repository<ContestEntity>,
+    @InjectRepository(ContestProblemEntity)
+    private readonly contestProblemRepository: Repository<ContestProblemEntity>,
     @InjectRepository(ClarificationEntity)
     private readonly clarificationRepository: Repository<ClarificationEntity>,
+    @InjectRepository(ProblemEntity)
+    private readonly problemRepository: Repository<ProblemEntity>,
+    @Inject(forwardRef(() => ProblemService))
+    private readonly problemService: ProblemService,
+    private readonly localizedContentService: LocalizedContentService,
   ) {
 
+  }
+
+  async userHasPermission(
+    user: UserEntity,
+    type: ContestPermissionType,
+    contest?: ContestEntity,
+  ): Promise<boolean> {
+    switch (type) {
+      case ContestPermissionType.View:
+        if (contest.isPublic) return true;
+        if (!user) return false;
+        if (user.isAdmin) return true;
+        if (contest.users.includes(user)) {
+          if (await this.getContestStatus(contest) !== ContestStatusType.Pending) {
+            return true;
+          } else {
+            return false;
+          }
+        }
+      case ContestPermissionType.Edit:
+        if (!user) return false;
+        return user.isAdmin;
+      case ContestPermissionType.Create:
+        if (!user) return false;
+        return user.isAdmin;
+      default:
+        return false;
+    }
   }
 
   async findContestById(contestId: number): Promise<ContestEntity> {
@@ -160,32 +204,73 @@ export class ContestService {
     return await this.contestRepository.findAndCount(findParams);
   }
 
-  async userHasPermission(
-    user: UserEntity,
-    type: ContestPermissionType,
-    contest?: ContestEntity,
+  async addProblemById(
+    contestId: number,
+    problemId: number,
+  ): Promise<void> {
+    const contestProblem = new ContestProblemEntity();
+    const contest = await this.findContestById(contestId);
+    const problem = await this.problemService.findProblemById(problemId);
+    contestProblem.contest = contest;
+    contestProblem.problem = problem;
+    contestProblem.order = parseInt((await this.contestProblemRepository
+                                .createQueryBuilder()
+                                .select("IFNULL(MAX(`order`), 0)", "order")
+                                .where("contest_id = :contestId", {contestId})
+                                .getRawOne()).order) + 1;
+    await this.contestProblemRepository.save(contestProblem);
+  }
+
+  async deleteProblemById(
+    contestId: number,
+    problemId: number,
   ): Promise<boolean> {
-    switch (type) {
-      case ContestPermissionType.View:
-        if (contest.isPublic) return true;
-        if (!user) return false;
-        if (user.isAdmin) return true;
-        if (contest.users.includes(user)) {
-          if (await this.getContestStatus(contest) !== ContestStatusType.Pending) {
-            return true;
-          } else {
-            return false;
-          }
-        }
-      case ContestPermissionType.Edit:
-        if (!user) return false;
-        return user.isAdmin;
-      case ContestPermissionType.Create:
-        if (!user) return false;
-        return user.isAdmin;
-      default:
-        return false;
+    const contest = await this.findContestById(contestId);
+    const problem = await this.problemService.findProblemById(problemId);
+    const contestProblem = await this.contestProblemRepository.findOne({
+      where: {
+        contest: contest,
+        problem: problem,
+      }
+    });
+
+    if (!contestProblem) {
+      return false;
     }
+
+    await this.contestProblemRepository.delete(contestProblem);
+    return true;
+  }
+
+  async findProblemMetaListByContestId(
+    contestId: number,
+  ): Promise<ProblemMetaDto[]> {
+    const contest = await this.findContestById(contestId);
+
+    if (!contest) return [];
+
+    const problems = await this.contestProblemRepository
+                            .createQueryBuilder("contest_problem")
+                            .where("contest_problem.contest = :contestId", {contestId})
+                            .leftJoinAndSelect("contest_problem.problem", "problem")
+                            .leftJoinAndSelect(
+                              LocalizedContentEntity,
+                              "localizedContent",
+                              "localizedContent.type = :type AND problem_id = localizedContent.objectId",
+                              {type: LocalizedContentType.ProblemTitle}
+                            )
+                            .orderBy("contest_problem.order", "ASC")
+                            .getRawMany()
+
+    return problems.map((problem) => (
+      <ProblemMetaDto>{
+        order: problem.contest_problem_order,
+        problemId: problem.problem_id,
+        submissionCount: problem.problem_submissionCount,
+        acceptedSubmissionCount: problem.problem_acceptedSubmissionCount,
+        title: problem.localizedContent_data,
+      }
+    ));
   }
 
   async createClarification(

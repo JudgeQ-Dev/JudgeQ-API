@@ -5,6 +5,7 @@ import { Controller, Get, Redirect, Query, Param, Post, Body } from "@nestjs/com
 import { ApiTags, ApiProperty, ApiBearerAuth, ApiBasicAuth, ApiOperation } from "@nestjs/swagger";
 
 import { ConfigService } from "@/config/config.service";
+import { ProblemService } from "@/problem/problem.service";
 import { ContestService, ContestPermissionType, ContestStatusType } from "./contest.service";
 
 import {
@@ -17,6 +18,12 @@ import {
   GetContestMetaRequestDto,
   GetContestMetaResponseDto,
   GetContestMetaResponseDtoError,
+  AddProblemRequestDto,
+  AddProblemResponseDto,
+  AddProblemResponseError,
+  DeleteProblemRequestDto,
+  DeleteProblemResponseDto,
+  DeleteProblemResponseError,
   ImportContestUsersRequestDto,
   ImportContestUsersResponseDto,
   GetClarificationsRequestDto,
@@ -25,6 +32,9 @@ import {
   GetContestListRequestDto,
   GetContestListResponseDto,
   GetContestListResponseError,
+  GetProblemMetaListRequestDto,
+  GetProblemMetaListResponseDto,
+  GetProblemMetaListResponseError,
 } from "./dto";
 
 class GetContentDto {
@@ -38,6 +48,7 @@ export class ContestController {
   constructor(
     private readonly contestService: ContestService,
     private readonly configService: ConfigService,
+    private readonly problemService: ProblemService,
   ) {}
 
   @ApiBearerAuth()
@@ -99,7 +110,7 @@ export class ContestController {
     return {};
   }
 
-  @ApiBasicAuth()
+  @ApiBearerAuth()
   @Post("getContestMeta")
   @ApiOperation({
     summary: "Get a contest's metadata."
@@ -129,7 +140,7 @@ export class ContestController {
 
   }
 
-  @ApiBasicAuth()
+  @ApiBearerAuth()
   @Post("getContestList")
   @ApiOperation({
     summary: "Get a contest list."
@@ -155,7 +166,99 @@ export class ContestController {
       contestMetas: await Promise.all(contests.map(contest => this.contestService.getContestMeta(contest))),
       count
     };
+  }
 
+  @ApiBearerAuth()
+  @Post("addProblem")
+  @ApiOperation({
+    summary: "Add a problem to a contest."
+  })
+  async addProblem(
+    @CurrentUser() currentUser: UserEntity,
+    @Body() request: AddProblemRequestDto,
+  ): Promise<AddProblemResponseDto> {
+    if (!currentUser || currentUser.isAdmin === false) {
+      return {
+        error: AddProblemResponseError.PERMISSION_DENIED
+      };
+    }
+
+    if (!await this.contestService.findContestById(request.contestId)) {
+      return {
+        error: AddProblemResponseError.NO_SUCH_CONTEST
+      };
+    }
+
+    if (!await this.problemService.findProblemById(request.problemId)) {
+      return {
+        error: AddProblemResponseError.NO_SUCH_PROBLEM
+      };
+    }
+
+    await this.contestService.addProblemById(request.contestId, request.problemId);
+
+    return {};
+  }
+
+  @ApiBearerAuth()
+  @Post("deleteProblem")
+  @ApiOperation({
+    summary: "Delete a problem by contestId and problemId."
+  })
+  async deleteProblem(
+    @CurrentUser() currentUser: UserEntity,
+    @Body() request: DeleteProblemRequestDto,
+  ): Promise<DeleteProblemResponseDto> {
+    if (!currentUser || currentUser.isAdmin === false) {
+      return {
+        error: DeleteProblemResponseError.PERMISSION_DENIED
+      };
+    }
+
+    if (!await this.contestService.findContestById(request.contestId)) {
+      return {
+        error: DeleteProblemResponseError.NO_SUCH_CONTEST
+      };
+    }
+
+    if (!await this.problemService.findProblemById(request.problemId)) {
+      return {
+        error: DeleteProblemResponseError.NO_SUCH_PROBLEM
+      };
+    }
+
+    if (!await this.contestService.deleteProblemById(request.contestId, request.problemId)) {
+      return {
+        error: DeleteProblemResponseError.PROBLEM_NOT_IN_CONTEST
+      };
+    }
+
+    return {};
+  }
+
+  @ApiBearerAuth()
+  @Post("getProblemMetaList")
+  @ApiOperation({
+    summary: "Get Problem Meta List by contestId."
+  })
+  async getProblemMetaList(
+    @CurrentUser() currentUser: UserEntity,
+    @Body() request: GetProblemMetaListRequestDto
+  ): Promise<GetProblemMetaListResponseDto> {
+
+    const contest = await this.contestService.findContestById(request.contestId);
+
+    if (contest.isPublic === false && (!currentUser || currentUser.isAdmin === false)) {
+      return {
+        error: GetProblemMetaListResponseError.NO_SUCH_CONTEST
+      };
+    }
+
+    const problemMetaList = await this.contestService.findProblemMetaListByContestId(request.contestId);
+
+    return {
+      problemMetas: problemMetaList
+    };
   }
 
   @ApiBearerAuth()
