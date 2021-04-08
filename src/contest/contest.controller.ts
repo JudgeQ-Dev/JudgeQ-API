@@ -159,8 +159,11 @@ export class ContestController {
   }
 
   @ApiBearerAuth()
-  @Post("getClarifications")
-  async getClarifications(
+  @Post("getClarificationList")
+  @ApiOperation({
+    summary: "Get a clarification list."
+  })
+  async getClarificationList(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: GetClarificationsRequestDto,
   ): Promise<GetClarificationsResponseDto> {
