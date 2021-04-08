@@ -83,7 +83,6 @@ export class ContestService {
     }
 
     return ContestStatusType.Running;
-
   }
 
   async getContestMeta(contest: ContestEntity): Promise<ContestMetaDto> {
