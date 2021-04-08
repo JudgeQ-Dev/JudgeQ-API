@@ -3,6 +3,7 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 
 import { RedisModule } from "@/redis/redis.module";
 import { ProblemModule } from "@/problem/problem.module";
+import { ContestModule } from "@/contest/contest.module";
 import { ProblemTypeModule } from "@/problem-type/problem-type.module";
 import { JudgeModule } from "@/judge/judge.module";
 import { UserModule } from "@/user/user.module";
@@ -23,6 +24,7 @@ import { SubmissionStatisticsService } from "./submission-statistics.service";
     TypeOrmModule.forFeature([SubmissionDetailEntity]),
     forwardRef(() => RedisModule),
     forwardRef(() => ProblemModule),
+    forwardRef(() => ContestModule),
     forwardRef(() => ProblemTypeModule),
     forwardRef(() => JudgeModule),
     forwardRef(() => UserModule),

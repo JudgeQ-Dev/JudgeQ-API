@@ -78,6 +78,17 @@ export class SubmissionEntity {
   @Index()
   problemId: number;
 
+  @ManyToOne(() => ContestEntity, {
+    onDelete: "CASCADE",
+    nullable: true
+  })
+  @JoinColumn()
+  contest?: Promise<ContestEntity>;
+
+  @Column({ nullable: true })
+  @Index()
+  contestId?: number;
+
   @ManyToOne(() => UserEntity)
   @JoinColumn()
   submitter: Promise<UserEntity>;

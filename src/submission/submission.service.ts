@@ -312,7 +312,7 @@ export class SubmissionService implements JudgeTaskService<SubmissionProgress, S
     problem: ProblemEntity,
     content: SubmissionContent,
     uploadInfo: FileUploadInfoDto,
-    contestId?: number,
+    contestId: number,
   ): Promise<
     [
       errors: ValidationError[],
@@ -365,6 +365,7 @@ export class SubmissionService implements JudgeTaskService<SubmissionProgress, S
       submission.submitTime = new Date();
       submission.problemId = problem.id;
       submission.submitterId = submitter.id;
+      submission.contestId = contestId;
       await transactionalEntityManager.save(submission);
 
       const submissionDetail = new SubmissionDetailEntity();

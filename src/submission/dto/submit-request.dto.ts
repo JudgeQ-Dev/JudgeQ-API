@@ -13,7 +13,7 @@ export class SubmitRequestDto {
   @ApiProperty()
   @IsInt()
   @IsOptional()
-  readonly contestId: number;
+  readonly contestId?: number;
 
   @ApiProperty()
   @IsObject()
