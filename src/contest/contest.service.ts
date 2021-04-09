@@ -25,7 +25,7 @@ import run from "./run.json";
 
 import {
   ContestMetaDto,
-  ProblemMetaDto
+  ProblemInContestMetaDto
 } from "./dto";
 
 export type DateType = Date | string | number;
@@ -213,11 +213,11 @@ export class ContestService {
     const problem = await this.problemService.findProblemById(problemId);
     contestProblem.contest = contest;
     contestProblem.problem = problem;
-    contestProblem.order = parseInt((await this.contestProblemRepository
+    contestProblem.orderId = parseInt((await this.contestProblemRepository
                                 .createQueryBuilder()
-                                .select("IFNULL(MAX(`order`), 0)", "order")
+                                .select("IFNULL(MAX(`orderId`), 0)", "orderId")
                                 .where("contest_id = :contestId", {contestId})
-                                .getRawOne()).order) + 1;
+                                .getRawOne()).orderId) + 1;
     await this.contestProblemRepository.save(contestProblem);
   }
 
@@ -242,29 +242,26 @@ export class ContestService {
     return true;
   }
 
-  async findProblemMetaListByContestId(
-    contestId: number,
-  ): Promise<ProblemMetaDto[]> {
-    const contest = await this.findContestById(contestId);
-
-    if (!contest) return [];
+  async getProblemMetaList(
+    contest: ContestEntity,
+  ): Promise<ProblemInContestMetaDto[]> {
 
     const problems = await this.contestProblemRepository
-                            .createQueryBuilder("contest_problem")
-                            .where("contest_problem.contest = :contestId", {contestId})
-                            .leftJoinAndSelect("contest_problem.problem", "problem")
-                            .leftJoinAndSelect(
-                              LocalizedContentEntity,
-                              "localizedContent",
-                              "localizedContent.type = :type AND problem_id = localizedContent.objectId",
-                              {type: LocalizedContentType.ProblemTitle}
-                            )
-                            .orderBy("contest_problem.order", "ASC")
-                            .getRawMany()
+      .createQueryBuilder("contest_problem")
+      .where("contest_problem.contest = :contestId", { contestId: contest.id })
+      .leftJoinAndSelect("contest_problem.problem", "problem")
+      .leftJoinAndSelect(
+        LocalizedContentEntity,
+        "localizedContent",
+        "localizedContent.type = :type AND problem_id = localizedContent.objectId",
+        { type: LocalizedContentType.ProblemTitle }
+      )
+      .orderBy("contest_problem.orderId", "ASC")
+      .getRawMany()
 
     return problems.map((problem) => (
-      <ProblemMetaDto>{
-        order: problem.contest_problem_order,
+      <ProblemInContestMetaDto>{
+        orderId: problem.contest_problem_orderId,
         problemId: problem.problem_id,
         submissionCount: problem.problem_submissionCount,
         acceptedSubmissionCount: problem.problem_acceptedSubmissionCount,

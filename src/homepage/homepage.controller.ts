@@ -1,8 +1,6 @@
 import { Body, Controller, Get, Post, Query, Inject, forwardRef } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 
-import { CurrentUser } from "@/common/user.decorator";
-import { UserEntity } from "@/user/user.entity";
 import { SubmissionStatus } from "@/submission/submission-status.enum";
 import { SubmissionService } from "@/submission/submission.service";
 

@@ -19,5 +19,5 @@ export class ContestProblemEntity {
   problem: ProblemEntity;
 
   @Column({ type: "integer" })
-  order: number;
+  orderId: number;
 }

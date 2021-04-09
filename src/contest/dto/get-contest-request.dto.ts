@@ -1,7 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
-import { IsBoolean, IsInt } from "class-validator";
+import { IsInt } from "class-validator";
 
-export class GetContestMetaRequestDto {
+export class GetContestRequestDto {
   @ApiProperty()
   @IsInt()
   id: number;

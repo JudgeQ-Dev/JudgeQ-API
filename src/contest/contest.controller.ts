@@ -15,9 +15,9 @@ import {
   EditContestRequestDto,
   EditContestResponseDto,
   EditContestResponseError,
-  GetContestMetaRequestDto,
-  GetContestMetaResponseDto,
-  GetContestMetaResponseDtoError,
+  GetContestRequestDto,
+  GetContestResponseDto,
+  GetContestResponseDtoError,
   AddProblemRequestDto,
   AddProblemResponseDto,
   AddProblemResponseError,
@@ -111,31 +111,34 @@ export class ContestController {
   }
 
   @ApiBearerAuth()
-  @Post("getContestMeta")
+  @Post("getContest")
   @ApiOperation({
-    summary: "Get a contest's metadata."
+    summary: "Get any parts of contest."
   })
-  async getContestMeta(
+  async getContest(
     @CurrentUser() currentUser: UserEntity,
-    @Body() request: GetContestMetaRequestDto,
-  ): Promise<GetContestMetaResponseDto> {
+    @Body() request: GetContestRequestDto,
+  ): Promise<GetContestResponseDto> {
     const contest = await this.contestService.findContestById(request.id);
 
     if (!contest) {
       return {
-        error: GetContestMetaResponseDtoError.NO_SUCH_CONTEST
+        error: GetContestResponseDtoError.NO_SUCH_CONTEST
       };
     }
 
     if (!contest.isPublic &&
       (!currentUser || currentUser.isAdmin === false)) {
       return {
-        error: GetContestMetaResponseDtoError.PERMISSION_DENIED
+        error: GetContestResponseDtoError.PERMISSION_DENIED
       };
     }
 
+    const problemMetaList = await this.contestService.getProblemMetaList(contest);
+
     return {
-      contestMeta: contest
+      contestMeta: contest,
+      problemMetas: problemMetaList
     };
 
   }
@@ -254,7 +257,7 @@ export class ContestController {
       };
     }
 
-    const problemMetaList = await this.contestService.findProblemMetaListByContestId(request.contestId);
+    const problemMetaList = await this.contestService.getProblemMetaList(contest);
 
     return {
       problemMetas: problemMetaList

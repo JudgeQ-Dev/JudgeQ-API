@@ -1,6 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 
-import { ProblemMetaDto } from "./problem-meta.dto";
+import { ProblemInContestMetaDto } from "./problem-in-contest-meta.dto";
 
 export enum GetProblemMetaListResponseError {
   PERMISSION_DENIED = "PERMISSION_DENIED",
@@ -12,5 +12,5 @@ export class GetProblemMetaListResponseDto {
   error?: GetProblemMetaListResponseError;
 
   @ApiProperty()
-  problemMetas?: ProblemMetaDto[]
+  problemMetas?: ProblemInContestMetaDto[];
 }
