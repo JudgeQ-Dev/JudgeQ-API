@@ -16,6 +16,11 @@ export class GetProblemRequestDto {
   readonly displayId?: number;
 
   @ApiProperty({ required: false })
+  @IsInt()
+  @IsOptional()
+  readonly contestId?: number;
+
+  @ApiProperty({ required: false })
   @IsBoolean()
   @IsOptional()
   readonly owner?: boolean;

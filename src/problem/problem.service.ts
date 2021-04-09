@@ -17,6 +17,7 @@ import { ConfigService } from "@/config/config.service";
 import { RedisService } from "@/redis/redis.service";
 import { LockService } from "@/redis/lock.service";
 import { SubmissionService } from "@/submission/submission.service";
+import { ContestService } from "@/contest/contest.service";
 import { AuditLogObjectType, AuditService } from "@/audit/audit.service";
 import { ProblemTypeFactoryService } from "@/problem-type/problem-type-factory.service";
 import { FileEntity } from "@/file/file.entity";
@@ -88,6 +89,8 @@ export class ProblemService {
     private readonly fileService: FileService,
     @Inject(forwardRef(() => SubmissionService))
     private readonly submissionService: SubmissionService,
+    @Inject(forwardRef(() => ContestService))
+    private readonly contestService: ContestService,
     private readonly configService: ConfigService,
     private readonly redisService: RedisService,
     private readonly lockService: LockService,

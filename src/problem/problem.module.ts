@@ -7,11 +7,13 @@ import { FileModule } from "@/file/file.module";
 import { RedisModule } from "@/redis/redis.module";
 import { SubmissionModule } from "@/submission/submission.module";
 import { ProblemTypeModule } from "@/problem-type/problem-type.module";
+import { ContestModule } from "@/contest/contest.module";
 import { AuditModule } from "@/audit/audit.module";
 import { DiscussionModule } from "@/discussion/discussion.module";
 import { LocalizedContentModule } from "@/localized-content/localized-content.module";
 
 import { ProblemService } from "./problem.service";
+import { ContestEntity } from "@/contest/contest.entity";
 import { ProblemController } from "./problem.controller";
 import { ProblemTagMapEntity } from "./problem-tag-map.entity";
 import { ProblemTagEntity } from "./problem-tag.entity";
@@ -23,6 +25,7 @@ import { ProblemEntity } from "./problem.entity";
 @Module({
   imports: [
     TypeOrmModule.forFeature([ProblemEntity]),
+    TypeOrmModule.forFeature([ContestEntity]),
     TypeOrmModule.forFeature([ProblemJudgeInfoEntity]),
     TypeOrmModule.forFeature([ProblemSampleEntity]),
     TypeOrmModule.forFeature([ProblemFileEntity]),
@@ -35,6 +38,7 @@ import { ProblemEntity } from "./problem.entity";
     forwardRef(() => RedisModule),
     forwardRef(() => SubmissionModule),
     forwardRef(() => ProblemTypeModule),
+    forwardRef(() => ContestModule),
     forwardRef(() => AuditModule),
     forwardRef(() => DiscussionModule)
   ],

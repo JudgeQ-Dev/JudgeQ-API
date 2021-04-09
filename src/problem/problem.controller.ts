@@ -12,11 +12,13 @@ import { UserPrivilegeService, UserPrivilegeType } from "@/user/user-privilege.s
 import { Locale } from "@/common/locale.type";
 import { SubmissionService } from "@/submission/submission.service";
 import { SubmissionStatus } from "@/submission/submission-status.enum";
+import { ContestPermissionType, ContestService } from "@/contest/contest.service";
 import { AuditLogObjectType, AuditService } from "@/audit/audit.service";
 import { DiscussionService } from "@/discussion/discussion.service";
 
 import { ProblemFileType } from "./problem-file.entity";
 import { ProblemEntity } from "./problem.entity";
+import { ContestEntity } from "@/contest/contest.entity";
 import { ProblemService, ProblemPermissionType, ProblemPermissionLevel } from "./problem.service";
 
 import {
@@ -90,6 +92,7 @@ export class ProblemController {
     private readonly userPrivilegeService: UserPrivilegeService,
     private readonly fileService: FileService,
     private readonly submissionService: SubmissionService,
+    private readonly contestService: ContestService,
     private readonly auditService: AuditService,
     private readonly discussionService: DiscussionService
   ) {}
@@ -305,15 +308,26 @@ export class ProblemController {
     if (request.id) problem = await this.problemService.findProblemById(request.id);
     else if (request.displayId) problem = await this.problemService.findProblemByDisplayId(request.displayId);
 
-    if (!problem)
+    if (!problem) {
       return {
         error: GetProblemResponseError.NO_SUCH_PROBLEM
       };
+    }
 
-    if (!(await this.problemService.userHasPermission(currentUser, problem, ProblemPermissionType.View)))
-      return {
-        error: GetProblemResponseError.PERMISSION_DENIED
-      };
+    if (request.contestId) {
+      let contest = await this.contestService.findContestById(request.contestId);
+      if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.View, contest, problem))) {
+        return {
+          error: GetProblemResponseError.PERMISSION_DENIED
+        };
+      }
+    } else {
+      if (!(await this.problemService.userHasPermission(currentUser, problem, ProblemPermissionType.View))) {
+        return {
+          error: GetProblemResponseError.PERMISSION_DENIED
+        };
+      }
+    }
 
     const result: GetProblemResponseDto = {
       meta: await this.problemService.getProblemMeta(problem, request.statistics)
