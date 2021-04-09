@@ -82,6 +82,7 @@ export class ContestService {
     user: UserEntity,
     type: ContestPermissionType,
     contest?: ContestEntity,
+    problem?: ProblemEntity,
   ): Promise<boolean> {
     switch (type) {
       case ContestPermissionType.Create:
