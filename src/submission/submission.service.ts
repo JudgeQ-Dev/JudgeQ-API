@@ -221,6 +221,7 @@ export class SubmissionService implements JudgeTaskService<SubmissionProgress, S
   async querySubmissions(
     problemId: number,
     submitterId: number,
+    contestId: number,
     codeLanguage: string,
     status: SubmissionStatus,
     minId: number,
@@ -245,6 +246,12 @@ export class SubmissionService implements JudgeTaskService<SubmissionProgress, S
     if (submitterId) {
       queryBuilder.andWhere("submitterId = :submitterId", {
         submitterId
+      });
+    }
+
+    if (contestId) {
+      queryBuilder.andWhere("contestId = :contestId", {
+        contestId
       });
     }
 

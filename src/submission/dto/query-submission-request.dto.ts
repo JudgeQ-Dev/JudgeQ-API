@@ -16,39 +16,44 @@ export class QuerySubmissionRequestDto {
   @ApiProperty()
   @IsInt()
   @IsOptional()
-  problemId: number;
+  problemId?: number;
 
   @ApiProperty()
   @IsInt()
   @IsOptional()
-  problemDisplayId: number;
+  problemDisplayId?: number;
 
   @ApiProperty()
   @IsUsername()
   @IsOptional()
-  submitter: string;
+  submitter?: string;
+
+  @ApiProperty()
+  @IsInt()
+  @IsOptional()
+  contestId?: number;
 
   @ApiProperty()
   @IsString()
   @Length(1, 20)
   @IsOptional()
-  codeLanguage: string;
+  codeLanguage?: string;
 
   @ApiProperty()
   @IsEnum(SubmissionStatus)
   @IsOptional()
-  status: SubmissionStatus;
+  status?: SubmissionStatus;
 
   // For pagination
   @ApiProperty()
   @IsInt()
   @IsOptional()
-  minId: number;
+  minId?: number;
 
   @ApiProperty()
   @IsInt()
   @IsOptional()
-  maxId: number;
+  maxId?: number;
 
   @ApiProperty()
   @IsPositive()

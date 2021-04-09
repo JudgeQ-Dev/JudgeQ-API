@@ -5,6 +5,7 @@ import { SignedFileUploadRequestDto } from "@/file/dto";
 export enum SubmitResponseError {
   PERMISSION_DENIED = "PERMISSION_DENIED",
   NO_SUCH_PROBLEM = "NO_SUCH_PROBLEM",
+  NO_SUCH_CONTEST = "NO_SUCH_CONTEST",
   FILE_TOO_LARGE = "FILE_TOO_LARGE",
 
   // Below only happen when user uploaded the file and call this API twice.

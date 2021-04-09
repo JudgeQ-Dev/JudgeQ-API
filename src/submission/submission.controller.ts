@@ -8,6 +8,8 @@ import { UserEntity } from "@/user/user.entity";
 import { ProblemService, ProblemPermissionType } from "@/problem/problem.service";
 import { UserService } from "@/user/user.service";
 import { UserPrivilegeService, UserPrivilegeType } from "@/user/user-privilege.service";
+import { ContestEntity } from "@/contest/contest.entity";
+import { ContestService, ContestPermissionType } from "@/contest/contest.service";
 import { ConfigService } from "@/config/config.service";
 import { ProblemEntity } from "@/problem/problem.entity";
 import { AuditLogObjectType, AuditService } from "@/audit/audit.service";
@@ -60,6 +62,7 @@ export class SubmissionController {
     private readonly problemTypeFactoryService: ProblemTypeFactoryService,
     private readonly userService: UserService,
     private readonly userPrivilegeService: UserPrivilegeService,
+    private readonly contestService: ContestService,
     private readonly configService: ConfigService,
     private readonly submissionProgressGateway: SubmissionProgressGateway,
     private readonly submissionProgressService: SubmissionProgressService,
@@ -90,16 +93,34 @@ export class SubmissionController {
         };
 
       // TODO: add "submit" permission
-      if (!(await this.problemService.userHasPermission(currentUser, problem, ProblemPermissionType.View)))
-        return {
-          error: SubmitResponseError.PERMISSION_DENIED
-        };
+      if (request.contestId) {
+        const contest = await this.contestService.findContestById(request.contestId);
+
+        if (!contest) {
+          return {
+            error: SubmitResponseError.NO_SUCH_CONTEST
+          }
+        }
+
+        if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.Submit, contest, problem))) {
+          return {
+            error: SubmitResponseError.PERMISSION_DENIED
+          }
+        }
+      } else {
+        if (!(await this.problemService.userHasPermission(currentUser, problem, ProblemPermissionType.View))) {
+          return {
+            error: SubmitResponseError.PERMISSION_DENIED
+          };
+        }
+      }
 
       const [, submittable] = await this.problemService.getProblemJudgeInfo(problem);
-      if (!submittable)
+      if (!submittable) {
         return {
           error: SubmitResponseError.PERMISSION_DENIED
         };
+      }
 
       const [validationError, fileErrorOrUploadRequest, submission] = await this.submissionService.createSubmission(
         currentUser,
@@ -142,33 +163,48 @@ export class SubmissionController {
       filterProblem = request.problemId
         ? await this.problemService.findProblemById(request.problemId)
         : await this.problemService.findProblemByDisplayId(request.problemDisplayId);
-      if (!filterProblem)
+      if (!filterProblem) {
         return {
           error: QuerySubmissionResponseError.NO_SUCH_PROBLEM
         };
+      }
     }
 
     let filterSubmitter: UserEntity = null;
     if (request.submitter) {
       filterSubmitter = await this.userService.findUserByUsername(request.submitter);
-      if (!filterSubmitter)
+      if (!filterSubmitter) {
         return {
           error: QuerySubmissionResponseError.NO_SUCH_USER
         };
+      }
+    }
+
+    let filterContest: ContestEntity = null;
+    if (request.contestId) {
+      filterContest = await this.contestService.findContestById(request.contestId);
+      if (!filterContest) {
+        return {
+          error: QuerySubmissionResponseError.NO_SUCH_CONTEST
+        }
+      }
     }
 
     const hasManageProblemPrivilege = await this.userPrivilegeService.userHasPrivilege(
       currentUser,
       UserPrivilegeType.ManageProblem
     );
+
     const hasViewProblemPermission =
       hasManageProblemPrivilege ||
       (filterProblem &&
         (await this.problemService.userHasPermission(currentUser, filterProblem, ProblemPermissionType.View)));
+
     const isSubmissionsOwned = filterSubmitter && currentUser && filterSubmitter.id === currentUser.id;
     const queryResult = await this.submissionService.querySubmissions(
       filterProblem ? filterProblem.id : null,
       filterSubmitter ? filterSubmitter.id : null,
+      filterContest ? filterContest.id : null,
       request.codeLanguage,
       request.status,
       request.minId,
