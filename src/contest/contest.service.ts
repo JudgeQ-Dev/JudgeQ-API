@@ -1,6 +1,6 @@
 import { Injectable, Inject, forwardRef } from "@nestjs/common";
 import { InjectRepository, InjectConnection } from "@nestjs/typeorm";
-import { Repository, Connection, QueryBuilder, FindManyOptions } from "typeorm";
+import { Repository, Connection, FindManyOptions } from "typeorm";
 
 // DO NOT USE bcrypt, REPLACE it with bcryptjs
 // https://stackoverflow.com/questions/34546272/cannot-find-module-bcrypt/41878322
@@ -41,7 +41,9 @@ export function getDate(date: DateType): Date {
 }
 
 export enum ContestPermissionType {
+  Register = "Register",
   View = "View",
+  Submit = "Submit",
   Edit = "Edit",
   Create = "Create",
 }
@@ -82,23 +84,28 @@ export class ContestService {
     contest?: ContestEntity,
   ): Promise<boolean> {
     switch (type) {
-      case ContestPermissionType.View:
-        if (contest.isPublic) return true;
-        if (!user) return false;
-        if (user.isAdmin) return true;
-        if (contest.users.includes(user)) {
-          if (await this.getContestStatus(contest) !== ContestStatusType.Pending) {
-            return true;
-          } else {
-            return false;
-          }
-        }
-      case ContestPermissionType.Edit:
-        if (!user) return false;
-        return user.isAdmin;
       case ContestPermissionType.Create:
         if (!user) return false;
         return user.isAdmin;
+      case ContestPermissionType.Edit:
+        if (!user) return false;
+        return user.isAdmin;
+      case ContestPermissionType.Register:
+        return true;
+      case ContestPermissionType.View:
+        return true;
+        // if (contest.isPublic) return true;
+        // if (!user) return false;
+        // if (user.isAdmin) return true;
+        // if (contest.users.includes(user)) {
+        //   if (await this.getContestStatus(contest) !== ContestStatusType.Pending) {
+        //     return true;
+        //   } else {
+        //     return false;
+        //   }
+        // }
+      case ContestPermissionType.Submit:
+        return true;
       default:
         return false;
     }
