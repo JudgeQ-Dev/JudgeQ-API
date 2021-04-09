@@ -17,5 +17,7 @@ export enum SubmissionStatus {
   WrongAnswer = "WrongAnswer",
   Accepted = "Accepted",
 
-  JudgementFailed = "JudgementFailed"
+  JudgementFailed = "JudgementFailed",
+
+  Frozen = "Frozen"
 }
