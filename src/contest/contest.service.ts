@@ -16,7 +16,6 @@ import { ClarificationEntity } from "./clarification.entity";
 import { ProblemService } from "@/problem/problem.service";
 import { ProblemEntity } from "@/problem/problem.entity";
 
-import { LocalizedContentService } from "@/localized-content/localized-content.service";
 import { LocalizedContentEntity, LocalizedContentType } from "@/localized-content/localized-content.entity";
 
 import config from "./config.json";
@@ -25,9 +24,12 @@ import run from "./run.json";
 
 import {
   ContestMetaDto,
+  ContestUser,
   ProblemInContestMetaDto
 } from "./dto";
 import { SubmissionService } from "@/submission/submission.service";
+import { ContestUserEntity } from "./contest-user.entity";
+import { ContestUserMetaDto } from "./dto/contest-user-meta.dto";
 
 export type DateType = Date | string | number;
 
@@ -68,18 +70,19 @@ export class ContestService {
     private readonly contestRepository: Repository<ContestEntity>,
     @InjectRepository(ContestProblemEntity)
     private readonly contestProblemRepository: Repository<ContestProblemEntity>,
+    @InjectRepository(ContestUserEntity)
+    private readonly contestUserRepository: Repository<ContestUserEntity>,
     @InjectRepository(ClarificationEntity)
     private readonly clarificationRepository: Repository<ClarificationEntity>,
     @InjectRepository(ProblemEntity)
     private readonly problemRepository: Repository<ProblemEntity>,
+    @InjectRepository(UserEntity)
+    private readonly userRepository: Repository<UserEntity>,
     @Inject(forwardRef(() => ProblemService))
     private readonly problemService: ProblemService,
     @Inject(forwardRef(() => SubmissionService))
     private readonly submissionService: SubmissionService,
-    private readonly localizedContentService: LocalizedContentService,
-  ) {
-
-  }
+  ) {}
 
   async userHasPermission(
     user: UserEntity,
@@ -238,7 +241,7 @@ export class ContestService {
     contestProblem.orderId = parseInt((await this.contestProblemRepository
                                 .createQueryBuilder()
                                 .select("IFNULL(MAX(`orderId`), 0)", "orderId")
-                                .where("contest_id = :contestId", {contestId})
+                                .where("contestId = :contestId", {contestId})
                                 .getRawOne()).orderId) + 1;
     await this.contestProblemRepository.save(contestProblem);
   }
@@ -278,7 +281,7 @@ export class ContestService {
       .leftJoinAndSelect(
         LocalizedContentEntity,
         "localizedContent",
-        "localizedContent.type = :type AND problem_id = localizedContent.objectId",
+        "localizedContent.type = :type AND problemId = localizedContent.objectId",
         { type: LocalizedContentType.ProblemTitle }
       )
       .orderBy("contest_problem.orderId", "ASC")
@@ -291,8 +294,6 @@ export class ContestService {
       this.submissionService.getUserLatestSubmissionByProblems(currentUser, problems.map(problem => problem.problem_id), false, contest)
     ]);
 
-    console.log(acceptedSubmissions, nonAcceptedSubmissions);
-
     return problems.map((problem) => (
       <ProblemInContestMetaDto>{
         orderId: problem.contest_problem_orderId,
@@ -301,6 +302,92 @@ export class ContestService {
         acceptedSubmissionCount: problem.problem_acceptedSubmissionCount,
         title: problem.localizedContent_data,
         submission: currentUser && (acceptedSubmissions.get(problem.problem_id) || nonAcceptedSubmissions.get(problem.problem_id))
+      }
+    ));
+  }
+
+  private async hashPassword(password: string): Promise<string> {
+    return await bcrypt.hash(password, 10);
+  }
+
+  async registerContestUser(contest: ContestEntity, user: UserEntity): Promise<void> {
+    const now = new Date();
+    const contestUser = new ContestUserEntity();
+    contestUser.contest = contest;
+    contestUser.user = user;
+    contestUser.registrationTime = now;
+    await this.contestUserRepository.save(contestUser);
+  }
+
+  async importContestUsers(
+    contestUserList: ContestUser[],
+    contest: ContestEntity,
+  ): Promise<void> {
+    const now = new Date();
+    await this.connection.transaction("READ COMMITTED", async transactionalEntityManager => {
+      contestUserList.forEach(async (_contestUser) => {
+        const { username, nickname, password } = _contestUser;
+        const user = new UserEntity();
+        user.username = username;
+        user.email = `${username}@hznuoj.com`;
+        user.publicEmail = false;
+        user.nickname = nickname;
+        user.bio = "";
+        user.avatarInfo = "gravatar:";
+        user.isAdmin = false;
+        user.submissionCount = 0;
+        user.acceptedProblemCount = 0;
+        user.rating = 0;
+        user.registrationTime = new Date();
+        user.isContestUser = true;
+        await transactionalEntityManager.save(user);
+
+        const userAuth = new UserAuthEntity();
+        userAuth.userId = user.id;
+        userAuth.password = await this.hashPassword(password);
+        await transactionalEntityManager.save(userAuth);
+
+        const userInformation = new UserInformationEntity();
+        userInformation.userId = user.id;
+        userInformation.organization = "";
+        userInformation.location = "";
+        userInformation.url = "";
+        userInformation.telegram = "";
+        userInformation.qq = "";
+        userInformation.github = "";
+        await transactionalEntityManager.save(userInformation);
+
+        const contestUser = new ContestUserEntity();
+        contestUser.contest = contest;
+        contestUser.user = user;
+        contestUser.registrationTime = now;
+        await transactionalEntityManager.save(contestUser);
+      })
+    });
+  }
+
+  async getContestUserList(contest: ContestEntity): Promise<ContestUserMetaDto[]> {
+
+    const userList = await this.contestUserRepository
+      .createQueryBuilder("contest_user")
+      .where("contest_user.contest = :contestId", { contestId: contest.id })
+      .leftJoinAndSelect("contest_user.user", "user")
+      .leftJoinAndSelect(
+        UserInformationEntity,
+        "userInformation",
+        "contest_user.userId = userInformation.userId",
+      )
+      .orderBy("contest_user.registrationTime", "DESC")
+      .getRawMany()
+
+    return userList.map((user) => (
+      <ContestUserMetaDto>{
+        id: user.user_id,
+        username: user.user_username,
+        email: user.user_email,
+        nickname: user.user_nickname,
+        organization: user.userInformation_organization,
+        registrationTime: user.contest_user_registrationTime,
       }
     ));
   }
@@ -338,50 +425,6 @@ export class ContestService {
   async listAllClarification(contestId: number): Promise<ClarificationEntity[]> {
     return await this.clarificationRepository.find({
       contestId: contestId
-    });
-  }
-
-  private async hashPassword(password: string): Promise<string> {
-    return await bcrypt.hash(password, 10);
-  }
-
-  async importContestUsers(
-    username: string,
-    nickname: string,
-    password: string,
-  ): Promise<void> {
-
-    let user: UserEntity;
-    await this.connection.transaction("READ COMMITTED", async transactionalEntityManager => {
-      user = new UserEntity();
-      user.username = username;
-      user.email = `${username}@hznuoj.com`;
-      user.publicEmail = false;
-      user.nickname = nickname;
-      user.bio = "";
-      user.avatarInfo = "gravatar:";
-      user.isAdmin = false;
-      user.submissionCount = 0;
-      user.acceptedProblemCount = 0;
-      user.rating = 0;
-      user.registrationTime = new Date();
-      user.isContestUser = true;
-      await transactionalEntityManager.save(user);
-
-      const userAuth = new UserAuthEntity();
-      userAuth.userId = user.id;
-      userAuth.password = await this.hashPassword(password);
-      await transactionalEntityManager.save(userAuth);
-
-      const userInformation = new UserInformationEntity();
-      userInformation.userId = user.id;
-      userInformation.organization = "";
-      userInformation.location = "";
-      userInformation.url = "";
-      userInformation.telegram = "";
-      userInformation.qq = "";
-      userInformation.github = "";
-      await transactionalEntityManager.save(userInformation);
     });
   }
 

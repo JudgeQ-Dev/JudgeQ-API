@@ -27,3 +27,10 @@ export * from "./delete-problem-response.dto";
 export * from "./get-problem-meta-list-request.dto";
 export * from "./get-problem-meta-list-response.dto";
 export * from "./problem-in-contest-meta.dto";
+
+export * from "./register-contest-user-request.dto";
+export * from "./register-contest-user-response.dto";
+
+export * from "./get-contest-user-list-request.dto";
+export * from "./get-contest-user-list-response.dto";
+export * from "./contest-meta.dto";

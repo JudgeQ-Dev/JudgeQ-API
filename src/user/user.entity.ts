@@ -65,6 +65,6 @@ export class UserEntity {
   @OneToOne(() => UserAuthEntity, userAuth => userAuth.user)
   userAuth: Promise<UserAuthEntity>;
 
-  @ManyToMany(() => ContestEntity, (contest) => contest.users)
+  @ManyToMany(() => ContestEntity, contest => contest.users)
   contests?: ContestEntity[];
 }

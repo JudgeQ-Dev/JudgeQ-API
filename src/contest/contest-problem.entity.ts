@@ -11,11 +11,11 @@ import { ProblemEntity } from "@/problem/problem.entity";
 @Entity("contest_problem")
 export class ContestProblemEntity {
   @ManyToOne(type => ContestEntity, contest => contest.problems, { primary: true })
-  @JoinColumn({ name: 'contest_id' })
+  @JoinColumn({ name: 'contestId' })
   contest: ContestEntity;
 
   @ManyToOne(type => ProblemEntity, problem => problem.contests, { primary: true })
-  @JoinColumn({ name: 'problem_id' })
+  @JoinColumn({ name: 'problemId' })
   problem: ProblemEntity;
 
   @Column({ type: "integer" })

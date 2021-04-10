@@ -1,7 +1,6 @@
 import { ApiProperty } from "@nestjs/swagger";
 
-export class ImportContestUsersRequestDto {
-
+export class ContestUser {
   @ApiProperty()
   readonly username: string;
 
@@ -10,5 +9,14 @@ export class ImportContestUsersRequestDto {
 
   @ApiProperty()
   readonly password: string;
+}
+
+export class ImportContestUsersRequestDto {
+
+  @ApiProperty()
+  readonly contestId: number;
+
+  @ApiProperty()
+  readonly contestUserList: ContestUser[];
 
 }

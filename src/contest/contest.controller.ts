@@ -8,7 +8,7 @@ import { ConfigService } from "@/config/config.service";
 import { ProblemService } from "@/problem/problem.service";
 import { ContestService, ContestPermissionType, ContestStatusType } from "./contest.service";
 import { SubmissionService } from "@/submission/submission.service";
-
+import { UserService } from "@/user/user.service";
 
 import {
   CreateContestRequestDto,
@@ -26,8 +26,15 @@ import {
   DeleteProblemRequestDto,
   DeleteProblemResponseDto,
   DeleteProblemResponseError,
+  RegisterContestUserRequestDto,
+  RegisterContestUserResponseDto,
+  RegisterContestUserResponseError,
   ImportContestUsersRequestDto,
   ImportContestUsersResponseDto,
+  ImportContestUsersResponseError,
+  GetContestUserListRequestDto,
+  GetContestUserListResponseDto,
+  GetContestUserListResponseError,
   GetClarificationsRequestDto,
   GetClarificationsResponseDto,
   GetClarificationsResponseError,
@@ -38,6 +45,7 @@ import {
   GetProblemMetaListResponseDto,
   GetProblemMetaListResponseError,
 } from "./dto";
+
 
 class GetContentDto {
   @ApiProperty()
@@ -52,6 +60,7 @@ export class ContestController {
     private readonly configService: ConfigService,
     private readonly problemService: ProblemService,
     private readonly submissionService: SubmissionService,
+    private readonly userService: UserService,
   ) {}
 
   @ApiBearerAuth()
@@ -289,19 +298,93 @@ export class ContestController {
     return {};
   }
 
+  @ApiBearerAuth()
+  @Post("registerContestUser")
+  @ApiOperation({
+    summary: "Register a user in a contest."
+  })
+  async registerContestUser(
+    @CurrentUser() currentUser: UserEntity,
+    @Body() request: RegisterContestUserRequestDto,
+  ): Promise<RegisterContestUserResponseDto> {
+    if (!currentUser) {
+      return {
+        error: RegisterContestUserResponseError.PERMISSION_DENIED,
+      };
+    }
+
+    const contest = await this.contestService.findContestById(request.contestId);
+
+    if (!contest) {
+      return {
+        error: RegisterContestUserResponseError.NO_SUCH_CONTEST
+      };
+    }
+
+    await this.contestService.registerContestUser(contest, currentUser);
+
+    return {};
+  }
+
+  @ApiBearerAuth()
   @Post("importContestUsers")
+  @ApiOperation({
+    summary: "Import a user list as a Contest User List."
+  })
   async importContestUsers(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: ImportContestUsersRequestDto,
   ): Promise<ImportContestUsersResponseDto> {
 
+    const contest = await this.contestService.findContestById(request.contestId);
+
+    if (!contest) {
+      return {
+        error: ImportContestUsersResponseError.NO_SUCH_CONTEST,
+      };
+    }
+
+    if (!currentUser || !(await this.contestService.userHasPermission(currentUser, ContestPermissionType.Edit, contest))) {
+      return {
+        error: ImportContestUsersResponseError.PERMISSION_DENIED,
+      };
+    }
+
     await this.contestService.importContestUsers(
-      request.username,
-      request.nickname,
-      request.password,
+      request.contestUserList,
+      contest
     );
 
     return {};
+  }
+
+  @ApiBearerAuth()
+  @Post("getContestUserList")
+  @ApiOperation({
+    summary: "Get User List from a contest."
+  })
+  async getContestUserList(
+    @CurrentUser() currentUser: UserEntity,
+    @Body() request: GetContestUserListRequestDto,
+  ): Promise<GetContestUserListResponseDto> {
+
+    const contest = await this.contestService.findContestById(request.contestId);
+
+    if (!contest) {
+      return {
+        error: GetContestUserListResponseError.NO_SUCH_CONTEST,
+      };
+    }
+
+    if (!currentUser || !(await this.contestService.userHasPermission(currentUser, ContestPermissionType.Edit, contest))) {
+      return {
+        error: GetContestUserListResponseError.PERMISSION_DENIED,
+      };
+    }
+
+    return {
+      contestUserList: await this.contestService.getContestUserList(contest)
+    };
   }
 
   @Get("config")

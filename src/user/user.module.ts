@@ -9,15 +9,19 @@ import { AuditModule } from "@/audit/audit.module";
 import { UserEntity } from "./user.entity";
 import { UserPrivilegeEntity } from "./user-privilege.entity";
 import { UserInformationEntity } from "./user-information.entity";
+import {ContestEntity} from "@/contest/contest.entity";
 import { UserService } from "./user.service";
 import { UserPrivilegeService } from "./user-privilege.service";
 import { UserController } from "./user.controller";
+import { ContestModule } from "@/contest/contest.module";
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([UserEntity]),
     TypeOrmModule.forFeature([UserPrivilegeEntity]),
     TypeOrmModule.forFeature([UserInformationEntity]),
+    TypeOrmModule.forFeature([ContestEntity]),
+    forwardRef(() => ContestModule),
     forwardRef(() => AuthModule),
     forwardRef(() => SubmissionModule),
     forwardRef(() => RedisModule),

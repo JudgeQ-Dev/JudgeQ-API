@@ -5,6 +5,7 @@ import { ContestService } from "./contest.service";
 
 import { ContestEntity } from "./contest.entity";
 import { ContestProblemEntity } from "./contest-problem.entity";
+import { ContestUserEntity } from "./contest-user.entity";
 import { UserEntity } from "@/user/user.entity";
 import { ProblemEntity } from "@/problem/problem.entity";
 import { SubmissionEntity } from "@/submission/submission.entity";
@@ -21,6 +22,7 @@ import { LocalizedContentModule } from "@/localized-content/localized-content.mo
   imports: [
     TypeOrmModule.forFeature([ContestEntity]),
     TypeOrmModule.forFeature([ContestProblemEntity]),
+    TypeOrmModule.forFeature([ContestUserEntity]),
     TypeOrmModule.forFeature([UserEntity]),
     TypeOrmModule.forFeature([ProblemEntity]),
     TypeOrmModule.forFeature([SubmissionEntity]),
