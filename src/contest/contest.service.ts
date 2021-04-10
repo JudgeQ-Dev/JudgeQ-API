@@ -399,14 +399,25 @@ export class ContestService {
     content: string,
     replyId: number,
   ) {
-    const clarification = new ClarificationEntity();
-    clarification.publisherId = user.id;
-    clarification.contestId = contest.id;
-    clarification.content = content;
-    clarification.publishTime = new Date();
-    clarification.replyId = replyId;
 
-    await this.clarificationRepository.save(clarification);
+    await this.connection.transaction("READ COMMITTED", async transactionalEntityManager => {
+
+      const clarification = new ClarificationEntity();
+      clarification.publisherId = user.id;
+      clarification.contestId = contest.id;
+      clarification.content = content;
+      clarification.publishTime = new Date();
+      clarification.replyId = replyId;
+
+      await transactionalEntityManager.save(clarification);
+
+      if (clarification.replyId == null) {
+        clarification.replyId = clarification.id;
+      }
+
+      await transactionalEntityManager.save(clarification);
+
+    });
   }
 
   async getClarifications(contest: ContestEntity, currentUser: UserEntity): Promise<ClarificationMetaDto[]> {
