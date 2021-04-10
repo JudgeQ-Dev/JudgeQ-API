@@ -432,6 +432,9 @@ export class ContestService {
       queryBuilder.andWhere("user.isAdmin = 1 OR user.id = :id", {id: currentUser.id})
     }
 
+    queryBuilder.orderBy("clarification.replyId", "ASC");
+    queryBuilder.addOrderBy("clarification.id", "ASC");
+
     const result = await queryBuilder.getRawMany();
 
     return result.map((item) => (
