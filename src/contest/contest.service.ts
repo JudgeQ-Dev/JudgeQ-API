@@ -27,6 +27,7 @@ import {
   ContestMetaDto,
   ProblemInContestMetaDto
 } from "./dto";
+import { SubmissionService } from "@/submission/submission.service";
 
 export type DateType = Date | string | number;
 
@@ -73,6 +74,8 @@ export class ContestService {
     private readonly problemRepository: Repository<ProblemEntity>,
     @Inject(forwardRef(() => ProblemService))
     private readonly problemService: ProblemService,
+    @Inject(forwardRef(() => SubmissionService))
+    private readonly submissionService: SubmissionService,
     private readonly localizedContentService: LocalizedContentService,
   ) {
 
@@ -84,6 +87,8 @@ export class ContestService {
     contest?: ContestEntity,
     problem?: ProblemEntity,
   ): Promise<boolean> {
+    let status: ContestStatusType;
+    if (contest) status = await this.getContestStatus(contest);
     switch (type) {
       case ContestPermissionType.Create:
         if (!user) return false;
@@ -94,6 +99,8 @@ export class ContestService {
       case ContestPermissionType.Register:
         return true;
       case ContestPermissionType.View:
+        if (user && user.isAdmin) return true;
+        if (status === ContestStatusType.Pending) return false;
         return true;
         // if (contest.isPublic) return true;
         // if (!user) return false;
@@ -106,6 +113,9 @@ export class ContestService {
         //   }
         // }
       case ContestPermissionType.Submit:
+        if (status === ContestStatusType.Pending || status === ContestStatusType.Finished) {
+          return false;
+        }
         return true;
       default:
         return false;
@@ -124,17 +134,21 @@ export class ContestService {
       return ContestStatusType.Pending;
     }
 
-    if (contest.frozenStartTime && contest.frozenEndTime) {
-      if (now >= contest.frozenStartTime && now <= contest.frozenEndTime) {
-        return ContestStatusType.Frozen;
-      }
-    }
-
     if (now >= contest.endTime) {
       return ContestStatusType.Finished;
     }
 
     return ContestStatusType.Running;
+  }
+
+  async getContestFrozenStatus(contest: ContestEntity): Promise<boolean> {
+    const now = new Date();
+    if (contest.frozenStartTime && contest.frozenEndTime) {
+      if (now >= contest.frozenStartTime && now <= contest.frozenEndTime) {
+        return true;
+      }
+    }
+    return false;
   }
 
   async getContestMeta(contest: ContestEntity): Promise<ContestMetaDto> {
@@ -252,7 +266,10 @@ export class ContestService {
 
   async getProblemMetaList(
     contest: ContestEntity,
+    currentUser?: UserEntity,
   ): Promise<ProblemInContestMetaDto[]> {
+
+    const frozenStatus = await this.getContestFrozenStatus(contest);
 
     const problems = await this.contestProblemRepository
       .createQueryBuilder("contest_problem")
@@ -267,6 +284,15 @@ export class ContestService {
       .orderBy("contest_problem.orderId", "ASC")
       .getRawMany()
 
+    const [acceptedSubmissions, nonAcceptedSubmissions] = await Promise.all([
+      currentUser &&
+      this.submissionService.getUserLatestSubmissionByProblems(currentUser, problems.map(problem => problem.problem_id), true, contest),
+      currentUser &&
+      this.submissionService.getUserLatestSubmissionByProblems(currentUser, problems.map(problem => problem.problem_id), false, contest)
+    ]);
+
+    console.log(acceptedSubmissions, nonAcceptedSubmissions);
+
     return problems.map((problem) => (
       <ProblemInContestMetaDto>{
         orderId: problem.contest_problem_orderId,
@@ -274,6 +300,7 @@ export class ContestService {
         submissionCount: problem.problem_submissionCount,
         acceptedSubmissionCount: problem.problem_acceptedSubmissionCount,
         title: problem.localizedContent_data,
+        submission: currentUser && (acceptedSubmissions.get(problem.problem_id) || nonAcceptedSubmissions.get(problem.problem_id))
       }
     ));
   }

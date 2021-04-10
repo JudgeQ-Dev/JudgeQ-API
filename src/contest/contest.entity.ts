@@ -2,18 +2,12 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  OneToOne,
-  ManyToOne,
   ManyToMany,
   Index,
-  JoinTable,
-  JoinColumn,
-  OneToMany,
 } from "typeorm";
 
 import { UserEntity } from "@/user/user.entity";
 import { ProblemEntity } from "@/problem/problem.entity";
-import { SubmissionEntity } from "@/submission/submission.entity";
 
 @Entity("contest")
 export class ContestEntity {

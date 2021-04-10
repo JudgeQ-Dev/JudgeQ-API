@@ -12,8 +12,10 @@ import { UserAuthEntity } from "@/auth/user-auth.entity";
 import { ClarificationEntity } from "./clarification.entity";
 
 import { UserModule } from "@/user/user.module";
+import { SubmissionModule } from "@/submission/submission.module";
 import { ProblemModule } from "@/problem/problem.module";
 import { LocalizedContentModule } from "@/localized-content/localized-content.module"
+
 
 @Module({
   imports: [
@@ -25,6 +27,7 @@ import { LocalizedContentModule } from "@/localized-content/localized-content.mo
     TypeOrmModule.forFeature([ClarificationEntity]),
     TypeOrmModule.forFeature([UserAuthEntity]),
     forwardRef(() => UserModule),
+    forwardRef(() => SubmissionModule),
     forwardRef(() => ProblemModule),
     forwardRef(() => LocalizedContentModule),
   ],

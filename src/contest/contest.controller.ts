@@ -1,12 +1,14 @@
 import { CurrentUser } from "@/common/user.decorator";
 import { UserEntity } from "@/user/user.entity";
-import { Controller, Get, Redirect, Query, Param, Post, Body } from "@nestjs/common";
+import { Controller, Get, Post, Body } from "@nestjs/common";
 
 import { ApiTags, ApiProperty, ApiBearerAuth, ApiBasicAuth, ApiOperation } from "@nestjs/swagger";
 
 import { ConfigService } from "@/config/config.service";
 import { ProblemService } from "@/problem/problem.service";
 import { ContestService, ContestPermissionType, ContestStatusType } from "./contest.service";
+import { SubmissionService } from "@/submission/submission.service";
+
 
 import {
   CreateContestRequestDto,
@@ -49,6 +51,7 @@ export class ContestController {
     private readonly contestService: ContestService,
     private readonly configService: ConfigService,
     private readonly problemService: ProblemService,
+    private readonly submissionService: SubmissionService,
   ) {}
 
   @ApiBearerAuth()
@@ -134,7 +137,7 @@ export class ContestController {
       };
     }
 
-    const problemMetaList = await this.contestService.getProblemMetaList(contest);
+    const problemMetaList = await this.contestService.getProblemMetaList(contest, currentUser);
 
     return {
       contestMeta: contest,
@@ -257,7 +260,7 @@ export class ContestController {
       };
     }
 
-    const problemMetaList = await this.contestService.getProblemMetaList(contest);
+    const problemMetaList = await this.contestService.getProblemMetaList(contest, currentUser);
 
     return {
       problemMetas: problemMetaList

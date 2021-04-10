@@ -115,10 +115,11 @@ export class ProblemController {
 
     // A non-privileged user could query problems owned by ieself, even use the "nonpublic" filter
     // This will NOT be reported as true in "permissions"
-    if ((request.ownerId || request.nonpublic) && !hasPrivilege && (!currentUser || currentUser.id !== request.ownerId))
+    if ((request.ownerId || request.nonpublic) && !hasPrivilege && (!currentUser || currentUser.id !== request.ownerId)) {
       return {
         error: QueryProblemSetResponseError.PERMISSION_DENIED
       };
+    }
 
     const filterTags = !request.tagIds
       ? null
@@ -157,10 +158,10 @@ export class ProblemController {
     const [acceptedSubmissions, nonAcceptedSubmissions] = await Promise.all([
       !request.titleOnly &&
         currentUser &&
-        this.submissionService.getUserLatestSubmissionByProblems(currentUser, problems, true),
+        this.submissionService.getUserLatestSubmissionByProblems(currentUser, problems.map(problem => problem.id), true),
       !request.titleOnly &&
         currentUser &&
-        this.submissionService.getUserLatestSubmissionByProblems(currentUser, problems)
+        this.submissionService.getUserLatestSubmissionByProblems(currentUser, problems.map(problem => problem.id))
     ]);
 
     return {
@@ -476,17 +477,20 @@ export class ProblemController {
       );
     }
 
+    let contest: ContestEntity;
+    if (request.contestId) contest = await this.contestService.findContestById(request.contestId);
+
     if (request.lastSubmissionAndLastAcceptedSubmission) {
       promises.push(
         (async () => {
           if (currentUser) {
             const lastSubmission = (
-              await this.submissionService.getUserLatestSubmissionByProblems(currentUser, [problem], false)
+              await this.submissionService.getUserLatestSubmissionByProblems(currentUser, [problem.id], false, contest)
             ).get(problem.id);
             const lastAcceptedSubmission =
               lastSubmission && lastSubmission.status === SubmissionStatus.Accepted
                 ? lastSubmission
-                : (await this.submissionService.getUserLatestSubmissionByProblems(currentUser, [problem], true)).get(
+                : (await this.submissionService.getUserLatestSubmissionByProblems(currentUser, [problem.id], true, contest)).get(
                     problem.id
                   );
 

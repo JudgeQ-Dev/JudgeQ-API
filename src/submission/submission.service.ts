@@ -42,6 +42,7 @@ import { SubmissionStatus } from "./submission-status.enum";
 import { FileUploadInfoDto, SignedFileUploadRequestDto } from "@/file/dto";
 
 import { SubmissionBasicMetaDto } from "./dto";
+import { ContestEntity } from "@/contest/contest.entity";
 
 export enum SubmissionPermissionType {
   View = "View",
@@ -253,6 +254,8 @@ export class SubmissionService implements JudgeTaskService<SubmissionProgress, S
       queryBuilder.andWhere("contestId = :contestId", {
         contestId
       });
+    } else {
+      queryBuilder.andWhere("contestId IS NULL");
     }
 
     if (codeLanguage) {
@@ -864,17 +867,23 @@ export class SubmissionService implements JudgeTaskService<SubmissionProgress, S
 
   async getUserLatestSubmissionByProblems(
     user: UserEntity,
-    problems: ProblemEntity[],
-    acceptedOnly?: boolean
+    problemIds: number[],
+    acceptedOnly?: boolean,
+    contest?: ContestEntity,
   ): Promise<Map<number, SubmissionEntity>> {
-    if (problems.length === 0) return new Map();
+    if (problemIds.length === 0) return new Map();
 
     const queryBuilder = this.submissionRepository
       .createQueryBuilder()
       .select("MAX(id)", "id")
       .where("submitterId = :submitterId", { submitterId: user.id })
-      .andWhere("problemId IN (:...problemIds)", { problemIds: problems.map(problem => problem.id) })
+      .andWhere("problemId IN (:...problemIds)", { problemIds })
       .groupBy("problemId");
+    if (contest) {
+      queryBuilder.andWhere("contestId = :contestId", {contestId: contest.id});
+    } else {
+      queryBuilder.andWhere("contestId IS NULL");
+    }
     const queryResult: { id: string }[] = await (acceptedOnly
       ? queryBuilder.andWhere("status = :status", { status: SubmissionStatus.Accepted })
       : queryBuilder.andWhere("status != :status", { status: SubmissionStatus.Pending })

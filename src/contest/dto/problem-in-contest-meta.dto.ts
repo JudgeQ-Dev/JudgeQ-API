@@ -1,5 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 import { IsInt, IsString } from "class-validator";
+import { SubmissionBasicMetaDto } from "@/submission/dto";
+
 
 export class ProblemInContestMetaDto {
   @ApiProperty()
@@ -21,4 +23,7 @@ export class ProblemInContestMetaDto {
   @ApiProperty()
   @IsString()
   title: string;
+
+  @ApiProperty()
+  submission?: SubmissionBasicMetaDto;
 }
