@@ -5,7 +5,4 @@ export class GetClarificationsRequestDto {
   @ApiProperty()
   readonly contestId: number;
 
-  @ApiProperty()
-  readonly all?: boolean;
-
 }

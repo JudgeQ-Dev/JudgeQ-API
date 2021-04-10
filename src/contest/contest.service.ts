@@ -23,6 +23,7 @@ import team from "./team.json";
 import run from "./run.json";
 
 import {
+  ClarificationMetaDto,
   ContestMetaDto,
   ContestUser,
   ProblemInContestMetaDto
@@ -393,39 +394,46 @@ export class ContestService {
   }
 
   async createClarification(
-    publishId: number,
-    replyId: number,
-    contestId: number,
+    user: UserEntity,
+    contest: ContestEntity,
     content: string,
+    replyId: number,
   ) {
     const clarification = new ClarificationEntity();
-    clarification.publisherId = publishId;
-    clarification.replyId = replyId;
-    clarification.contestId = contestId;
+    clarification.publisherId = user.id;
+    clarification.contestId = contest.id;
     clarification.content = content;
     clarification.publishTime = new Date();
+    clarification.replyId = replyId;
 
     await this.clarificationRepository.save(clarification);
-
   }
 
-  async getClarificationList(contestId: number, publisherId: number): Promise<ClarificationEntity[]> {
-    const queryBuilder = this.clarificationRepository.createQueryBuilder("clarification").select("*");
-    // queryBuilder.leftJoinAndSelect("publisherId", "clarification.publisherId");
+  async getClarifications(contest: ContestEntity, currentUser: UserEntity): Promise<ClarificationMetaDto[]> {
+
+    const queryBuilder = this.clarificationRepository.createQueryBuilder("clarification");
+
+    queryBuilder.where("clarification.contest = :contestId", {contestId: contest.id});
+
     queryBuilder.leftJoinAndSelect("clarification.publisher", "user");
-    queryBuilder.where("(clarification.contestId = :contestId)");
-    queryBuilder.andWhere("(clarification.publisherId = 1 OR clarification.publisherId = 4 OR clarification.publisherId = :publisherId)");
-    queryBuilder.setParameters({ contestId: contestId, publisherId:  publisherId});
+
+    if (currentUser.isAdmin === false) {
+      queryBuilder.andWhere("user.isAdmin = 1 OR user.id = :id", {id: currentUser.id})
+    }
 
     const result = await queryBuilder.getRawMany();
 
-    return result;
-  }
-
-  async listAllClarification(contestId: number): Promise<ClarificationEntity[]> {
-    return await this.clarificationRepository.find({
-      contestId: contestId
-    });
+    return result.map((item) => (
+      <ClarificationMetaDto>{
+        id: item.clarification_id,
+        publishTime: item.clarification_publishTime,
+        content: item.clarification_content,
+        publisherId: item.clarification_publisherId,
+        username: item.user_username,
+        nickname: item.user_nickname,
+        replyId: item.clarification_replyId,
+      }
+    ));
   }
 
   getConfig(): string {

@@ -34,3 +34,7 @@ export * from "./register-contest-user-response.dto";
 export * from "./get-contest-user-list-request.dto";
 export * from "./get-contest-user-list-response.dto";
 export * from "./contest-meta.dto";
+
+export * from "./create-clarification-request.dto";
+export * from "./create-clarification-response.dto";
+export * from "./clarification-meta.dto";

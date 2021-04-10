@@ -35,6 +35,9 @@ import {
   GetContestUserListRequestDto,
   GetContestUserListResponseDto,
   GetContestUserListResponseError,
+  CreateClarificationRequestDto,
+  CreateClarificationResponseDto,
+  CreateClarificationResponseError,
   GetClarificationsRequestDto,
   GetClarificationsResponseDto,
   GetClarificationsResponseError,
@@ -277,28 +280,6 @@ export class ContestController {
   }
 
   @ApiBearerAuth()
-  @Post("getClarificationList")
-  @ApiOperation({
-    summary: "Get a clarification list."
-  })
-  async getClarificationList(
-    @CurrentUser() currentUser: UserEntity,
-    @Body() request: GetClarificationsRequestDto,
-  ): Promise<GetClarificationsResponseDto> {
-
-    // if (!await this.contestService.userHasPermission(currentUser, ContestPermissionType.Edit)) {
-    //   return {
-    //     error: GetClarificationsResponseError.PERMISSION_DENIED,
-    //   };
-    // }
-
-    this.contestService.getClarificationList(1, 4);
-
-
-    return {};
-  }
-
-  @ApiBearerAuth()
   @Post("registerContestUser")
   @ApiOperation({
     summary: "Register a user in a contest."
@@ -384,6 +365,59 @@ export class ContestController {
 
     return {
       contestUserList: await this.contestService.getContestUserList(contest)
+    };
+  }
+
+  @ApiBearerAuth()
+  @Post("createClarification")
+  @ApiOperation({
+    summary: "Create clarification."
+  })
+  async createClarification(
+    @CurrentUser() currentUser: UserEntity,
+    @Body() request: CreateClarificationRequestDto,
+  ): Promise<CreateClarificationResponseDto> {
+
+    if (!currentUser) {
+      return {
+        error: CreateClarificationResponseError.PERMISSION_DENIED,
+      };
+    }
+
+    const contest = await this.contestService.findContestById(request.contestId);
+
+    if (!contest) {
+      return {
+        error: CreateClarificationResponseError.NO_SUCH_CONTEST,
+      };
+    }
+
+    await this.contestService.createClarification(currentUser, contest, request.content, request.replyId);
+
+    return {};
+  }
+
+
+  @ApiBearerAuth()
+  @Post("getClarifications")
+  @ApiOperation({
+    summary: "Get clarifications."
+  })
+  async getClarifications(
+    @CurrentUser() currentUser: UserEntity,
+    @Body() request: GetClarificationsRequestDto,
+  ): Promise<GetClarificationsResponseDto> {
+
+    const contest = await this.contestService.findContestById(request.contestId);
+
+    if (!contest) {
+      return {
+        error: GetClarificationsResponseError.NO_SUCH_CONTEST,
+      };
+    }
+
+    return {
+      clarifications: await this.contestService.getClarifications(contest, currentUser)
     };
   }
 
