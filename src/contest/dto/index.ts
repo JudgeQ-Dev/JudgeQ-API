@@ -34,6 +34,7 @@ export * from "./register-contest-user-response.dto";
 export * from "./get-contest-user-list-request.dto";
 export * from "./get-contest-user-list-response.dto";
 export * from "./contest-meta.dto";
+export * from "./contest-user-meta.dto";
 
 export * from "./create-clarification-request.dto";
 export * from "./create-clarification-response.dto";
@@ -41,3 +42,9 @@ export * from "./clarification-meta.dto";
 
 export * from "./get-standings-data-request.dto";
 export * from "./get-standings-data-response.dto";
+
+export * from "./get-contest-submissions-request.dto"
+export * from "./get-contest-submissions-response.dto"
+
+// Must Export from here, and then import from here too, don't know why.
+export * from "@/submission/dto/submission-meta.dto";

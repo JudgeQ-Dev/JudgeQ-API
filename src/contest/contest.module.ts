@@ -2,8 +2,6 @@ import { Module, forwardRef, NestModule, MiddlewareConsumer, RequestMethod } fro
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ContestController } from "./contest.controller";
 import { ContestService } from "./contest.service";
-import { SubmissionProgressService } from "@/submission/submission-progress.service";
-import { SubmissionProgressGateway } from "@/submission/submission-progress.gateway";
 
 import { ContestEntity } from "./contest.entity";
 import { ContestProblemEntity } from "./contest-problem.entity";
@@ -20,6 +18,9 @@ import { ProblemModule } from "@/problem/problem.module";
 import { LocalizedContentModule } from "@/localized-content/localized-content.module"
 import { RedisModule } from "@/redis/redis.module";
 import { ProblemTypeModule } from "@/problem-type/problem-type.module";
+import { SubmissionDetailEntity } from "@/submission/submission-detail.entity";
+import { SubmissionProgressService } from "@/submission/submission-progress.service";
+import { SubmissionProgressGateway } from "@/submission/submission-progress.gateway";
 
 @Module({
   imports: [
@@ -29,6 +30,7 @@ import { ProblemTypeModule } from "@/problem-type/problem-type.module";
     TypeOrmModule.forFeature([UserEntity]),
     TypeOrmModule.forFeature([ProblemEntity]),
     TypeOrmModule.forFeature([SubmissionEntity]),
+    TypeOrmModule.forFeature([SubmissionDetailEntity]),
     TypeOrmModule.forFeature([ClarificationEntity]),
     TypeOrmModule.forFeature([UserAuthEntity]),
     forwardRef(() => RedisModule),

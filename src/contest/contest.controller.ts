@@ -50,7 +50,11 @@ import {
   GetStandingsDataRequestDto,
   GetStandingsDataResponseDto,
   GetStandingsDataResponseError,
+  GetContestSubmissionsRequestDto,
+  GetContestSubmissionsResponseDto,
+  GetContestSubmissionsResponseError,
 } from "./dto";
+import { ProblemEntity } from "@/problem/problem.entity";
 
 @ApiTags("Contest")
 @Controller("contest")
@@ -437,12 +441,60 @@ export class ContestController {
 
     return {
       contestUserList: await this.contestService.getContestUserList(contest),
-      submissions: await this.contestService.getContestSubmissions(contest, currentUser),
+      submissions: await this.contestService.getContestSubmissions(
+        contest,
+        currentUser,
+        null,
+        null
+      ),
     };
   }
 
+  @ApiBearerAuth()
+  @Post("getContestSubmissions")
+  @ApiOperation({
+    summary: "Get Contest Submissions."
+  })
+  async getContestSubmissions(
+    @CurrentUser() currentUser: UserEntity,
+    @Body() request: GetContestSubmissionsRequestDto,
+  ): Promise<GetContestSubmissionsResponseDto> {
 
+    const contest = await this.contestService.findContestById(request.contestId);
 
+    if (!contest) {
+      return {
+        error: GetContestSubmissionsResponseError.NO_SUCH_CONTEST,
+      };
+    }
 
+    let user: UserEntity = null;
+    if (request.submitter) {
+      user = await this.userService.findUserByUsername(request.submitter);
+      if (!user) {
+        return {
+          error: GetContestSubmissionsResponseError.NO_SUCH_USER,
+        }
+      }
+    }
 
+    let problem: ProblemEntity = null;
+    if (request.problemId) {
+      problem = await this.problemService.findProblemById(request.problemId);
+      if (!problem) {
+        return {
+          error: GetContestSubmissionsResponseError.NO_SUCH_PROBLEM,
+        }
+      }
+    }
+
+    return {
+      submissions: await this.contestService.getContestSubmissions(
+        contest,
+        currentUser,
+        user,
+        problem
+      ),
+    };
+  }
 }

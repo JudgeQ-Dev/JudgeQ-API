@@ -24,7 +24,7 @@ import {
   ContestUser,
   ProblemInContestMetaDto
 } from "./dto";
-import { SubmissionMetaDto } from "@/submission/dto/submission-meta.dto";
+import { SubmissionMetaDto } from "./dto/";
 import { SubmissionService } from "@/submission/submission.service";
 import { ContestUserEntity } from "./contest-user.entity";
 import { ContestUserMetaDto } from "./dto/contest-user-meta.dto";
@@ -460,11 +460,16 @@ export class ContestService {
     ));
   }
 
-  async getContestSubmissions(contest: ContestEntity, currentUser: UserEntity): Promise<SubmissionMetaDto[]> {
+  async getContestSubmissions(
+    contest: ContestEntity,
+    currentUser: UserEntity,
+    user: UserEntity,
+    problem: ProblemEntity,
+  ): Promise<SubmissionMetaDto[]> {
 
     const queryResult = await this.submissionService.querySubmissions(
-      null,
-      null,
+      user ? user.id : null,
+      problem ? problem.id : null,
       contest.id,
       null,
       null,
