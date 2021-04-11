@@ -2,7 +2,7 @@ import { CurrentUser } from "@/common/user.decorator";
 import { UserEntity } from "@/user/user.entity";
 import { Controller, Get, Post, Body } from "@nestjs/common";
 
-import { ApiTags, ApiProperty, ApiBearerAuth, ApiBasicAuth, ApiOperation } from "@nestjs/swagger";
+import { ApiTags, ApiBearerAuth, ApiOperation } from "@nestjs/swagger";
 
 import { ConfigService } from "@/config/config.service";
 import { ProblemService } from "@/problem/problem.service";
@@ -47,13 +47,10 @@ import {
   GetProblemMetaListRequestDto,
   GetProblemMetaListResponseDto,
   GetProblemMetaListResponseError,
+  GetStandingsDataRequestDto,
+  GetStandingsDataResponseDto,
+  GetStandingsDataResponseError,
 } from "./dto";
-
-
-class GetContentDto {
-  @ApiProperty()
-  content: string;
-}
 
 @ApiTags("Contest")
 @Controller("contest")
@@ -397,7 +394,6 @@ export class ContestController {
     return {};
   }
 
-
   @ApiBearerAuth()
   @Post("getClarifications")
   @ApiOperation({
@@ -421,24 +417,32 @@ export class ContestController {
     };
   }
 
-  @Get("config")
-  async getConfig(): Promise<GetContentDto> {
-    return {
-      content: this.contestService.getConfig(),
+  @ApiBearerAuth()
+  @Post("getStandingsData")
+  @ApiOperation({
+    summary: "Get Standings Data."
+  })
+  async getStandingsData(
+    @CurrentUser() currentUser: UserEntity,
+    @Body() request: GetStandingsDataRequestDto,
+  ): Promise<GetStandingsDataResponseDto> {
+
+    const contest = await this.contestService.findContestById(request.contestId);
+
+    if (!contest) {
+      return {
+        error: GetStandingsDataResponseError.NO_SUCH_CONTEST,
+      };
     }
+
+    return {
+      contestUserList: await this.contestService.getContestUserList(contest),
+      submissions: await this.contestService.getContestSubmissions(contest, currentUser),
+    };
   }
 
-  @Get("team")
-  async getTeam(): Promise<GetContentDto> {
-    return {
-      content: this.contestService.getTeam(),
-    }
-  }
 
-  @Get("run")
-  async getRun(): Promise<GetContentDto> {
-    return {
-      content: this.contestService.getRun(),
-    }
-  }
+
+
+
 }

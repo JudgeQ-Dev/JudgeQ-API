@@ -18,19 +18,20 @@ import { ProblemEntity } from "@/problem/problem.entity";
 
 import { LocalizedContentEntity, LocalizedContentType } from "@/localized-content/localized-content.entity";
 
-import config from "./config.json";
-import team from "./team.json";
-import run from "./run.json";
-
 import {
   ClarificationMetaDto,
   ContestMetaDto,
   ContestUser,
   ProblemInContestMetaDto
 } from "./dto";
+import { SubmissionMetaDto } from "@/submission/dto/submission-meta.dto";
 import { SubmissionService } from "@/submission/submission.service";
 import { ContestUserEntity } from "./contest-user.entity";
 import { ContestUserMetaDto } from "./dto/contest-user-meta.dto";
+import { UserService } from "@/user/user.service";
+import { Locale } from "@/common/locale.type";
+import { SubmissionStatus } from "@/submission/submission-status.enum";
+import { SubmissionProgressService } from "@/submission/submission-progress.service";
 
 export type DateType = Date | string | number;
 
@@ -77,12 +78,16 @@ export class ContestService {
     private readonly clarificationRepository: Repository<ClarificationEntity>,
     @InjectRepository(ProblemEntity)
     private readonly problemRepository: Repository<ProblemEntity>,
-    @InjectRepository(UserEntity)
-    private readonly userRepository: Repository<UserEntity>,
     @Inject(forwardRef(() => ProblemService))
     private readonly problemService: ProblemService,
+    @InjectRepository(UserEntity)
+    private readonly userRepository: Repository<UserEntity>,
+    @Inject(forwardRef(() => UserService))
+    private readonly userService: UserService,
     @Inject(forwardRef(() => SubmissionService))
     private readonly submissionService: SubmissionService,
+    @Inject(forwardRef(() => SubmissionProgressService))
+    private readonly submissionProgressService: SubmissionProgressService,
   ) {}
 
   async userHasPermission(
@@ -383,6 +388,7 @@ export class ContestService {
         "contest_user.userId = userInformation.userId",
       )
       .orderBy("contest_user.registrationTime", "DESC")
+      .addOrderBy("contest_user.userId", "DESC")
       .getRawMany()
 
     return userList.map((user) => (
@@ -454,16 +460,62 @@ export class ContestService {
     ));
   }
 
-  getConfig(): string {
-    return JSON.stringify(config);
-  }
+  async getContestSubmissions(contest: ContestEntity, currentUser: UserEntity): Promise<SubmissionMetaDto[]> {
 
-  getTeam(): string {
-    return JSON.stringify(team);
-  }
+    const queryResult = await this.submissionService.querySubmissions(
+      null,
+      null,
+      contest.id,
+      null,
+      null,
+      null,
+      null,
+      false,
+      1000000,
+    );
 
-  getRun(): string {
-    return JSON.stringify(run);
-  }
+    const submissionMetas: SubmissionMetaDto[] = new Array(queryResult.result.length);
+    const [problems, submitters] = await Promise.all([
+      this.problemService.findProblemsByExistingIds(queryResult.result.map(submission => submission.problemId)),
+      this.userService.findUsersByExistingIds(queryResult.result.map(submission => submission.submitterId))
+    ]);
 
+    const pendingSubmissionIds: number[] = [];
+    await Promise.all(
+      queryResult.result.map(async (_, i) => {
+        const submission = queryResult.result[i];
+        const titleLocale = problems[i].locales.includes(Locale.en_US) ? Locale.en_US : problems[i].locales[0];
+
+        submissionMetas[i] = {
+          id: submission.id,
+          isPublic: submission.isPublic,
+          codeLanguage: submission.codeLanguage,
+          answerSize: submission.answerSize,
+          score: submission.score,
+          status: submission.status,
+          submitTime: submission.submitTime,
+          problem: await this.problemService.getProblemMeta(problems[i]),
+          problemTitle: await this.problemService.getProblemLocalizedTitle(problems[i], titleLocale),
+          submitter: await this.userService.getUserMeta(submitters[i], currentUser),
+          timeUsed: submission.timeUsed,
+          memoryUsed: submission.memoryUsed
+        };
+
+        // For progress reporting
+        const progress =
+          submission.status === SubmissionStatus.Pending &&
+          (await this.submissionProgressService.getPendingSubmissionProgress(submission.id));
+
+        if (progress) {
+          submissionMetas[i].progressType = progress.progressType;
+        }
+
+        if (submission.status === SubmissionStatus.Pending) {
+          pendingSubmissionIds.push(submission.id);
+        }
+      })
+    );
+
+    return submissionMetas;
+  }
 }

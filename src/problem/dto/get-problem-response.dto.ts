@@ -25,7 +25,8 @@ class ProblemUserPermissionDto {
   @ApiProperty()
   user: UserMetaDto;
 
-  @ApiProperty({ enum: Object.values(ProblemPermissionLevel).filter(x => typeof x === "number") })
+  @ApiProperty()
+  // @ApiProperty({ enum: Object.values(ProblemPermissionLevel).filter(x => typeof x === "number") })
   permissionLevel: ProblemPermissionLevel;
 }
 

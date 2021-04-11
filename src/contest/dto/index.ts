@@ -38,3 +38,6 @@ export * from "./contest-meta.dto";
 export * from "./create-clarification-request.dto";
 export * from "./create-clarification-response.dto";
 export * from "./clarification-meta.dto";
+
+export * from "./get-standings-data-request.dto";
+export * from "./get-standings-data-response.dto";

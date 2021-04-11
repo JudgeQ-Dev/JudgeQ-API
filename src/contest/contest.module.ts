@@ -2,6 +2,8 @@ import { Module, forwardRef, NestModule, MiddlewareConsumer, RequestMethod } fro
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ContestController } from "./contest.controller";
 import { ContestService } from "./contest.service";
+import { SubmissionProgressService } from "@/submission/submission-progress.service";
+import { SubmissionProgressGateway } from "@/submission/submission-progress.gateway";
 
 import { ContestEntity } from "./contest.entity";
 import { ContestProblemEntity } from "./contest-problem.entity";
@@ -16,7 +18,8 @@ import { UserModule } from "@/user/user.module";
 import { SubmissionModule } from "@/submission/submission.module";
 import { ProblemModule } from "@/problem/problem.module";
 import { LocalizedContentModule } from "@/localized-content/localized-content.module"
-
+import { RedisModule } from "@/redis/redis.module";
+import { ProblemTypeModule } from "@/problem-type/problem-type.module";
 
 @Module({
   imports: [
@@ -28,13 +31,15 @@ import { LocalizedContentModule } from "@/localized-content/localized-content.mo
     TypeOrmModule.forFeature([SubmissionEntity]),
     TypeOrmModule.forFeature([ClarificationEntity]),
     TypeOrmModule.forFeature([UserAuthEntity]),
+    forwardRef(() => RedisModule),
     forwardRef(() => UserModule),
     forwardRef(() => SubmissionModule),
     forwardRef(() => ProblemModule),
+    forwardRef(() => ProblemTypeModule),
     forwardRef(() => LocalizedContentModule),
   ],
   controllers: [ContestController],
-  providers: [ContestService],
+  providers: [ContestService, SubmissionProgressService, SubmissionProgressGateway],
   exports: [ContestService],
 })
 

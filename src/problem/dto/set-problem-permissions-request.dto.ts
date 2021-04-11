@@ -10,7 +10,8 @@ class SetProblemPermissionsRequestUserPermissionDto {
   @IsInt()
   userId: number;
 
-  @ApiProperty({ enum: Object.values(ProblemPermissionLevel).filter(x => typeof x === "number") })
+  @ApiProperty()
+  // @ApiProperty({ enum: Object.values(ProblemPermissionLevel).filter(x => typeof x === "number") })
   @IsEnum(ProblemPermissionLevel)
   permissionLevel: ProblemPermissionLevel;
 }
@@ -20,7 +21,8 @@ class SetProblemPermissionsRequestGroupPermissionDto {
   @IsInt()
   groupId: number;
 
-  @ApiProperty({ enum: Object.values(ProblemPermissionLevel).filter(x => typeof x === "number") })
+  @ApiProperty()
+  // @ApiProperty({ enum: Object.values(ProblemPermissionLevel).filter(x => typeof x === "number") })
   @IsEnum(ProblemPermissionLevel)
   permissionLevel: ProblemPermissionLevel;
 }
