@@ -326,44 +326,48 @@ export class ContestService {
   ): Promise<void> {
     const now = new Date();
     await this.connection.transaction("READ COMMITTED", async transactionalEntityManager => {
-      contestUserList.forEach(async (_contestUser) => {
-        const { username, nickname, password } = _contestUser;
-        const user = new UserEntity();
-        user.username = username;
-        user.email = `${username}@hznuoj.com`;
-        user.publicEmail = false;
-        user.nickname = nickname;
-        user.bio = "";
-        user.avatarInfo = "gravatar:";
-        user.isAdmin = false;
-        user.submissionCount = 0;
-        user.acceptedProblemCount = 0;
-        user.rating = 0;
-        user.registrationTime = new Date();
-        user.isContestUser = true;
-        await transactionalEntityManager.save(user);
+      await Promise.all(
+        contestUserList.map(async (_contestUser) => {
+          const { username, nickname, password } = _contestUser;
+          const user = new UserEntity();
+          user.username = username;
+          user.email = `${username}@hznuoj.com`;
+          user.publicEmail = false;
+          user.nickname = nickname;
+          user.bio = "";
+          user.avatarInfo = "gravatar:";
+          user.isAdmin = false;
+          user.submissionCount = 0;
+          user.acceptedProblemCount = 0;
+          user.rating = 0;
+          user.registrationTime = now;
+          user.isContestUser = true;
+          user.contestId = contest.id;
+          await transactionalEntityManager.save(user);
 
-        const userAuth = new UserAuthEntity();
-        userAuth.userId = user.id;
-        userAuth.password = await this.hashPassword(password);
-        await transactionalEntityManager.save(userAuth);
+          const userAuth = new UserAuthEntity();
+          userAuth.userId = user.id;
+          userAuth.password = await this.hashPassword(password);
+          await transactionalEntityManager.save(userAuth);
 
-        const userInformation = new UserInformationEntity();
-        userInformation.userId = user.id;
-        userInformation.organization = "";
-        userInformation.location = "";
-        userInformation.url = "";
-        userInformation.telegram = "";
-        userInformation.qq = "";
-        userInformation.github = "";
-        await transactionalEntityManager.save(userInformation);
+          const userInformation = new UserInformationEntity();
+          userInformation.userId = user.id;
+          userInformation.organization = "";
+          userInformation.location = "";
+          userInformation.url = "";
+          userInformation.telegram = "";
+          userInformation.qq = "";
+          userInformation.github = "";
+          await transactionalEntityManager.save(userInformation);
 
-        const contestUser = new ContestUserEntity();
-        contestUser.contest = contest;
-        contestUser.user = user;
-        contestUser.registrationTime = now;
-        await transactionalEntityManager.save(contestUser);
-      })
+          const contestUser = new ContestUserEntity();
+          contestUser.contest = contest;
+          contestUser.user = user;
+          contestUser.registrationTime = now;
+          await transactionalEntityManager.save(contestUser);
+
+          return {};
+        }))
     });
   }
 

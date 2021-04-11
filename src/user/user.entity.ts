@@ -4,8 +4,9 @@ import {
   Column,
   OneToOne,
   ManyToMany,
-  JoinTable,
-  Index
+  Index,
+  ManyToOne,
+  JoinColumn
 } from "typeorm";
 
 import { UserAuthEntity } from "@/auth/user-auth.entity";
@@ -67,4 +68,14 @@ export class UserEntity {
 
   @ManyToMany(() => ContestEntity, contest => contest.users)
   contests?: ContestEntity[];
+
+  @ManyToOne(() => ContestEntity, {
+    onDelete: "CASCADE"
+  })
+  @JoinColumn()
+  contest: Promise<ContestEntity>;
+
+  @Column({nullable: true})
+  @Index()
+  contestId: number;
 }
