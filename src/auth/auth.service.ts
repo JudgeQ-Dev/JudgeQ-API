@@ -75,6 +75,7 @@ export class AuthService {
         user.acceptedProblemCount = 0;
         user.rating = 0;
         user.registrationTime = new Date();
+        user.notificationEmail = email;
         await transactionalEntityManager.save(user);
 
         const userAuth = new UserAuthEntity();

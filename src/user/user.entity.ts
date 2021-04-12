@@ -25,6 +25,9 @@ export class UserEntity {
   @Index({ unique: true })
   email: string;
 
+  @Column({ type: "varchar", length: 255, nullable: true })
+  notificationEmail: string;
+
   @Column({ type: "varchar", length: 24 })
   nickname: string;
 

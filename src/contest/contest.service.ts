@@ -97,7 +97,11 @@ export class ContestService {
     problem?: ProblemEntity,
   ): Promise<boolean> {
     let status: ContestStatusType;
-    if (contest) status = await this.getContestStatus(contest);
+    let frozen: boolean;
+    if (contest) {
+      status = await this.getContestStatus(contest);
+      frozen = await this.getContestFrozenStatus(contest);
+    }
     switch (type) {
       case ContestPermissionType.Create:
         if (!user) return false;
@@ -106,26 +110,22 @@ export class ContestService {
         if (!user) return false;
         return user.isAdmin;
       case ContestPermissionType.Register:
-        return true;
+        if (!user) return false;
+        if (contest.isPublic) return true;
+        return user.isAdmin;
       case ContestPermissionType.View:
         if (user && user.isAdmin) return true;
         if (status === ContestStatusType.Pending) return false;
-        return true;
-        // if (contest.isPublic) return true;
-        // if (!user) return false;
-        // if (user.isAdmin) return true;
-        // if (contest.users.includes(user)) {
-        //   if (await this.getContestStatus(contest) !== ContestStatusType.Pending) {
-        //     return true;
-        //   } else {
-        //     return false;
-        //   }
-        // }
+        if (contest.isPublic) return true;
+        if (await this.isUserRegisteredContest(user, contest)) return true;
+        return false;
       case ContestPermissionType.Submit:
-        if (status === ContestStatusType.Pending || status === ContestStatusType.Finished) {
-          return false;
-        }
-        return true;
+        if (!user) return false;
+        if (!(await this.isProblemExistInContest(problem, contest))) return false;
+        if (status === ContestStatusType.Pending || status === ContestStatusType.Finished) return false;
+        if (user.isAdmin) return true;
+        if (await this.isUserRegisteredContest(user, contest)) return true;
+        return false;
       default:
         return false;
     }
@@ -158,6 +158,24 @@ export class ContestService {
       }
     }
     return false;
+  }
+
+  async isUserRegisteredContest(user: UserEntity, contest: ContestEntity): Promise<boolean> {
+    const contestUser = await this.contestUserRepository.find({
+      contest: contest,
+      user: user,
+    });
+    if (!contestUser) return false;
+    return true;
+  }
+
+  async isProblemExistInContest(problem: ProblemEntity, contest: ContestEntity): Promise<boolean> {
+    const contestProblem = await this.contestProblemRepository.find({
+      contest: contest,
+      problem: problem,
+    });
+    if (!contestProblem) return false;
+    return true;
   }
 
   async getContestMeta(contest: ContestEntity): Promise<ContestMetaDto> {
