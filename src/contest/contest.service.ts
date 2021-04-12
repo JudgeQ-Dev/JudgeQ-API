@@ -456,8 +456,12 @@ export class ContestService {
 
     queryBuilder.leftJoinAndSelect("clarification.publisher", "user");
 
-    if (currentUser.isAdmin === false) {
-      queryBuilder.andWhere("user.isAdmin = 1 OR user.id = :id", {id: currentUser.id})
+    if (!currentUser || currentUser.isAdmin === false) {
+      if (currentUser) {
+        queryBuilder.andWhere("user.isAdmin = 1 OR user.id = :id", {id: currentUser.id});
+      } else {
+        queryBuilder.andWhere("user.isAdmin = 1");
+      }
     }
 
     queryBuilder.orderBy("clarification.replyId", "ASC");
