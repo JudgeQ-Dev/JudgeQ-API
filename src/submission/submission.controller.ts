@@ -1,4 +1,4 @@
-import { Controller, Post, Body, BadRequestException } from "@nestjs/common";
+import { Controller, Post, Body, BadRequestException, HttpCode } from "@nestjs/common";
 import { ApiOperation, ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 
 import { Recaptcha } from "@nestlab/google-recaptcha";
@@ -154,6 +154,7 @@ export class SubmissionController {
   })
   @ApiBearerAuth()
   @Post("querySubmission")
+  @HttpCode(200)
   async querySubmission(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: QuerySubmissionRequestDto
