@@ -1,4 +1,4 @@
-import { Controller, Post, Body } from "@nestjs/common";
+import { Controller, Post, Body, HttpCode } from "@nestjs/common";
 import { ApiOperation, ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 
 import { Recaptcha } from "@nestlab/google-recaptcha";
@@ -244,6 +244,7 @@ export class DiscussionController {
   @ApiOperation({
     summary: "Get a list of specfied discussions."
   })
+  @HttpCode(200)
   async queryDiscussions(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: QueryDiscussionsRequestDto
@@ -336,6 +337,7 @@ export class DiscussionController {
   @ApiOperation({
     summary: "Get which users and groups which permissions of the discussion."
   })
+  @HttpCode(200)
   async getDiscussionPermissions(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: GetDiscussionPermissionsRequestDto
@@ -375,6 +377,7 @@ export class DiscussionController {
   @ApiOperation({
     summary: "Get a discussion or/and some of its replies."
   })
+  @HttpCode(200)
   async getDiscussionAndReplies(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: GetDiscussionAndRepliesRequestDto

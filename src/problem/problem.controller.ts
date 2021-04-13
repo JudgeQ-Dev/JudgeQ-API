@@ -1,4 +1,4 @@
-import { Controller, Post, Body } from "@nestjs/common";
+import { Controller, Post, Body, HttpCode } from "@nestjs/common";
 import { ApiOperation, ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 
 import { Recaptcha } from "@nestlab/google-recaptcha";
@@ -102,6 +102,7 @@ export class ProblemController {
   @ApiOperation({
     summary: "Query problems in problem set"
   })
+  @HttpCode(200)
   async queryProblemSet(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: QueryProblemSetRequestDto
@@ -301,6 +302,7 @@ export class ProblemController {
     description:
       "Get a problem's meta and any parts of its owner, localized contents of given locale, localized contents of all locales, samples, testdata, additional files, permissions of current user, permission for users and groups and judge info. If localized contents of given locale are request but not found, they are fallbacked to default (first) locale if none for given locale."
   })
+  @HttpCode(200)
   async getProblem(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: GetProblemRequestDto
@@ -866,6 +868,7 @@ export class ProblemController {
   @ApiOperation({
     summary: "Get all problem tags with the name of given locale."
   })
+  @HttpCode(200)
   async getAllProblemTags(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: GetAllProblemTagsRequestDto
@@ -909,6 +912,7 @@ export class ProblemController {
   @ApiOperation({
     summary: "Get the meta and all localized names of a problem tag."
   })
+  @HttpCode(200)
   async getProblemTagDetail(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: GetProblemTagDetailRequestDto
@@ -1000,6 +1004,7 @@ export class ProblemController {
   @ApiOperation({
     summary: "Get the meta and all localized names of all problem tags."
   })
+  @HttpCode(200)
   async getAllProblemTagsOfAllLocales(
     @CurrentUser() currentUser: UserEntity
   ): Promise<GetAllProblemTagsOfAllLocalesResponseDto> {

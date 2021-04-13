@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Query, Inject, forwardRef } from "@nestjs/common";
+import { Controller, Get, Post, Body, Query, Inject, forwardRef, HttpCode } from "@nestjs/common";
 import { ApiOperation, ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 
 import { CurrentUser } from "@/common/user.decorator";
@@ -87,6 +87,7 @@ export class UserController {
   @ApiOperation({
     summary: "Get a user's metadata with its ID or username."
   })
+  @HttpCode(200)
   async getUserMeta(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: GetUserMetaRequestDto
@@ -243,6 +244,7 @@ export class UserController {
   @ApiOperation({
     summary: "Get a user list sorted by rating or accepted problems count."
   })
+  @HttpCode(200)
   async getUserList(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: GetUserListRequestDto
@@ -265,6 +267,7 @@ export class UserController {
   @ApiOperation({
     summary: "Get a user's meta and related data for user profile page."
   })
+  @HttpCode(200)
   async getUserDetail(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: GetUserDetailRequestDto
@@ -308,6 +311,7 @@ export class UserController {
   @ApiOperation({
     summary: "Get a user's meta and information for user profile edit page."
   })
+  @HttpCode(200)
   async getUserProfile(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: GetUserProfileRequestDto
@@ -355,6 +359,7 @@ export class UserController {
   @ApiOperation({
     summary: "Get a user's security settings for user settings page."
   })
+  @HttpCode(200)
   async getUserSecuritySettings(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: GetUserSecuritySettingsRequestDto
@@ -390,6 +395,7 @@ export class UserController {
   @ApiOperation({
     summary: "Query audit logs."
   })
+  @HttpCode(200)
   async queryAuditLogs(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: QueryAuditLogsRequestDto

@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query, Inject, forwardRef } from "@nestjs/common";
+import { Body, Controller, Get, Post, Query, Inject, forwardRef, HttpCode } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 
 import { SubmissionStatus } from "@/submission/submission-status.enum";
@@ -24,6 +24,7 @@ export class HomepageController {
   @ApiOperation({
     summary: "Get Submission Statics."
   })
+  @HttpCode(200)
   async getSubmissionStatics(
     @Query() request: GetSubmissionStaticsRequestDto
   ): Promise<GetSubmissionStaticsResponseDto> {

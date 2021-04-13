@@ -276,6 +276,7 @@ export class SubmissionController {
   })
   @ApiBearerAuth()
   @Post("getSubmissionDetail")
+  @HttpCode(200)
   async getSubmissionDetail(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: GetSubmissionDetailRequestDto
@@ -383,6 +384,7 @@ export class SubmissionController {
   })
   @ApiBearerAuth()
   @Post("downloadSubmissionFile")
+  @HttpCode(200)
   async downloadSubmissionFile(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: DownloadSubmissionFileRequestDto
@@ -418,6 +420,7 @@ export class SubmissionController {
   })
   @ApiBearerAuth()
   @Post("querySubmissionStatistics")
+  @HttpCode(200)
   async querySubmissionStatistics(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: QuerySubmissionStatisticsRequestDto

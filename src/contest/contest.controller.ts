@@ -1,6 +1,6 @@
 import { CurrentUser } from "@/common/user.decorator";
 import { UserEntity } from "@/user/user.entity";
-import { Controller, Get, Post, Body } from "@nestjs/common";
+import { Controller, Get, Post, Body, HttpCode } from "@nestjs/common";
 
 import { ApiTags, ApiBearerAuth, ApiOperation } from "@nestjs/swagger";
 
@@ -131,6 +131,7 @@ export class ContestController {
   @ApiOperation({
     summary: "Get any parts of contest."
   })
+  @HttpCode(200)
   async getContest(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: GetContestRequestDto,
@@ -164,6 +165,7 @@ export class ContestController {
   @ApiOperation({
     summary: "Get a contest list."
   })
+  @HttpCode(200)
   async getContestList(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: GetContestListRequestDto,
@@ -260,6 +262,7 @@ export class ContestController {
   @ApiOperation({
     summary: "Get Problem Meta List by contestId."
   })
+  @HttpCode(200)
   async getProblemMetaList(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: GetProblemMetaListRequestDto
@@ -345,6 +348,7 @@ export class ContestController {
   @ApiOperation({
     summary: "Get User List from a contest."
   })
+  @HttpCode(200)
   async getContestUserList(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: GetContestUserListRequestDto,
@@ -403,6 +407,7 @@ export class ContestController {
   @ApiOperation({
     summary: "Get clarifications."
   })
+  @HttpCode(200)
   async getClarifications(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: GetClarificationsRequestDto,
@@ -426,6 +431,7 @@ export class ContestController {
   @ApiOperation({
     summary: "Get Standings Data."
   })
+  @HttpCode(200)
   async getStandingsData(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: GetStandingsDataRequestDto,
@@ -455,6 +461,7 @@ export class ContestController {
   @ApiOperation({
     summary: "Get Contest Submissions."
   })
+  @HttpCode(200)
   async getContestSubmissions(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: GetContestSubmissionsRequestDto,
