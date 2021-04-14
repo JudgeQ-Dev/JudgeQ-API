@@ -58,6 +58,7 @@ export enum ContestPermissionType {
   ViewContestUserList = "ViewContestUserList",
   ViewStandings = "ViewStandings",
   ViewFrozenStatus = "ViewFrozenStatus",
+  ViewSubmissionDetails = "ViewSubmissionDetails",
 }
 
 export enum ContestStatusType {
@@ -151,6 +152,14 @@ export class ContestService {
         return false;
       case ContestPermissionType.ViewFrozenStatus:
         if (user && user.isAdmin) return true;
+        return false;
+      case ContestPermissionType.ViewSubmissionDetails:
+        if (!contest) return false;
+        if (user && user.isAdmin) return true;
+        if (status === ContestStatusType.Finished && !frozen) {
+          if (contest.isPublic) return true;
+          if (await this.isUserRegisteredContest(user, contest)) return true;
+        }
         return false;
       case ContestPermissionType.Submit:
         if (!user) return false;

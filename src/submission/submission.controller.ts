@@ -281,10 +281,20 @@ export class SubmissionController {
     @Body() request: GetSubmissionDetailRequestDto
   ): Promise<GetSubmissionDetailResponseDto> {
     const submission = await this.submissionService.findSubmissionById(Number(request.submissionId));
-    if (!submission)
+    if (!submission) {
       return {
         error: GetSubmissionDetailResponseError.NO_SUCH_SUBMISSION
       };
+    }
+
+    if (submission.contestId) {
+      const contest = await this.contestService.findContestById(submission.contestId);
+      if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.ViewSubmissionDetails, contest))) {
+        return {
+          error: GetSubmissionDetailResponseError.PERMISSION_DENIED
+        };
+      }
+    }
 
     const [problem, hasPrivilege] = await Promise.all([
       this.problemService.findProblemById(submission.problemId),
