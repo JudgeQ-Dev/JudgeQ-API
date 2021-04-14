@@ -53,8 +53,10 @@ import {
   GetContestSubmissionsRequestDto,
   GetContestSubmissionsResponseDto,
   GetContestSubmissionsResponseError,
+  ProblemInContestMetaDto,
 } from "./dto";
 import { ProblemEntity } from "@/problem/problem.entity";
+import { SubmissionStatus } from "@/submission/submission-status.enum";
 
 @ApiTags("Contest")
 @Controller("contest")
@@ -86,7 +88,7 @@ export class ContestController {
       request.contestName,
       request.startTime,
       request.endTime,
-      request.isPublic,
+      request.isPublic ?? false,
       request.frozenStartTime,
       request.frozenEndTime,
     );
@@ -107,14 +109,21 @@ export class ContestController {
     @Body() request: EditContestRequestDto,
   ): Promise<EditContestResponseDto> {
 
-    if (!await this.contestService.userHasPermission(currentUser, ContestPermissionType.Edit)) {
+    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.Edit))) {
       return {
         error: EditContestResponseError.PERMISSION_DENIED,
       };
     }
 
+    const contest = await this.contestService.findContestById(request.contestId);
+    if (!contest) {
+      return {
+        error: EditContestResponseError.NO_SUCH_CONTEST,
+      };
+    }
+
     const id = await this.contestService.editContest(
-      request.contestId,
+      contest,
       request.contestName,
       request.startTime,
       request.endTime,
@@ -144,19 +153,23 @@ export class ContestController {
       };
     }
 
-    if (!contest.isPublic &&
-      (!currentUser || currentUser.isAdmin === false)) {
+    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.ViewContestMeta, contest))) {
       return {
-        error: GetContestResponseDtoError.PERMISSION_DENIED
+        error: GetContestResponseDtoError.PERMISSION_DENIED,
       };
     }
 
-    const problemMetaList = await this.contestService.getProblemMetaList(contest, currentUser);
-
-    return {
-      contestMeta: contest,
-      problemMetas: problemMetaList
-    };
+    if (await this.contestService.userHasPermission(currentUser, ContestPermissionType.ViewProblemMeta, contest)) {
+      const problemMetaList = await this.contestService.getProblemMetaList(contest, currentUser);
+      return {
+        contestMeta: contest,
+        problemMetas: problemMetaList,
+      };
+    } else {
+      return {
+        contestMeta: contest,
+      };
+    }
 
   }
 
@@ -176,10 +189,15 @@ export class ContestController {
       };
     }
 
-    let hasPrivate = request.hasPrivate;
-    if (!currentUser || currentUser.isAdmin === false) {
-      hasPrivate = false;
+    if (currentUser && currentUser.isContestUser) {
+      const contest = await this.contestService.findContestById(currentUser.contestId);
+      return {
+        contestMetas: [await this.contestService.getContestMeta(contest)],
+        count: 1
+      };
     }
+
+    let hasPrivate = request.hasPrivate && (await this.contestService.userHasPermission(currentUser, ContestPermissionType.ViewPrivateContest));
 
     const [contests, count] = await this.contestService.getContestList(hasPrivate, request.skipCount, request.takeCount);
 
@@ -198,25 +216,29 @@ export class ContestController {
     @CurrentUser() currentUser: UserEntity,
     @Body() request: AddProblemRequestDto,
   ): Promise<AddProblemResponseDto> {
-    if (!currentUser || currentUser.isAdmin === false) {
+
+    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.Edit))) {
       return {
         error: AddProblemResponseError.PERMISSION_DENIED
       };
     }
 
-    if (!await this.contestService.findContestById(request.contestId)) {
+    const contest = await this.contestService.findContestById(request.contestId);
+
+    if (!contest) {
       return {
         error: AddProblemResponseError.NO_SUCH_CONTEST
       };
     }
 
-    if (!await this.problemService.findProblemById(request.problemId)) {
+    const problem = await this.problemService.findProblemById(request.problemId);
+    if (!problem) {
       return {
         error: AddProblemResponseError.NO_SUCH_PROBLEM
       };
     }
 
-    await this.contestService.addProblemById(request.contestId, request.problemId);
+    await this.contestService.addProblemById(contest, problem);
 
     return {};
   }
@@ -230,29 +252,34 @@ export class ContestController {
     @CurrentUser() currentUser: UserEntity,
     @Body() request: DeleteProblemRequestDto,
   ): Promise<DeleteProblemResponseDto> {
-    if (!currentUser || currentUser.isAdmin === false) {
+
+    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.Edit))) {
       return {
         error: DeleteProblemResponseError.PERMISSION_DENIED
       };
     }
 
-    if (!await this.contestService.findContestById(request.contestId)) {
+    const contest = await this.contestService.findContestById(request.contestId);
+    if (!contest) {
       return {
         error: DeleteProblemResponseError.NO_SUCH_CONTEST
       };
     }
 
-    if (!await this.problemService.findProblemById(request.problemId)) {
+    const problem = await this.problemService.findProblemById(request.problemId);
+    if (!problem) {
       return {
         error: DeleteProblemResponseError.NO_SUCH_PROBLEM
       };
     }
 
-    if (!await this.contestService.deleteProblemById(request.contestId, request.problemId)) {
+    if (!(await this.contestService.isProblemExistInContest(problem, contest))) {
       return {
         error: DeleteProblemResponseError.PROBLEM_NOT_IN_CONTEST
       };
     }
+
+    await this.contestService.deleteProblemById(contest, problem);
 
     return {};
   }
@@ -270,9 +297,15 @@ export class ContestController {
 
     const contest = await this.contestService.findContestById(request.contestId);
 
-    if (contest.isPublic === false && (!currentUser || currentUser.isAdmin === false)) {
+    if (!contest) {
       return {
         error: GetProblemMetaListResponseError.NO_SUCH_CONTEST
+      };
+    }
+
+    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.ViewProblemMeta, contest))) {
+      return {
+        error: GetProblemMetaListResponseError.PERMISSION_DENIED
       };
     }
 
@@ -292,17 +325,18 @@ export class ContestController {
     @CurrentUser() currentUser: UserEntity,
     @Body() request: RegisterContestUserRequestDto,
   ): Promise<RegisterContestUserResponseDto> {
-    if (!currentUser) {
-      return {
-        error: RegisterContestUserResponseError.PERMISSION_DENIED,
-      };
-    }
 
     const contest = await this.contestService.findContestById(request.contestId);
 
     if (!contest) {
       return {
         error: RegisterContestUserResponseError.NO_SUCH_CONTEST
+      };
+    }
+
+    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.Register, contest))) {
+      return {
+        error: RegisterContestUserResponseError.PERMISSION_DENIED
       };
     }
 
@@ -329,7 +363,7 @@ export class ContestController {
       };
     }
 
-    if (!currentUser || !(await this.contestService.userHasPermission(currentUser, ContestPermissionType.Edit, contest))) {
+    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.Edit, contest))) {
       return {
         error: ImportContestUsersResponseError.PERMISSION_DENIED,
       };
@@ -362,7 +396,7 @@ export class ContestController {
       };
     }
 
-    if (!currentUser || !(await this.contestService.userHasPermission(currentUser, ContestPermissionType.Edit, contest))) {
+    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.ViewContestUserList, contest))) {
       return {
         error: GetContestUserListResponseError.PERMISSION_DENIED,
       };
@@ -383,17 +417,17 @@ export class ContestController {
     @Body() request: CreateClarificationRequestDto,
   ): Promise<CreateClarificationResponseDto> {
 
-    if (!currentUser) {
-      return {
-        error: CreateClarificationResponseError.PERMISSION_DENIED,
-      };
-    }
-
     const contest = await this.contestService.findContestById(request.contestId);
 
     if (!contest) {
       return {
         error: CreateClarificationResponseError.NO_SUCH_CONTEST,
+      };
+    }
+
+    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.View, contest))) {
+      return {
+        error: CreateClarificationResponseError.PERMISSION_DENIED,
       };
     }
 
@@ -421,6 +455,12 @@ export class ContestController {
       };
     }
 
+    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.View, contest))) {
+      return {
+        error: GetClarificationsResponseError.PERMISSION_DENIED,
+      };
+    }
+
     return {
       clarifications: await this.contestService.getClarifications(contest, currentUser)
     };
@@ -445,14 +485,36 @@ export class ContestController {
       };
     }
 
+    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.ViewStandings, contest))) {
+      return {
+        error: GetStandingsDataResponseError.PERMISSION_DENIED,
+      };
+    }
+
+    const submissionMetas = await this.contestService.getContestSubmissions(
+      null,
+      null,
+      contest.id,
+      null,
+      null,
+      null,
+      null,
+      false,
+      1000000,
+    );
+
+    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.ViewFrozenStatus))) {
+      submissionMetas.forEach(async submission => {
+        if (await this.contestService.isSubmissionFrozen(submission, contest)) {
+          submission.status = SubmissionStatus.Frozen;
+          submission.score = 0;
+        }
+      });
+    }
+
     return {
       contestUserList: await this.contestService.getContestUserList(contest),
-      submissions: await this.contestService.getContestSubmissions(
-        contest,
-        currentUser,
-        null,
-        null
-      ),
+      submissions: submissionMetas,
     };
   }
 
@@ -495,13 +557,29 @@ export class ContestController {
       }
     }
 
+    const submissionMetas = await this.contestService.getContestSubmissions(
+      problem ? problem.id : null,
+      user ? user.id : null,
+      contest ? contest.id : null,
+      request.codeLanguage,
+      request.status,
+      request.minId,
+      request.maxId,
+      false,
+      1000000,
+    );
+
+    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.ViewFrozenStatus))) {
+      submissionMetas.forEach(async submission => {
+        if (await this.contestService.isSubmissionFrozen(submission, contest)) {
+          submission.status = SubmissionStatus.Frozen;
+          submission.score = 0;
+        }
+      });
+    }
+
     return {
-      submissions: await this.contestService.getContestSubmissions(
-        contest,
-        currentUser,
-        user,
-        problem
-      ),
+      submissions: submissionMetas,
     };
   }
 }

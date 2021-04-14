@@ -29,11 +29,6 @@ export class QuerySubmissionRequestDto {
   submitter?: string;
 
   @ApiProperty()
-  @IsInt()
-  @IsOptional()
-  contestId?: number;
-
-  @ApiProperty()
   @IsString()
   @Length(1, 20)
   @IsOptional()

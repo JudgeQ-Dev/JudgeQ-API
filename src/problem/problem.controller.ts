@@ -318,8 +318,8 @@ export class ProblemController {
     }
 
     if (request.contestId) {
-      let contest = await this.contestService.findContestById(request.contestId);
-      if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.View, contest, problem))) {
+      const contest = await this.contestService.findContestById(request.contestId);
+      if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.ViewProblemMeta, contest, problem))) {
         return {
           error: GetProblemResponseError.PERMISSION_DENIED
         };

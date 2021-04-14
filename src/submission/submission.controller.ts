@@ -78,7 +78,10 @@ export class SubmissionController {
   })
   @ApiBearerAuth()
   @Post("submit")
-  async submit(@CurrentUser() currentUser: UserEntity, @Body() request: SubmitRequestDto): Promise<SubmitResponseDto> {
+  async submit(
+    @CurrentUser() currentUser: UserEntity,
+    @Body() request: SubmitRequestDto
+  ): Promise<SubmitResponseDto> {
 
     if (!currentUser) {
       return {
@@ -93,6 +96,12 @@ export class SubmissionController {
         };
 
       // TODO: add "submit" permission
+      if (currentUser.isContestUser && currentUser.contestId !== request.contestId) {
+        return {
+          error: SubmitResponseError.PERMISSION_DENIED
+        };
+      }
+
       if (request.contestId) {
         const contest = await this.contestService.findContestById(request.contestId);
 
@@ -181,16 +190,6 @@ export class SubmissionController {
       }
     }
 
-    let filterContest: ContestEntity = null;
-    if (request.contestId) {
-      filterContest = await this.contestService.findContestById(request.contestId);
-      if (!filterContest) {
-        return {
-          error: QuerySubmissionResponseError.NO_SUCH_CONTEST
-        }
-      }
-    }
-
     const hasManageProblemPrivilege = await this.userPrivilegeService.userHasPrivilege(
       currentUser,
       UserPrivilegeType.ManageProblem
@@ -205,7 +204,7 @@ export class SubmissionController {
     const queryResult = await this.submissionService.querySubmissions(
       filterProblem ? filterProblem.id : null,
       filterSubmitter ? filterSubmitter.id : null,
-      filterContest ? filterContest.id : null,
+      null,
       request.codeLanguage,
       request.status,
       request.minId,
