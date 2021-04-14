@@ -43,6 +43,8 @@ import { FileUploadInfoDto, SignedFileUploadRequestDto } from "@/file/dto";
 
 import { SubmissionBasicMetaDto } from "./dto";
 import { ContestEntity } from "@/contest/contest.entity";
+import { ContestStatusType } from "@/contest/contest.service";
+import { query } from "express";
 
 export enum SubmissionPermissionType {
   View = "View",
@@ -473,6 +475,53 @@ export class SubmissionService implements JudgeTaskService<SubmissionProgress, S
     const result = [...new Array(days).keys()].map(i => map.get(startDate.clone().add(i, "day").valueOf()) || 0);
 
     return result;
+  }
+
+  async getSubmissionCountFilterByStatus(
+    contestId: number,
+    status: SubmissionStatus,
+    minDate: Date,
+    maxDate: Date,
+    problemIds: number[],
+    distinct: boolean,
+  ): Promise<Map<string, number>> {
+    const queryBuilder = this.submissionRepository.createQueryBuilder();
+
+    if (distinct) {
+      queryBuilder.select("COUNT(DISTINCT submitterId)", "count");
+    } else {
+      queryBuilder.select("COUNT(*)", "count");
+    }
+
+    queryBuilder.addSelect("problemId");
+
+    queryBuilder.where("TRUE")
+
+    if (status) {
+      queryBuilder.andWhere("status = :status", { status });
+    }
+
+    if (contestId) {
+      queryBuilder.andWhere("contestId = :contestId", { contestId });
+    }
+
+    if (problemIds) {
+      queryBuilder.andWhere("problemId IN (:...problemIds)", { problemIds })
+    }
+
+    if (minDate) {
+      queryBuilder.andWhere("submitTime >= :minDate", {minDate});
+    }
+
+    if (maxDate) {
+      queryBuilder.andWhere("submitTime < :maxDate", {maxDate});
+    }
+
+    queryBuilder.groupBy("problemId");
+
+    const queryResult: { problemId: string; count: string}[] = await queryBuilder.getRawMany();
+
+    return new Map(queryResult.map(result => [result.problemId, parseInt(result.count)]));
   }
 
   async getAllRecentlySubmissionCountPerDay(

@@ -354,12 +354,29 @@ export class ContestService {
       this.submissionService.getUserLatestSubmissionByProblems(currentUser, problems.map(problem => problem.problem_id), false, contest)
     ]);
 
+    const [acceptedSubmissionCount, allSubmissionCount] = await Promise.all([
+      this.submissionService.getSubmissionCountFilterByStatus(
+        contest.id,
+        SubmissionStatus.Accepted,
+        contest.startTime,
+        frozenStatus ? contest.frozenStartTime : null,
+        problems.map(problem => problem.problem_id),
+        null),
+      this.submissionService.getSubmissionCountFilterByStatus(
+        contest.id,
+        null,
+        contest.startTime,
+        null,
+        problems.map(problem => problem.problem_id),
+        null),
+    ]);
+
     return problems.map((problem) => (
       <ProblemInContestMetaDto>{
         orderId: problem.contest_problem_orderId,
         problemId: problem.problem_id,
-        submissionCount: problem.problem_submissionCount,
-        acceptedSubmissionCount: problem.problem_acceptedSubmissionCount,
+        submissionCount: allSubmissionCount.get(problem.problem_id) ?? 0,
+        acceptedSubmissionCount: acceptedSubmissionCount.get(problem.problem_id) ?? 0,
         title: problem.localizedContent_data,
         submission: currentUser && (acceptedSubmissions.get(problem.problem_id) || nonAcceptedSubmissions.get(problem.problem_id))
       }
