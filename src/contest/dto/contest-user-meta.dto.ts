@@ -21,4 +21,7 @@ export class ContestUserMetaDto {
 
   @ApiProperty()
   registrationTime: Date;
+
+  @ApiProperty()
+  notificationEmail: string;
 }

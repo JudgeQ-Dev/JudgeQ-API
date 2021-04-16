@@ -470,6 +470,7 @@ export class ContestService {
         nickname: user.user_nickname,
         organization: user.userInformation_organization,
         registrationTime: user.contest_user_registrationTime,
+        notificationEmail: user.user_notificationEmail,
       }
     ));
   }
