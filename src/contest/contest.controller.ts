@@ -53,7 +53,6 @@ import {
   GetContestSubmissionsRequestDto,
   GetContestSubmissionsResponseDto,
   GetContestSubmissionsResponseError,
-  ProblemInContestMetaDto,
 } from "./dto";
 import { ProblemEntity } from "@/problem/problem.entity";
 import { SubmissionStatus } from "@/submission/submission-status.enum";
@@ -84,6 +83,7 @@ export class ContestController {
         error: CreateContestResponseError.PERMISSION_DENIED,
       };
     }
+
     const id = await this.contestService.createContest(
       request.contestName,
       request.startTime,
@@ -238,7 +238,13 @@ export class ContestController {
       };
     }
 
-    await this.contestService.addProblemById(contest, problem);
+    if (await this.contestService.isProblemExistInContest(problem, contest)) {
+      return {
+        error: AddProblemResponseError.PROBLEM_ALREADY_EXISTS
+      };
+    }
+
+    await this.contestService.addProblem(contest, problem);
 
     return {};
   }
@@ -279,7 +285,7 @@ export class ContestController {
       };
     }
 
-    await this.contestService.deleteProblemById(contest, problem);
+    await this.contestService.deleteProblem(contest, problem);
 
     return {};
   }

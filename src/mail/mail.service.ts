@@ -19,18 +19,18 @@ export class MailService {
   private readonly transporter: nodemailer.Transporter;
 
   constructor(private readonly configService: ConfigService) {
-  //   this.transporter = nodemailer.createTransport({
-  //     host: "host", 
-  //     secure: false,  
-  //     port: 587, 
-  //     auth: {
-  //         user: "username",
-  //         pass: "password"
-  //     },
-  //     tls: {
-  //       rejectUnauthorized: false
-  //     }
-  // });
+    //   this.transporter = nodemailer.createTransport({
+    //     host: "host",
+    //     secure: false,
+    //     port: 587,
+    //     auth: {
+    //         user: "username",
+    //         pass: "password"
+    //     },
+    //     tls: {
+    //       rejectUnauthorized: false
+    //     }
+    // });
     this.transporter = nodemailer.createTransport(this.configService.config.services.mail.transport);
   }
 
@@ -73,5 +73,25 @@ export class MailService {
     } catch (e) {
       return String(e);
     }
+  }
+
+  async sendMailByHTML(
+    subject: string,
+    html: string,
+    recipient: string,
+  ): Promise<string> {
+
+    try {
+      await this.transporter.sendMail({
+        from: `${this.configService.config.preference.siteName} <${this.configService.config.services.mail.address}>`,
+        to: recipient,
+        subject,
+        html,
+      });
+      return null;
+    } catch (e) {
+      return String(e);
+    }
+
   }
 }

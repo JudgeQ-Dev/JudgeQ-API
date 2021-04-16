@@ -298,7 +298,7 @@ export class ContestService {
     return await this.contestRepository.findAndCount(findParams);
   }
 
-  async addProblemById(
+  async addProblem(
     contest: ContestEntity,
     problem: ProblemEntity,
   ): Promise<void> {
@@ -313,7 +313,7 @@ export class ContestService {
     await this.contestProblemRepository.save(contestProblem);
   }
 
-  async deleteProblemById(
+  async deleteProblem(
     contest: ContestEntity,
     problem: ProblemEntity,
   ): Promise<void> {
