@@ -81,4 +81,8 @@ export class UserEntity {
   @Column({nullable: true})
   @Index()
   contestId: number;
+
+  @Column({ type: "char", length: 60, nullable: true })
+  contestUserPassword?: string;
+
 }

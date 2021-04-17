@@ -212,9 +212,11 @@ export class ContestService {
   }
 
   async isProblemExistInContest(problem: ProblemEntity, contest: ContestEntity): Promise<boolean> {
-    const contestProblem = await this.contestProblemRepository.find({
-      contest: contest,
-      problem: problem,
+    const contestProblem = await this.contestProblemRepository.findOne({
+      where: {
+        contest: contest,
+        problem: problem,
+      }
     });
     if (!contestProblem) return false;
     return true;
@@ -317,14 +319,10 @@ export class ContestService {
     contest: ContestEntity,
     problem: ProblemEntity,
   ): Promise<void> {
-    const contestProblem = await this.contestProblemRepository.findOne({
-      where: {
-        contest: contest,
-        problem: problem,
-      }
+    await this.contestProblemRepository.delete({
+      contest: contest,
+      problem: problem,
     });
-
-    await this.contestProblemRepository.delete(contestProblem);
   }
 
   async getProblemMetaList(
@@ -419,6 +417,8 @@ export class ContestService {
           user.registrationTime = now;
           user.isContestUser = true;
           user.contestId = contest.id;
+          user.contestUserPassword = password;
+          user.notificationEmail = _contestUser.notificationEmail;
           await transactionalEntityManager.save(user);
 
           const userAuth = new UserAuthEntity();

@@ -124,7 +124,10 @@ export class AuthController {
 
     return {
       token: await this.authSessionService.newSession(user, req.ip, req.headers["user-agent"]),
-      username: user.username
+      username: user.username,
+      isContestUser: user.isContestUser,
+      contestId: user.contestId,
+      notificationEmail: user.notificationEmail,
     };
   }
 

@@ -16,4 +16,14 @@ export class LoginResponseDto {
 
   @ApiProperty()
   username?: string;
+
+  @ApiProperty()
+  isContestUser?: boolean;
+
+  @ApiProperty()
+  contestId?: number;
+
+  @ApiProperty()
+  notificationEmail?: string;
+
 }

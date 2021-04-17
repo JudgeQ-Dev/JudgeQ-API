@@ -9,6 +9,9 @@ export class ContestUser {
 
   @ApiProperty()
   readonly password: string;
+
+  @ApiProperty()
+  readonly notificationEmail?: string;
 }
 
 export class ImportContestUsersRequestDto {
