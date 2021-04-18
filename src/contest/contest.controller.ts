@@ -9,6 +9,8 @@ import { ProblemService } from "@/problem/problem.service";
 import { ContestService, ContestPermissionType, ContestStatusType } from "./contest.service";
 import { SubmissionService } from "@/submission/submission.service";
 import { UserService } from "@/user/user.service";
+import { MailService, MailTemplate } from "@/mail/mail.service";
+
 
 import {
   CreateContestRequestDto,
@@ -53,9 +55,13 @@ import {
   GetContestSubmissionsRequestDto,
   GetContestSubmissionsResponseDto,
   GetContestSubmissionsResponseError,
+  SendContestNotificationRequestDto,
+  SendContestNotificationResponseDto,
+  SendContestNotificationResponseError,
 } from "./dto";
 import { ProblemEntity } from "@/problem/problem.entity";
 import { SubmissionStatus } from "@/submission/submission-status.enum";
+import { Locale } from "@/common/locale.type";
 
 @ApiTags("Contest")
 @Controller("contest")
@@ -66,6 +72,7 @@ export class ContestController {
     private readonly problemService: ProblemService,
     private readonly submissionService: SubmissionService,
     private readonly userService: UserService,
+    private readonly mailService: MailService,
   ) {}
 
   @ApiBearerAuth()
@@ -588,4 +595,43 @@ export class ContestController {
       submissions: submissionMetas,
     };
   }
+
+  @ApiBearerAuth()
+  @Post("sendContestNotification")
+  @ApiOperation({
+    summary: "Send Contest Notification."
+  })
+  async sendContestNotification(
+    @CurrentUser() currentUser: UserEntity,
+    @Body() request: SendContestNotificationRequestDto,
+  ): Promise<SendContestNotificationResponseDto> {
+
+    const contest = await this.contestService.findContestById(request.contestId);
+    if (!contest) {
+      return {
+        error: SendContestNotificationResponseError.NO_SUCH_CONTEST
+      };
+    }
+
+    const userMetas = await this.contestService.getContestUserListAll(contest);
+
+    userMetas.forEach((user) => {
+      this.mailService.sendMail(
+        MailTemplate.SendContestNotification,
+        Locale.en_US,
+        {
+          nickname: user.nickname,
+          contestName: contest.contestName,
+          startTime: contest.startTime,
+          endTime: contest.endTime,
+          username: user.username,
+          password: user.contestUserPassword
+        },
+        user.notificationEmail,
+      )
+    });
+
+    return {};
+  }
+
 }

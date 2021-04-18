@@ -21,6 +21,7 @@ import { ProblemTypeModule } from "@/problem-type/problem-type.module";
 import { SubmissionDetailEntity } from "@/submission/submission-detail.entity";
 import { SubmissionProgressService } from "@/submission/submission-progress.service";
 import { SubmissionProgressGateway } from "@/submission/submission-progress.gateway";
+import { MailModule } from "@/mail/mail.module";
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { SubmissionProgressGateway } from "@/submission/submission-progress.gate
     forwardRef(() => ProblemModule),
     forwardRef(() => ProblemTypeModule),
     forwardRef(() => LocalizedContentModule),
+    forwardRef(() => MailModule),
   ],
   controllers: [ContestController],
   providers: [ContestService, SubmissionProgressService, SubmissionProgressGateway],

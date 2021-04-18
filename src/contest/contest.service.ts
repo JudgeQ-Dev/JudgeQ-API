@@ -475,6 +475,35 @@ export class ContestService {
     ));
   }
 
+  async getContestUserListAll(contest: ContestEntity): Promise<ContestUserMetaDto[]> {
+
+    const userList = await this.contestUserRepository
+      .createQueryBuilder("contest_user")
+      .where("contest_user.contest = :contestId", { contestId: contest.id })
+      .leftJoinAndSelect("contest_user.user", "user")
+      .leftJoinAndSelect(
+        UserInformationEntity,
+        "userInformation",
+        "contest_user.userId = userInformation.userId",
+      )
+      .orderBy("contest_user.registrationTime", "DESC")
+      .addOrderBy("contest_user.userId", "DESC")
+      .getRawMany()
+
+    return userList.map((user) => (
+      <ContestUserMetaDto>{
+        id: user.user_id,
+        username: user.user_username,
+        email: user.user_email,
+        nickname: user.user_nickname,
+        organization: user.userInformation_organization,
+        registrationTime: user.contest_user_registrationTime,
+        notificationEmail: user.user_notificationEmail,
+        contestUserPassword: user.user_contestUserPassword,
+      }
+    ));
+  }
+
   async createClarification(
     user: UserEntity,
     contest: ContestEntity,

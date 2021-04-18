@@ -24,4 +24,7 @@ export class ContestUserMetaDto {
 
   @ApiProperty()
   notificationEmail: string;
+
+  @ApiProperty()
+  contestUserPassword?: string;
 }

@@ -11,7 +11,8 @@ import { Locale } from "@/common/locale.type";
 export enum MailTemplate {
   RegisterVerificationCode = "register_verification_code",
   ResetPasswordVerificationCode = "reset_password_verification_code",
-  ChangeEmailVerificationCode = "change_email_verification_code"
+  ChangeEmailVerificationCode = "change_email_verification_code",
+  SendContestNotification = "send_contest_notification",
 }
 
 @Injectable()

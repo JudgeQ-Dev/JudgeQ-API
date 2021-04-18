@@ -48,3 +48,6 @@ export * from "./get-contest-submissions-response.dto"
 
 // Must Export from here, and then import from here too, don't know why.
 export * from "@/submission/dto/submission-meta.dto";
+
+export * from "./send-contest-notification-request.dto";
+export * from "./send-contest-notification-response.dto";
