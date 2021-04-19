@@ -579,7 +579,7 @@ export class ContestController {
       request.minId,
       request.maxId,
       false,
-      1000000,
+      request.takeCount ?? 1000000,
     );
 
     if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.ViewFrozenStatus))) {
