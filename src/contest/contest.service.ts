@@ -52,6 +52,7 @@ export enum ContestPermissionType {
   Submit = "Submit",
   Edit = "Edit",
   Create = "Create",
+  Delete = "Delete",
   ViewContestMeta = "ViewContestMeta",
   ViewProblemMeta = "ViewProblemMeta",
   ViewPrivateContest = "ViewPrivateContest",
@@ -115,6 +116,9 @@ export class ContestService {
         if (!user) return false;
         return user.isAdmin;
       case ContestPermissionType.Edit:
+        if (!user) return false;
+        return user.isAdmin;
+      case ContestPermissionType.Delete:
         if (!user) return false;
         return user.isAdmin;
       case ContestPermissionType.Register:

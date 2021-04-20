@@ -51,3 +51,6 @@ export * from "@/submission/dto/submission-meta.dto";
 
 export * from "./send-contest-notification-request.dto";
 export * from "./send-contest-notification-response.dto";
+
+export * from "./delete-contest-request.dto";
+export * from "./delete-contest-response.dto";

@@ -19,6 +19,9 @@ import {
   EditContestRequestDto,
   EditContestResponseDto,
   EditContestResponseError,
+  DeleteContestRequestDto,
+  DeleteContestResponseDto,
+  DeleteContestResponseError,
   GetContestRequestDto,
   GetContestResponseDto,
   GetContestResponseDtoError,
@@ -138,6 +141,32 @@ export class ContestController {
       request.frozenStartTime,
       request.frozenEndTime,
     );
+
+    return {};
+  }
+
+  @ApiBearerAuth()
+  @Post("deleteContest")
+  @ApiOperation({
+    summary: "Delete a contest."
+  })
+  async deleteContest(
+    @CurrentUser() currentUser: UserEntity,
+    @Body() request: DeleteContestRequestDto,
+  ) : Promise<DeleteContestResponseDto> {
+
+    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.Delete))) {
+      return {
+        error: DeleteContestResponseError.PERMISSION_DENIED
+      };
+    }
+
+    const contest = await this.contestService.findContestById(request.contestId);
+    if (!contest) {
+      return {
+        error: DeleteContestResponseError.NO_SUCH_CONTEST
+      };
+    }
 
     return {};
   }

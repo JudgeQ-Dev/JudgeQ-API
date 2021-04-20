@@ -1,11 +1,7 @@
 import { ApiProperty } from "@nestjs/swagger";
 
-export class DeleteProblemRequestDto {
+export class DeleteContestRequestDto {
 
   @ApiProperty()
   readonly contestId: number;
-
-  @ApiProperty()
-  readonly problemId: number;
-
 }
