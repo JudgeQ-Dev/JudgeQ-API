@@ -37,6 +37,9 @@ import {
   ImportContestUsersRequestDto,
   ImportContestUsersResponseDto,
   ImportContestUsersResponseError,
+  DeleteContestUserRequestDto,
+  DeleteContestUserResponseDto,
+  DeleteContestUserResponseError,
   GetContestUserListRequestDto,
   GetContestUserListResponseDto,
   GetContestUserListResponseError,
@@ -416,6 +419,45 @@ export class ContestController {
       contest
     );
 
+    return {};
+  }
+
+  @ApiBearerAuth()
+  @Post("deleteContestUser")
+  @ApiOperation({
+    summary: "Delete a contest user."
+  })
+  async deleteContestUser(
+    @CurrentUser() currentUser: UserEntity,
+    @Body() request: DeleteContestUserRequestDto,
+  ): Promise<DeleteContestUserResponseDto> {
+    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.Edit))) {
+      return {
+        error: DeleteContestUserResponseError.PERMISSION_DENIED
+      };
+    }
+
+    const contest = await this.contestService.findContestById(request.contestId);
+    if (!contest) {
+      return {
+        error: DeleteContestUserResponseError.NO_SUCH_CONTEST
+      };
+    }
+
+    const user = await this.userService.findUserById(request.userId);
+    if (!user) {
+      return {
+        error: DeleteContestUserResponseError.NO_SUCH_USER
+      };
+    }
+
+    if (!(await this.contestService.isUserRegisteredContest(user, contest))) {
+      return {
+        error: DeleteContestUserResponseError.USER_NOT_REGISTERED_CONTEST
+      };
+    }
+
+    await this.contestService.deleteContestUser(user, contest);
     return {};
   }
 

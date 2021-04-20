@@ -451,6 +451,16 @@ export class ContestService {
     });
   }
 
+  async deleteContestUser(
+    user: UserEntity,
+    contest: ContestEntity
+  ) : Promise<void> {
+    await this.contestUserRepository.delete({
+      contest: contest,
+      user: user,
+    });
+  }
+
   async getContestUserList(contest: ContestEntity): Promise<ContestUserMetaDto[]> {
 
     const userList = await this.contestUserRepository

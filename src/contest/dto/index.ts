@@ -54,3 +54,6 @@ export * from "./send-contest-notification-response.dto";
 
 export * from "./delete-contest-request.dto";
 export * from "./delete-contest-response.dto";
+
+export * from "./delete-contest-user-request.dto";
+export * from "./delete-contest-user-response.dto";
