@@ -179,7 +179,9 @@ export class ContestService {
 
   async findContestById(contestId: number): Promise<ContestEntity> {
     return await this.contestRepository.findOne({
-      id: contestId,
+      where: {
+        id: contestId
+      }
     });
   }
 
