@@ -405,7 +405,6 @@ export class ContestService {
     contestProblemOrigin: ContestProblemEntity,
     contestProblemNew: ContestProblemEntity,
   ): Promise<void> {
-    console.log(contestProblemOrigin.contest);
     await this.connection.transaction("READ COMMITTED", async transactionalEntityManager => {
       const tmp = contestProblemNew.orderId;
 
