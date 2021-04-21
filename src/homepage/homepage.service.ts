@@ -81,7 +81,7 @@ export class HomepageService {
     const announcements = await this.AnnouncementRepository
       .createQueryBuilder("announcement")
       .leftJoinAndSelect("announcement.discussion", "discussion")
-      .orderBy("announcement.orderId", "ASC")
+      .orderBy("announcement.orderId", "DESC")
       .getRawMany();
 
     return announcements.map((announcement) => (
@@ -89,6 +89,7 @@ export class HomepageService {
         id: announcement.announcement_id,
         title: announcement.discussion_title,
         lastUpdateTime: announcement.discussion_editTime ?? announcement.discussion_publishTIme,
+        orderid: announcement.announcement_orderId,
       }
     ));
   }

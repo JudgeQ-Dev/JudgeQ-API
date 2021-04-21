@@ -2,11 +2,14 @@ import { ApiProperty } from "@nestjs/swagger";
 
 export class AnnouncementMetaDto {
   @ApiProperty()
-  id: number;
+  readonly id: number;
 
   @ApiProperty()
-  title: string;
+  readonly title: string;
 
   @ApiProperty()
-  lastUpdateTime: Date;
+  readonly lastUpdateTime: Date;
+
+  @ApiProperty()
+  readonly orderid: number;
 }
