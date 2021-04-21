@@ -185,6 +185,18 @@ export class ContestService {
     });
   }
 
+  async findContestProblem(
+    contest: ContestEntity,
+    problem: ProblemEntity
+  ): Promise<ContestProblemEntity> {
+    return Object.assign({}, await this.contestProblemRepository.findOne({
+      where: {
+        contest: contest,
+        problem: problem,
+      }
+    }), {contest, problem});
+  }
+
   async getContestStatus(contest: ContestEntity): Promise<ContestStatusType> {
     const now = new Date();
     if (now < contest.startTime) {
@@ -387,6 +399,32 @@ export class ContestService {
         submission: currentUser && (acceptedSubmissions.get(problem.problem_id) || nonAcceptedSubmissions.get(problem.problem_id))
       }
     ));
+  }
+
+  async swapTwoProblemOrder(
+    contestProblemOrigin: ContestProblemEntity,
+    contestProblemNew: ContestProblemEntity,
+  ): Promise<void> {
+    console.log(contestProblemOrigin.contest);
+    await this.connection.transaction("READ COMMITTED", async transactionalEntityManager => {
+      const tmp = contestProblemNew.orderId;
+
+      await transactionalEntityManager
+      .createQueryBuilder()
+      .update(ContestProblemEntity)
+      .set({orderId: contestProblemOrigin.orderId})
+      .where("contestId = :contestId", {contestId: contestProblemNew.contest.id})
+      .andWhere("problemId = :problemId", {problemId: contestProblemNew.problem.id})
+      .execute();
+
+      await transactionalEntityManager
+      .createQueryBuilder()
+      .update(ContestProblemEntity)
+      .set({orderId: tmp})
+      .where("contestId = :contestId", {contestId: contestProblemOrigin.contest.id})
+      .andWhere("problemId = :problemId", {problemId: contestProblemOrigin.problem.id})
+      .execute();
+    });
   }
 
   private async hashPassword(password: string): Promise<string> {

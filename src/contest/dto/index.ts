@@ -57,3 +57,6 @@ export * from "./delete-contest-response.dto";
 
 export * from "./delete-contest-user-request.dto";
 export * from "./delete-contest-user-response.dto";
+
+export * from "./swap-two-problem-order-request.dto";
+export * from "./swap-two-problem-order-response.dto";

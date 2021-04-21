@@ -31,6 +31,9 @@ import {
   DeleteProblemRequestDto,
   DeleteProblemResponseDto,
   DeleteProblemResponseError,
+  SwapTwoProblemOrderRequestDto,
+  SwapTwoProblemOrderResponseDto,
+  SwapTwoProblemOrderResponseError,
   RegisterContestUserRequestDto,
   RegisterContestUserResponseDto,
   RegisterContestUserResponseError,
@@ -325,6 +328,62 @@ export class ContestController {
     }
 
     await this.contestService.deleteProblem(contest, problem);
+
+    return {};
+  }
+
+  @ApiBearerAuth()
+  @Post("swapTwoProblemOrder")
+  @ApiOperation({
+    summary: "Swap two problem order."
+  })
+  async swapTwoProblemOrder(
+    @CurrentUser() currentUser: UserEntity,
+    @Body() request: SwapTwoProblemOrderRequestDto,
+  ): Promise<SwapTwoProblemOrderResponseDto> {
+
+    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.Edit))) {
+      return {
+        error: SwapTwoProblemOrderResponseError.PERMISSION_DENIED
+      };
+    }
+
+    const contest = await this.contestService.findContestById(request.contestId);
+    if (!contest) {
+      return {
+        error: SwapTwoProblemOrderResponseError.NO_SUCH_CONTEST
+      };
+    }
+
+    const problemOrigin = await this.problemService.findProblemById(request.problemOriginId);
+    if (!problemOrigin) {
+      return {
+        error: SwapTwoProblemOrderResponseError.INVALID_PROBLEM_ORGIN_ID
+      };
+    }
+
+    const problemNew = await this.problemService.findProblemById(request.problemNewId);
+    if (!problemNew) {
+      return {
+        error: SwapTwoProblemOrderResponseError.INVALID_PROBLEM_NEW_ID
+      };
+    }
+
+    const contestProblemOrigin = await this.contestService.findContestProblem(contest, problemOrigin);
+    if (!contestProblemOrigin) {
+      return {
+        error: SwapTwoProblemOrderResponseError.INVALID_PROBLEM_ORGIN_ID
+      };
+    }
+
+    const contestProblemNew = await this.contestService.findContestProblem(contest, problemNew);
+    if (!contestProblemNew) {
+      return {
+        error: SwapTwoProblemOrderResponseError.INVALID_PROBLEM_NEW_ID
+      };
+    }
+
+    await this.contestService.swapTwoProblemOrder(contestProblemOrigin, contestProblemNew);
 
     return {};
   }
