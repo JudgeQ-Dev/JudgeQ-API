@@ -16,6 +16,9 @@ import {
   DeleteAnnouncementResponseDto,
   DeleteAnnouncementResponseError,
   GetAnnouncementsResponseDto,
+  SwapTwoAnnouncementOrderRequestDto,
+  SwapTwoAnnouncementOrderResponseDto,
+  SwapTwoAnnouncementOrderResponseError,
 } from "./dto";
 import { CurrentUser } from "@/common/user.decorator";
 import { UserEntity } from "@/user/user.entity";
@@ -110,6 +113,42 @@ export class HomepageController {
 
     return {};
   }
+
+  @ApiBearerAuth()
+  @Post("swapTwoAnnouncementOrder")
+  @ApiOperation({
+    summary: "Swap two announcement order."
+  })
+  async swapTwoAnnouncementOrder(
+    @CurrentUser() currentUser: UserEntity,
+    @Body() request: SwapTwoAnnouncementOrderRequestDto,
+  ): Promise<SwapTwoAnnouncementOrderResponseDto> {
+
+    if (!(await this.homepageService.userHasPermission(currentUser, HomePermissionType.Announcement))) {
+      return {
+        error: SwapTwoAnnouncementOrderResponseError.PERMISSION_DENIED
+      };
+    }
+
+    const announcementOrigin = await this.homepageService.findAnnouncementById(request.announcementOrginId);
+    if (!announcementOrigin) {
+      return {
+        error: SwapTwoAnnouncementOrderResponseError.INVALID_ANNOUNCEMENT_ORGIN_ID
+      };
+    }
+
+    const announcementNew = await this.homepageService.findAnnouncementById(request.announcementNewId);
+    if (!announcementNew) {
+      return {
+        error: SwapTwoAnnouncementOrderResponseError.INVALID_ANNOUNCEMENT_NEW_ID
+      };
+    }
+
+    await this.homepageService.swapTwoAnnouncementOrder(announcementOrigin, announcementNew);
+
+    return {};
+  }
+
 
   @Get("getAnnouncements")
   @ApiOperation({

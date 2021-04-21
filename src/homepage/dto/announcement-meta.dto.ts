@@ -5,11 +5,14 @@ export class AnnouncementMetaDto {
   readonly id: number;
 
   @ApiProperty()
+  readonly discussionId: number;
+
+  @ApiProperty()
   readonly title: string;
 
   @ApiProperty()
   readonly lastUpdateTime: Date;
 
   @ApiProperty()
-  readonly orderid: number;
+  readonly orderId: number;
 }

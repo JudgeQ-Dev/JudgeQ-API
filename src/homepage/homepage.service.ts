@@ -2,9 +2,9 @@ import { forwardRef, Inject, Injectable } from "@nestjs/common";
 
 import { ConfigService } from "@/config/config.service";
 import { DiscussionEntity } from "@/discussion/discussion.entity";
-import { InjectRepository } from "@nestjs/typeorm";
+import { InjectConnection, InjectRepository } from "@nestjs/typeorm";
 import { AnnouncementEntity } from "./announcement.entity";
-import { Repository } from "typeorm";
+import { Connection, Repository } from "typeorm";
 import { UserEntity } from "@/user/user.entity";
 import { DiscussionService } from "@/discussion/discussion.service";
 import { AnnouncementMetaDto } from "./dto";
@@ -15,7 +15,10 @@ export enum HomePermissionType {
 
 @Injectable()
 export class HomepageService {
+
   constructor(
+    @InjectConnection()
+    private connection: Connection,
     private configService: ConfigService,
     @InjectRepository(DiscussionEntity)
     private readonly DiscussionRepository: Repository<DiscussionEntity>,
@@ -71,6 +74,19 @@ export class HomepageService {
     await this.AnnouncementRepository.save(announcement);
   }
 
+  async swapTwoAnnouncementOrder(
+    announcementOrgin: AnnouncementEntity,
+    announcementNew: AnnouncementEntity
+  ): Promise<void> {
+    await this.connection.transaction("READ COMMITTED", async transactionalEntityManager => {
+      const tmp = announcementNew.orderId;
+      announcementNew.orderId = announcementOrgin.orderId;
+      announcementOrgin.orderId = tmp;
+      await transactionalEntityManager.save(announcementOrgin);
+      await transactionalEntityManager.save(announcementNew);
+    });
+  }
+
   async deleteAnnouncement(
     announcement: AnnouncementEntity,
   ): Promise<void> {
@@ -87,9 +103,10 @@ export class HomepageService {
     return announcements.map((announcement) => (
       <AnnouncementMetaDto>{
         id: announcement.announcement_id,
+        discussionId: announcement.discussion_id,
         title: announcement.discussion_title,
         lastUpdateTime: announcement.discussion_editTime ?? announcement.discussion_publishTIme,
-        orderid: announcement.announcement_orderId,
+        orderId: announcement.announcement_orderId,
       }
     ));
   }

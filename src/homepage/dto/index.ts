@@ -9,3 +9,6 @@ export * from "./delete-announcement-response.dto";
 
 export * from "./announcement-meta.dto";
 export * from "./get-announcements-response.dto";
+
+export * from "./swap-two-announcement-order-request.dto";
+export * from "./swap-two-announcement-order-response.dto";
