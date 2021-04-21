@@ -736,6 +736,12 @@ export class ContestController {
     @Body() request: SendContestNotificationRequestDto,
   ): Promise<SendContestNotificationResponseDto> {
 
+    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.Edit))) {
+      return {
+        error: SendContestNotificationResponseError.PERMISSION_DENIED
+      };
+    }
+
     const contest = await this.contestService.findContestById(request.contestId);
     if (!contest) {
       return {
