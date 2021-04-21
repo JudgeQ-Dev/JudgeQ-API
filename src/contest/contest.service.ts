@@ -207,9 +207,11 @@ export class ContestService {
   }
 
   async isUserRegisteredContest(user: UserEntity, contest: ContestEntity): Promise<boolean> {
-    const contestUser = await this.contestUserRepository.find({
-      contest: contest,
-      user: user,
+    const contestUser = await this.contestUserRepository.findOne({
+      where: {
+        contest: contest,
+        user: user,
+      }
     });
     if (!contestUser) return false;
     return true;
