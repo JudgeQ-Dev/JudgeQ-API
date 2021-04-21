@@ -15,6 +15,7 @@ import {
   DeleteAnnouncementRequestDto,
   DeleteAnnouncementResponseDto,
   DeleteAnnouncementResponseError,
+  GetAnnouncementsResponseDto,
 } from "./dto";
 import { CurrentUser } from "@/common/user.decorator";
 import { UserEntity } from "@/user/user.entity";
@@ -110,5 +111,14 @@ export class HomepageController {
     return {};
   }
 
+  @Get("getAnnouncements")
+  @ApiOperation({
+    summary: "get announcements."
+  })
+  async getAnnouncements(): Promise<GetAnnouncementsResponseDto> {
+    return {
+      announcementMetas: await this.homepageService.getAnnouncementList()
+    };
+  }
 
 }
