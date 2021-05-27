@@ -159,5 +159,4 @@ export class HomepageController {
       announcementMetas: await this.homepageService.getAnnouncementList()
     };
   }
-
 }

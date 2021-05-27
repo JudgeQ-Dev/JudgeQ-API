@@ -105,7 +105,7 @@ export class HomepageService {
         id: announcement.announcement_id,
         discussionId: announcement.discussion_id,
         title: announcement.discussion_title,
-        lastUpdateTime: announcement.discussion_editTime ?? announcement.discussion_publishTIme,
+        lastUpdateTime: announcement.discussion_editTime ?? announcement.discussion_publishTime,
         orderId: announcement.announcement_orderId,
       }
     ));
