@@ -485,6 +485,7 @@ export class SubmissionService implements JudgeTaskService<SubmissionProgress, S
     problemIds: number[],
     distinct: boolean,
   ): Promise<Map<string, number>> {
+    if (problemIds.length === 0) return new Map();
     const queryBuilder = this.submissionRepository.createQueryBuilder();
 
     if (distinct) {
