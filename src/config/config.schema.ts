@@ -105,6 +105,11 @@ class ServicesConfig {
   readonly mail: ServicesConfigMail;
 }
 
+class RegisterConfig {
+  @IsBoolean()
+  readonly enabled: boolean;
+}
+
 class SecurityConfigCrossOrigin {
   @IsBoolean()
   readonly enabled: boolean;
@@ -137,6 +142,7 @@ class SecurityConfigRateLimit {
 }
 
 class SecurityConfig {
+
   @IsString()
   readonly sessionSecret: string;
 
@@ -534,6 +540,10 @@ export class AppConfig {
   @ValidateNested()
   @Type(() => ServicesConfig)
   readonly services: ServicesConfig;
+
+  @ValidateNested()
+  @Type(() => RegisterConfig)
+  readonly register: RegisterConfig;
 
   @ValidateNested()
   @Type(() => SecurityConfig)

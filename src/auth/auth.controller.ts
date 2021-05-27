@@ -180,15 +180,18 @@ export class AuthController {
     @Body() request: SendEmailVerificationCodeRequestDto
   ): Promise<SendEmailVerificationCodeResponseDto> {
     if (request.type === EmailVerificationCodeType.Register) {
-      if (currentUser)
+      if (currentUser) {
         return {
           error: SendEmailVerificationCodeResponseError.ALREADY_LOGGEDIN
         };
+      }
 
-      if (!(await this.userService.checkEmailAvailability(request.email)))
+      if (!(await this.userService.checkEmailAvailability(request.email))) {
         return {
           error: SendEmailVerificationCodeResponseError.DUPLICATE_EMAIL
         };
+      }
+
     } else if (request.type === EmailVerificationCodeType.ChangeEmail) {
       if (!currentUser)
         return {
@@ -264,10 +267,17 @@ export class AuthController {
     @CurrentUser() currentUser: UserEntity,
     @Body() request: RegisterRequestDto
   ): Promise<RegisterResponseDto> {
-    if (currentUser)
+    if (currentUser) {
       return {
         error: RegisterResponseError.ALREADY_LOGGEDIN
       };
+    }
+
+    if (this.configService.config.register.enabled === false) {
+      return {
+        error: RegisterResponseError.DISABLE_REGISTER
+      };
+    }
 
     const [error, user] = await this.authService.register(
       request.username,
