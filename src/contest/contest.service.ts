@@ -365,8 +365,6 @@ export class ContestService {
       .orderBy("contest_problem.orderId", "ASC")
       .getRawMany()
 
-    console.log(problems);
-
     const [acceptedSubmissions, nonAcceptedSubmissions] = await Promise.all([
       currentUser &&
       this.submissionService.getUserLatestSubmissionByProblems(currentUser, problems.map(problem => problem.problem_id), true, contest),
