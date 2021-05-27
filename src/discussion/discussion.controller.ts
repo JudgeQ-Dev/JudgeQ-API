@@ -143,6 +143,12 @@ export class DiscussionController {
     @CurrentUser() currentUser: UserEntity,
     @Body() request: CreateDiscussionReplyRequestDto
   ): Promise<CreateDiscussionReplyResponseDto> {
+    if (!(await this.discussionService.userHasCreateDiscussionPermission(currentUser))) {
+      return {
+        error: CreateDiscussionReplyResponseError.PERMISSION_DENIED,
+      }
+    }
+
     const discussion = await this.discussionService.findDiscussionById(request.discussionId);
 
     if (!discussion)

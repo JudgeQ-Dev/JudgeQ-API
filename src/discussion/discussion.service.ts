@@ -246,6 +246,7 @@ export class DiscussionService {
 
   async userHasCreateDiscussionPermission(user: UserEntity, hasPrivilege?: boolean): Promise<boolean> {
     if (!user) return false;
+    if (user.isContestUser) return false;
     if (this.configService.config.preference.security.allowEveryoneCreateDiscussion) return true;
     return hasPrivilege ?? (await this.userPrivilegeService.userHasPrivilege(user, UserPrivilegeType.ManageDiscussion));
   }
