@@ -12,7 +12,7 @@ import { UserPrivilegeService, UserPrivilegeType } from "@/user/user-privilege.s
 import { Locale } from "@/common/locale.type";
 import { SubmissionService } from "@/submission/submission.service";
 import { SubmissionStatus } from "@/submission/submission-status.enum";
-import { ContestPermissionType, ContestService } from "@/contest/contest.service";
+import { ContestPermissionType, ContestService, ContestStatusType } from "@/contest/contest.service";
 import { AuditLogObjectType, AuditService } from "@/audit/audit.service";
 import { DiscussionService } from "@/discussion/discussion.service";
 
@@ -485,16 +485,25 @@ export class ProblemController {
     if (request.lastSubmissionAndLastAcceptedSubmission) {
       promises.push(
         (async () => {
+          var ok = false;
+
           if (currentUser) {
+            if (!contest) ok = true;
+            else if (currentUser.isAdmin) ok = true;
+            else if ((await this.contestService.getContestStatus(contest)) === ContestStatusType.Finished) ok = true;
+          }
+
+          if (ok) {
             const lastSubmission = (
               await this.submissionService.getUserLatestSubmissionByProblems(currentUser, [problem.id], false, contest)
             ).get(problem.id);
+
             const lastAcceptedSubmission =
               lastSubmission && lastSubmission.status === SubmissionStatus.Accepted
                 ? lastSubmission
                 : (await this.submissionService.getUserLatestSubmissionByProblems(currentUser, [problem.id], true, contest)).get(
-                    problem.id
-                  );
+                  problem.id
+                );
 
             result.lastSubmission = {
               lastSubmission: lastSubmission && (await this.submissionService.getSubmissionBasicMeta(lastSubmission)),
@@ -503,7 +512,9 @@ export class ProblemController {
               lastSubmissionContent:
                 lastSubmission && (await this.submissionService.getSubmissionDetail(lastSubmission)).content
             };
-          } else result.lastSubmission = {};
+          } else {
+            result.lastSubmission = {};
+          }
         })()
       );
     }
