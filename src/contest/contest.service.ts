@@ -160,7 +160,7 @@ export class ContestService {
       case ContestPermissionType.ViewSubmissionDetails:
         if (!contest) return false;
         if (user && user.isAdmin) return true;
-        if (status === ContestStatusType.Finished && !frozen) {
+        if (status === ContestStatusType.Finished) {
           if (contest.isPublic) return true;
           if (await this.isUserRegisteredContest(user, contest)) return true;
         }

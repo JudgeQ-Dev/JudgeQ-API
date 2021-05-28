@@ -287,15 +287,6 @@ export class SubmissionController {
       };
     }
 
-    if (submission.contestId) {
-      const contest = await this.contestService.findContestById(submission.contestId);
-      if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.ViewSubmissionDetails, contest))) {
-        return {
-          error: GetSubmissionDetailResponseError.PERMISSION_DENIED
-        };
-      }
-    }
-
     const [problem, hasPrivilege] = await Promise.all([
       this.problemService.findProblemById(submission.problemId),
       this.userPrivilegeService.userHasPrivilege(currentUser, UserPrivilegeType.ManageProblem)
@@ -309,10 +300,12 @@ export class SubmissionController {
         problem,
         hasPrivilege
       ))
-    )
+    ) {
       return {
         error: GetSubmissionDetailResponseError.PERMISSION_DENIED
       };
+    }
+
     const titleLocale = problem.locales.includes(request.locale) ? request.locale : problem.locales[0];
     const pending = submission.status === SubmissionStatus.Pending;
 
@@ -357,6 +350,14 @@ export class SubmissionController {
         hasPrivilege
       )
     ]);
+
+    if (submission.contestId) {
+      const contest = await this.contestService.findContestById(submission.contestId);
+      if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.ViewSubmissionDetails, contest))) {
+        submissionDetail.result.testcaseResult = {};
+        submissionDetail.content = {};
+      }
+    }
 
     return {
       meta: {
