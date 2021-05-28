@@ -447,7 +447,7 @@ export class ContestService {
     await this.connection.transaction("READ COMMITTED", async transactionalEntityManager => {
       await Promise.all(
         contestUserList.map(async (_contestUser) => {
-          const { username, nickname, password } = _contestUser;
+          const { username, nickname, password, organization, location } = _contestUser;
           const user = new UserEntity();
           user.username = username;
           user.email = `${username}@hznuoj.com`;
@@ -473,8 +473,8 @@ export class ContestService {
 
           const userInformation = new UserInformationEntity();
           userInformation.userId = user.id;
-          userInformation.organization = "";
-          userInformation.location = "";
+          userInformation.organization = organization;
+          userInformation.location = location;
           userInformation.url = "";
           userInformation.telegram = "";
           userInformation.qq = "";
@@ -524,6 +524,7 @@ export class ContestService {
         email: user.user_email,
         nickname: user.user_nickname,
         organization: user.userInformation_organization,
+        location: user.userInformation_location,
         registrationTime: user.contest_user_registrationTime,
         notificationEmail: user.user_notificationEmail,
       }

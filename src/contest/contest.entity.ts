@@ -33,6 +33,9 @@ export class ContestEntity {
   @Column({ type: "boolean" })
   isPublic: boolean;
 
+  @Column({ type: "varchar", length: 255 , nullable: true })
+  organization: string;
+
   @ManyToMany(() => UserEntity, (user) => user.contests)
   users?: UserEntity[];
 

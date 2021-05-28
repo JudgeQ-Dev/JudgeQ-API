@@ -24,4 +24,7 @@ export class ContestMetaDto {
   @ApiProperty()
   @IsBoolean()
   isPublic: boolean;
+
+  @ApiProperty()
+  organization?: string;
 }

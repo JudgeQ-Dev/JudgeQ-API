@@ -12,6 +12,12 @@ export class ContestUser {
 
   @ApiProperty()
   readonly notificationEmail?: string;
+
+  @ApiProperty()
+  readonly organization?: string;
+
+  @ApiProperty()
+  readonly location?: string;
 }
 
 export class ImportContestUsersRequestDto {

@@ -20,6 +20,10 @@ export class ContestUserMetaDto {
   organization: string;
 
   @ApiProperty()
+  @IsString()
+  location: string;
+
+  @ApiProperty()
   registrationTime: Date;
 
   @ApiProperty()
