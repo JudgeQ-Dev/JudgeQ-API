@@ -755,7 +755,7 @@ export class ContestController {
     if (!request.usernames) {
       userMetas = await this.contestService.getContestUserListAll(contest);
     } else {
-      userMetas = await this.contestService.getContestUserList(contest, request.usernames);
+      userMetas = await this.contestService.getContestUserListAll(contest, request.usernames);
     }
 
     userMetas.forEach((user) => {
