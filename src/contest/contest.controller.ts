@@ -715,7 +715,7 @@ export class ContestController {
 
     if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.ViewFrozenStatus))) {
       submissionMetas.forEach(async submission => {
-        if (await this.contestService.isSubmissionFrozen(submission, contest)) {
+        if (!(submission.submitter.id == currentUser.id) && await this.contestService.isSubmissionFrozen(submission, contest)) {
           submission.status = SubmissionStatus.Frozen;
           submission.score = 0;
         }
