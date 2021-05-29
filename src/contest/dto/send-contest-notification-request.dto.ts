@@ -4,4 +4,7 @@ export class SendContestNotificationRequestDto {
 
   @ApiProperty()
   contestId: number;
+
+  @ApiProperty()
+  usernames?: string[];
 }

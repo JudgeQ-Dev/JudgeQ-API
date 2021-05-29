@@ -67,6 +67,7 @@ import {
   SendContestNotificationRequestDto,
   SendContestNotificationResponseDto,
   SendContestNotificationResponseError,
+  ContestUserMetaDto,
 } from "./dto";
 import { ProblemEntity } from "@/problem/problem.entity";
 import { SubmissionStatus } from "@/submission/submission-status.enum";
@@ -749,7 +750,13 @@ export class ContestController {
       };
     }
 
-    const userMetas = await this.contestService.getContestUserListAll(contest);
+    var userMetas: ContestUserMetaDto[] = [];
+
+    if (!request.usernames) {
+      userMetas = await this.contestService.getContestUserListAll(contest);
+    } else {
+      userMetas = await this.contestService.getContestUserList(contest, request.usernames);
+    }
 
     userMetas.forEach((user) => {
       this.mailService.sendMail(

@@ -502,9 +502,9 @@ export class ContestService {
     });
   }
 
-  async getContestUserList(contest: ContestEntity): Promise<ContestUserMetaDto[]> {
+  async getContestUserList(contest: ContestEntity, usernames?: string[]): Promise<ContestUserMetaDto[]> {
 
-    const userList = await this.contestUserRepository
+    var userList = await this.contestUserRepository
       .createQueryBuilder("contest_user")
       .where("contest_user.contest = :contestId", { contestId: contest.id })
       .leftJoinAndSelect("contest_user.user", "user")
@@ -516,6 +516,11 @@ export class ContestService {
       .orderBy("contest_user.registrationTime", "DESC")
       .addOrderBy("contest_user.userId", "DESC")
       .getRawMany()
+
+    // TODO: high performance
+    if (usernames) {
+      userList = userList.filter((user) => usernames.includes(user.user_username));
+    }
 
     return userList.map((user) => (
       <ContestUserMetaDto>{
@@ -529,6 +534,7 @@ export class ContestService {
         notificationEmail: user.user_notificationEmail,
       }
     ));
+
   }
 
   async getContestUserListAll(contest: ContestEntity): Promise<ContestUserMetaDto[]> {
