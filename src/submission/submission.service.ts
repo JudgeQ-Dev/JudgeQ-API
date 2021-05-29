@@ -174,7 +174,7 @@ export class SubmissionService implements JudgeTaskService<SubmissionProgress, S
       // Everyone can read a public submission
       // Submitter and those who has the Modify permission of the submission's problem can View a non-public submission
       case SubmissionPermissionType.View:
-        if (submission.isPublic) return true;
+        if (!submission.contestId && submission.isPublic) return true;
         if (!user) return false;
         if (user.id === submission.submitterId) return true;
         return await this.problemService.userHasPermission(

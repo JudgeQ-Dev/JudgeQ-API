@@ -281,6 +281,7 @@ export class SubmissionController {
     @Body() request: GetSubmissionDetailRequestDto
   ): Promise<GetSubmissionDetailResponseDto> {
     const submission = await this.submissionService.findSubmissionById(Number(request.submissionId));
+
     if (!submission) {
       return {
         error: GetSubmissionDetailResponseError.NO_SUCH_SUBMISSION
