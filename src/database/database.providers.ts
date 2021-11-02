@@ -12,9 +12,9 @@ export const databaseProviders = [
       password: configService.config.services.database.password,
       database: configService.config.services.database.database,
       entities: [`${__dirname}/../**/*.entity{.ts,.js}`],
-      logging: !!process.env.HZNUOJ_V3_LOG_SQL,
-      synchronize: true
+      logging: !!process.env.JUDGEQ_LOG_SQL,
+      synchronize: true,
     }),
-    inject: [ConfigService]
-  })
+    inject: [ConfigService],
+  }),
 ];

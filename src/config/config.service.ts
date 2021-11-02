@@ -13,9 +13,12 @@ export class ConfigService {
   readonly preferenceConfigToBeSentToUser: PreferenceConfig;
 
   constructor() {
-    const filePath = process.env.HZNUOJ_V3_CONFIG_FILE;
+    const filePath = process.env.JUDGEQ_CONFIG_FILE;
+
     if (!filePath) {
-      throw new Error("Please specify configuration file with environment variable HZNUOJ_V3_CONFIG_FILE");
+      throw new Error(
+        "Please specify configuration file with environment variable JUDGEQ_CONFIG_FILE",
+      );
     }
 
     const config = yaml.load(fs.readFileSync(filePath).toString());
@@ -28,12 +31,14 @@ export class ConfigService {
     const appConfig = plainToClass(AppConfig, inputConfig);
     const errors = validateSync(appConfig, {
       validationError: {
-        target: false
-      }
+        target: false,
+      },
     });
 
     if (errors.length > 0) {
-      throw new Error(`Config validation error: ${JSON.stringify(errors, null, 2)}`);
+      throw new Error(
+        `Config validation error: ${JSON.stringify(errors, null, 2)}`,
+      );
     }
 
     checkConfigRelation((appConfig as unknown) as Record<string, unknown>);

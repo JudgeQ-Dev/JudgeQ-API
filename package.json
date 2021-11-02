@@ -1,8 +1,8 @@
 {
-  "name": "hznuoj-v3-api",
+  "name": "judgeq-api",
   "version": "0.0.43.7",
-  "description": "The 3th generation HZNUOJ API Server",
-  "repository": "https://github.com/HZNU-OJ/HZNUOJ-V3-API",
+  "description": "JudgeQ API Server",
+  "repository": "https://github.com/JudgeQ-Dev/JudgeQ-API",
   "author": "Dup4",
   "license": "MIT",
   "scripts": {
@@ -11,15 +11,16 @@
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "check-style": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
-    "start:dev": "cross-env HZNUOJ_V3_LOG_SQL=1 HZNUOJ_V3_CONFIG_FILE=./config.yaml nest start --watch",
-    "start:debug": "cross-env HZNUOJ_V3_LOG_SQL=1 HZNUOJ_V3_CONFIG_FILE=./config.yaml nest start --debug --watch",
+    "start:dev": "cross-env JUDGEQ_LOG_SQL=1 JUDGEQ_CONFIG_FILE=./config.yaml nest start --watch",
+    "start:debug": "cross-env JUDGEQ_LOG_SQL=1 JUDGEQ_CONFIG_FILE=./config.yaml nest start --debug --watch",
     "start:prod": "node dist/main",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test:e2e": "jest --config ./test/jest-e2e.json",
+    "typeorm": "ts-node -r tsconfig-paths/register --files ./node_modules/typeorm/cli -f ./ormconfig.js"
   },
   "gitHook": {
     "pre-commit": "lint-staged"
@@ -123,7 +124,7 @@
     "ts-jest": "^26.4.3",
     "ts-loader": "^8.0.8",
     "ts-node": "^9.0.0",
-    "tsconfig-paths": "^3.9.0",
+    "tsconfig-paths": "^3.11.0",
     "typescript": "^4.0.5",
     "yorkie": "^2.0.0"
   },
@@ -145,6 +146,6 @@
     "testEnvironment": "node"
   },
   "engines": {
-    "node": ">=14.15.5"
+    "node": ">=16.11.0"
   }
 }
