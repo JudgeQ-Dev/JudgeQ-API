@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://json-schema.org/draft-07/schema#
 name: Build
 on:
   workflow_dispatch:
@@ -20,10 +21,8 @@ jobs:
           node-version: 16
           registry-url: https://registry.npmjs.org/
 
-      - name: Install
-        run: yarn
-
-      - name: Build 🔧
+      - name: Install and Build 🔧
         run: |
+          yarn
           yarn build
           ls dist

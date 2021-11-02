@@ -1,9 +1,8 @@
 # JudgeQ API
 
-[![Build Status](https://img.shields.io/github/workflow/status/HZNU-OJ/HZNUOJ-V3-API/Build?style=flat-square)](https://github.com/HZNU-OJ/HZNUOJ-V3-API/actions?query=workflow%3ACI)
-[![Dependencies](https://img.shields.io/david/HZNU-OJ/HZNUOJ-V3-API?style=flat-square)](https://david-dm.org/HZNU-OJ/HZNUOJ-V3-API)
+[![Build Status](https://img.shields.io/github/workflow/status/JudgeQ-Dev/JudgeQ-API/Build?style=flat-square)](https://github.com/JudgeQ-Dev/JudgeQ-API/actions?query=workflow%3ACI)
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
-[![License](https://img.shields.io/github/license/syzoj/syzoj-ng?style=flat-square)](LICENSE)
+[![License](https://img.shields.io/github/license/JudgeQ-Dev/JudgeQ-API?style=flat-square)](LICENSE)
 
 # Deploying
 
