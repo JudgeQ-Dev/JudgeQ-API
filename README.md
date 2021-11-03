@@ -74,3 +74,23 @@ yarn typeorm migration:run
 # down
 yarn typeorm migration:revert
 ```
+
+## Use Docker
+
+### Build
+
+```bash
+docker build -t judgeq-api:latest -f docker/Dockerfile ./
+```
+
+### Run
+
+```bash
+docker run \
+  -d \
+  --restart=always \
+  --name=judgeq-api \
+  -p 3000:3000 \
+  -v "${PWD}"/config.yaml:/root/config.yaml \
+  judgeq-api
+```
