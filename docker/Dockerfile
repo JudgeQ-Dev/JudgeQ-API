@@ -7,8 +7,6 @@ COPY ./ ./judgeq
 RUN cd ./judgeq \
   && yarn \
   && yarn build \
-  && rm -rf ./node_modules \
-  && yarn --production \
   && mv ./docker/docker_entry.sh /root/docker_entry.sh \
   && mv ./dist /root/ \
   && mv ./node_modules /root/ \
