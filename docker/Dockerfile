@@ -7,10 +7,11 @@ COPY ./ ./judgeq
 RUN cd ./judgeq \
   && yarn \
   && yarn build \
-  && mv ./docker/docker_entry.sh /root/docker_entry.sh \
-  && mv ./dist /root/ \
-  && mv ./node_modules /root/ \
-  && mv package.json /root/ \
+  && bash post_build.sh \
+  && cp docker/docker_entry.sh /root/docker_entry.sh \
+  && cp -a dist /root/ \
+  && cp -a node_modules /root/ \
+  && cp package.json /root/ \
   && rm -rf /root/judgeq
 
 ENTRYPOINT ["/root/docker_entry.sh"]
