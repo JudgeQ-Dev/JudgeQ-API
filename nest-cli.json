@@ -11,8 +11,12 @@
       }
     ],
     "assets": [
+      "auth/scripts/",
+      "mail/templates/",
+      "redis/scripts/",
       "**/*.ejs",
       "**/*.lua"
-    ]
+    ],
+    "watchAssets": true
   }
 }
