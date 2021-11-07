@@ -13,13 +13,16 @@ import {
   IsArray,
   ArrayNotEmpty,
   ArrayUnique,
-  IsUrl
+  IsUrl,
 } from "class-validator";
 import { Type } from "class-transformer";
 
 import { If, isEmoji, IsEmoji, IsPortNumber } from "@/common/validators";
 
-import { ConfigRelation, ConfigRelationType } from "./config-relation.decorator";
+import {
+  ConfigRelation,
+  ConfigRelationType,
+} from "./config-relation.decorator";
 
 class ServerConfig {
   @IsIP()
@@ -56,6 +59,9 @@ class ServicesConfigDatabase {
 
   @IsString()
   readonly database: string;
+
+  @IsString()
+  readonly timezone?: string = "local";
 }
 
 class ServicesConfigMinio {
@@ -115,7 +121,7 @@ class SecurityConfigCrossOrigin {
   readonly enabled: boolean;
 
   @IsString({
-    each: true
+    each: true,
   })
   readonly whiteList: string[];
 }
@@ -142,7 +148,6 @@ class SecurityConfigRateLimit {
 }
 
 class SecurityConfig {
-
   @IsString()
   readonly sessionSecret: string;
 
@@ -243,7 +248,10 @@ class PreferenceConfigPagination {
 
   @IsInt()
   @Min(1)
-  @ConfigRelation("queryLimit.submissionStatistics", ConfigRelationType.LessThanOrEqual)
+  @ConfigRelation(
+    "queryLimit.submissionStatistics",
+    ConfigRelationType.LessThanOrEqual,
+  )
   @ApiProperty()
   readonly submissionStatistics: number;
 
@@ -255,7 +263,10 @@ class PreferenceConfigPagination {
 
   @IsInt()
   @Min(1)
-  @ConfigRelation("queryLimit.userAuditLogs", ConfigRelationType.LessThanOrEqual)
+  @ConfigRelation(
+    "queryLimit.userAuditLogs",
+    ConfigRelationType.LessThanOrEqual,
+  )
   @ApiProperty()
   readonly userAuditLogs: number;
 
@@ -279,19 +290,28 @@ class PreferenceConfigPagination {
 
   @IsInt()
   @Min(1)
-  @ConfigRelation("queryLimit.discussionReplies", ConfigRelationType.LessThanOrEqual)
+  @ConfigRelation(
+    "queryLimit.discussionReplies",
+    ConfigRelationType.LessThanOrEqual,
+  )
   @ApiProperty()
   readonly discussionReplies: number;
 
   @IsInt()
   @Min(1)
-  @ConfigRelation("preference.pagination.discussionReplies", ConfigRelationType.LessThan)
+  @ConfigRelation(
+    "preference.pagination.discussionReplies",
+    ConfigRelationType.LessThan,
+  )
   @ApiProperty()
   readonly discussionRepliesHead: number;
 
   @IsInt()
   @Min(1)
-  @ConfigRelation("queryLimit.discussionReplies", ConfigRelationType.LessThanOrEqual)
+  @ConfigRelation(
+    "queryLimit.discussionReplies",
+    ConfigRelationType.LessThanOrEqual,
+  )
   @ApiProperty()
   readonly discussionRepliesMore: number;
 }
@@ -302,7 +322,11 @@ class PreferenceConfigMisc {
   @ApiProperty()
   readonly appLogo: string;
 
-  @If(value => typeof value === "object" && Object.values(value).every(s => typeof s === "string"))
+  @If(
+    (value) =>
+      typeof value === "object" &&
+      Object.values(value).every((s) => typeof s === "string"),
+  )
   @ApiProperty()
   readonly appLogoForTheme: Record<string, string>;
 
@@ -352,10 +376,11 @@ class PreferenceConfigMisc {
 class PreferenceConfigServerSideOnly {
   @If((blacklist: string | unknown[]) =>
     (function validate(value: string | unknown[]) {
-      if (typeof value === "string") return (value.startsWith("/") && value.endsWith("/")) || isEmoji(value);
+      if (typeof value === "string")
+        return (value.startsWith("/") && value.endsWith("/")) || isEmoji(value);
       else if (Array.isArray(value)) return value.every(validate);
       else return false;
-    })(blacklist)
+    })(blacklist),
   )
   discussionReactionCustomEmojisBlacklist: string | unknown[];
 
@@ -508,7 +533,7 @@ class EventReportConfig {
   @IsOptional()
   readonly telegramApiRoot?: string;
 
-  @If(value => typeof value === "string" || typeof value === "number")
+  @If((value) => typeof value === "string" || typeof value === "number")
   @IsOptional()
   readonly sentTo?: string | number;
 
