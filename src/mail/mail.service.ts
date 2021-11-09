@@ -20,19 +20,9 @@ export class MailService {
   private readonly transporter: nodemailer.Transporter;
 
   constructor(private readonly configService: ConfigService) {
-    //   this.transporter = nodemailer.createTransport({
-    //     host: "host",
-    //     secure: false,
-    //     port: 587,
-    //     auth: {
-    //         user: "username",
-    //         pass: "password"
-    //     },
-    //     tls: {
-    //       rejectUnauthorized: false
-    //     }
-    // });
-    this.transporter = nodemailer.createTransport(this.configService.config.services.mail.transport);
+    this.transporter = nodemailer.createTransport(
+      this.configService.config.services.mail.transport,
+    );
   }
 
   private resolveTemplate(template: string, locale: string): string {
@@ -51,12 +41,12 @@ export class MailService {
     template: MailTemplate,
     locale: Locale,
     data: Record<string, unknown>,
-    recipient: string
+    recipient: string,
   ): Promise<string> {
     const renderResult = (
       await ejs.renderFile(this.resolveTemplate(template, locale), {
         ...data,
-        siteName: this.configService.config.preference.siteName
+        siteName: this.configService.config.preference.siteName,
       })
     ).trim();
 
@@ -68,8 +58,9 @@ export class MailService {
         from: `${this.configService.config.preference.siteName} <${this.configService.config.services.mail.address}>`,
         to: recipient,
         subject,
-        html: content
+        html: content,
       });
+
       return null;
     } catch (e) {
       return String(e);
@@ -81,7 +72,6 @@ export class MailService {
     html: string,
     recipient: string,
   ): Promise<string> {
-
     try {
       await this.transporter.sendMail({
         from: `${this.configService.config.preference.siteName} <${this.configService.config.services.mail.address}>`,
@@ -89,10 +79,10 @@ export class MailService {
         subject,
         html,
       });
+
       return null;
     } catch (e) {
       return String(e);
     }
-
   }
 }
