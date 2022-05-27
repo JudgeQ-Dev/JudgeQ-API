@@ -1,6 +1,6 @@
 {
-  "name": "judgeq-api",
-  "version": "0.0.43.20",
+  "name": "@judgeq/server",
+  "version": "0.0.43",
   "description": "JudgeQ API Server",
   "repository": "https://github.com/JudgeQ-Dev/JudgeQ-API",
   "author": "Dup4",
@@ -21,7 +21,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "typeorm": "ts-node -r tsconfig-paths/register --files ./node_modules/typeorm/cli -f ./ormconfig.js",
-    "postinstall":"patch-package"
+    "postinstall": "patch-package"
   },
   "gitHook": {
     "pre-commit": "lint-staged"
