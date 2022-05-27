@@ -1,0 +1,123 @@
+server:
+  hostname: 0.0.0.0
+  port: 3000
+  trustProxy:
+    - loopback
+  clusters: 2
+services:
+  database:
+    type: mysql
+    host: 127.0.0.1
+    port: 3306
+    username: judgeq
+    password: PASSWORD
+    database: judgeq
+    timezone: +08:00
+  minio:
+    endpoint: https://files.judgeq.test
+    endpointForUser: https://files.judgeq.test
+    endpointForJudge: https://files.judgeq.test
+    accessKey: ADMIN
+    secretKey: PASSWORD
+    bucket: judgeq-files
+  redis: redis://127.0.0.1:6379
+  mail:
+    address: admin@judgeq.test
+    transport: smtp://admin@judgeq.test:password@127.0.0.1:587?pool=true&tls.rejectUnauthorized=false
+register:
+  enabled: false
+security:
+  crossOrigin:
+    enabled: true
+    whiteList:
+      - https://judgeq.test
+  sessionSecret: don't leak this
+  maintainceKey: also don't leak this
+  recaptcha:
+    secretKey: null
+    useRecaptchaNet: false
+    proxyUrl: null
+  rateLimit:
+    maxRequests: 200
+    durationSeconds: 10
+preference:
+  siteName: JudgeQ
+  security:
+    recaptchaEnabled: false
+    recaptchaKey: null
+    requireEmailVerification: true
+    allowUserChangeUsername: true
+    allowEveryoneCreateProblem: true
+    allowNonPrivilegedUserEditPublicProblem: true
+    allowOwnerManageProblemPermission: false
+    allowOwnerDeleteProblem: true
+    allowEveryoneCreateDiscussion: true
+    discussionDefaultPublic: false
+    discussionReplyDefaultPublic: true
+  pagination:
+    homepageUserList: 10
+    homepageProblemList: 10
+    problemSet: 50
+    searchProblemsPreview: 7
+    submissions: 10
+    submissionStatistics: 10
+    userList: 30
+    userAuditLogs: 10
+    contestList: 50
+    discussions: 10
+    searchDiscussionsPreview: 7
+    discussionReplies: 40
+    discussionRepliesHead: 20
+    discussionRepliesMore: 20
+  misc:
+    appLogo: default
+    appLogoForTheme:
+      pure: original
+      far: inverted
+    googleAnalyticsId: null
+    gravatarCdn: https://gravatar.com
+    redirectLegacyUrls: false
+    legacyContestsEntryUrl: null
+    homepageUserListOnMainView: true
+    sortUserByRating: false
+    renderMarkdownInUserBio: false
+    discussionReactionEmojis: [👍, 👎, 😄, 😕, ❤️, 🤔, 🤣, 🌿, 🍋, 🕊️]
+    discussionReactionAllowCustomEmojis: true
+  serverSideOnly:
+    discussionReactionCustomEmojisBlacklist: /(\uD83C[\uDDE6-\uDDFF]){2}/
+    dynamicTaskPriority: true
+resourceLimit:
+  problemTestdataFiles: 40
+  problemTestdataSize: 134217728
+  problemAdditionalFileFiles: 40
+  problemAdditionalFileSize: 134217728
+  problemSamplesToRun: 10
+  problemTestcases: 20
+  problemTimeLimit: 2000
+  problemMemoryLimit: 512
+  submissionFileSize: 10485760
+queryLimit:
+  problemSet: 1000000
+  submissions: 1000000
+  submissionStatistics: 1000000
+  searchUser: 10
+  searchGroup: 10
+  userList: 1000000
+  userAuditLogs: 20
+  contestList: 1000000
+  discussions: 1000000
+  discussionReplies: 50
+judge:
+  limit:
+    compilerMessage: 524288
+    outputSize: 104857600
+    dataDisplay: 128
+    dataDisplayForSubmitAnswer: 128
+    stderrDisplay: 5120
+eventReport:
+  telegramBotToken: null
+  telegramApiRoot: null
+  sentTo: "@example"
+  proxyUrl: null
+vendor:
+  ip2region: null
