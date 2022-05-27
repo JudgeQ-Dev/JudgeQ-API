@@ -2,12 +2,16 @@
   "name": "@judgeq/server",
   "version": "0.0.43",
   "description": "JudgeQ API Server",
-  "repository": "https://github.com/JudgeQ-Dev/JudgeQ-API",
+  "repository": "https://github.com/JudgeQ-Dev/server",
   "author": "Dup4",
   "license": "AGPL-3.0",
   "engines": {
     "node": ">=16.11.0"
   },
+  "files": [
+    "src",
+    "dist"
+  ],
   "scripts": {
     "postinstall": "patch-package",
     "dev": "cross-env JUDGEQ_LOG_SQL=1 JUDGEQ_CONFIG_FILE=./config.yaml nest start --debug --watch",
@@ -18,7 +22,6 @@
     "lint:eslint": "eslint ./src/**/*.ts",
     "lint:style": "prettier --check src/",
     "format": "run-p format:*",
-    "format:eslint": "eslint --fix ./src",
     "format:style": "prettier --write src/",
     "test": "jest",
     "test:watch": "jest --watch",
@@ -42,6 +45,8 @@
     "class-transformer": "^0.4.0",
     "class-validator": "^0.13.1",
     "ejs": "^3.1.6",
+    "emoji-regex": "^10.1.0",
+    "express": "4.18.1",
     "fs-extra": "^9.1.0",
     "git-repo-info": "^2.1.1",
     "highlight.js": "10.5.0",
@@ -75,6 +80,7 @@
     "typeorm": "^0.2.31",
     "unzipper": "^0.10.11",
     "uuid": "^8.3.2",
+    "webpack": "^5.72.1",
     "xdomain": "^0.8.2"
   },
   "devDependencies": {
@@ -102,13 +108,14 @@
     "@types/toposort": "^2.0.3",
     "@types/unzipper": "^0.10.3",
     "@types/uuid": "^8.3.0",
-    "cross-env": "^7.0.3",
-    "eslint": "^8.16.0",
     "@typescript-eslint/eslint-plugin": "^5.25.0",
     "@typescript-eslint/parser": "^5.25.0",
+    "cross-env": "^7.0.3",
+    "eslint": "^8.16.0",
     "jest": "^26.6.3",
     "npm-run-all": "^4.1.5",
     "patch-package": "^6.4.7",
+    "pnpm": "^7.1.6",
     "prettier": "^2.6.2",
     "supertest": "^6.0.0",
     "ts-jest": "^26.4.3",
