@@ -28,7 +28,7 @@ export class JudgeClientService {
   constructor(
     @InjectRepository(JudgeClientEntity)
     private readonly judgeClientRepository: Repository<JudgeClientEntity>,
-    private readonly redisService: RedisService
+    private readonly redisService: RedisService,
   ) {
     this.redis = this.redisService.getClient();
   }
@@ -45,18 +45,24 @@ export class JudgeClientService {
     return await this.judgeClientRepository.find();
   }
 
-  async getJudgeClientInfo(judgeClient: JudgeClientEntity, showSensitive = false): Promise<JudgeClientInfoDto> {
+  async getJudgeClientInfo(
+    judgeClient: JudgeClientEntity,
+    showSensitive = false,
+  ): Promise<JudgeClientInfoDto> {
     return {
       id: judgeClient.id,
       name: judgeClient.name,
       key: !showSensitive ? null : judgeClient.key,
       allowedHosts: !showSensitive ? null : judgeClient.allowedHosts,
       online: await this.isJudgeClientOnline(judgeClient),
-      systemInfo: await this.getJudgeClientSystemInfo(judgeClient)
+      systemInfo: await this.getJudgeClientSystemInfo(judgeClient),
     };
   }
 
-  async addJudgeClient(name: string, allowedHosts: string[]): Promise<JudgeClientEntity> {
+  async addJudgeClient(
+    name: string,
+    allowedHosts: string[],
+  ): Promise<JudgeClientEntity> {
     const judgeClient = new JudgeClientEntity();
     judgeClient.name = name;
     judgeClient.key = generateKey();
@@ -74,29 +80,55 @@ export class JudgeClientService {
 
   async deleteJudgeClient(judgeClient: JudgeClientEntity): Promise<void> {
     await this.judgeClientRepository.delete({
-      id: judgeClient.id
+      id: judgeClient.id,
     });
     await this.disconnectJudgeClient(judgeClient);
   }
 
-  async setJudgeClientOnlineSessionId(judgeClient: JudgeClientEntity, sessionId: string): Promise<void> {
-    await this.redis.set(REDIS_KEY_JUDGE_CLIENT_SESSION_ID.format(judgeClient.id), sessionId);
+  async setJudgeClientOnlineSessionId(
+    judgeClient: JudgeClientEntity,
+    sessionId: string,
+  ): Promise<void> {
+    await this.redis.set(
+      REDIS_KEY_JUDGE_CLIENT_SESSION_ID.format(judgeClient.id),
+      sessionId,
+    );
   }
 
   async disconnectJudgeClient(judgeClient: JudgeClientEntity): Promise<void> {
-    await this.redis.del(REDIS_KEY_JUDGE_CLIENT_SESSION_ID.format(judgeClient.id));
+    await this.redis.del(
+      REDIS_KEY_JUDGE_CLIENT_SESSION_ID.format(judgeClient.id),
+    );
   }
 
-  async checkJudgeClientSession(judgeClient: JudgeClientEntity, sessionId: string): Promise<boolean> {
-    return sessionId === (await this.redis.get(REDIS_KEY_JUDGE_CLIENT_SESSION_ID.format(judgeClient.id)));
+  async checkJudgeClientSession(
+    judgeClient: JudgeClientEntity,
+    sessionId: string,
+  ): Promise<boolean> {
+    return (
+      sessionId ===
+      (await this.redis.get(
+        REDIS_KEY_JUDGE_CLIENT_SESSION_ID.format(judgeClient.id),
+      ))
+    );
   }
 
-  async updateJudgeClientSystemInfo(judgeClient: JudgeClientEntity, systemInfo: JudgeClientSystemInfo): Promise<void> {
-    await this.redis.set(REDIS_KEY_JUDGE_CLIENT_SYSTEM_INFO.format(judgeClient.id), JSON.stringify(systemInfo));
+  async updateJudgeClientSystemInfo(
+    judgeClient: JudgeClientEntity,
+    systemInfo: JudgeClientSystemInfo,
+  ): Promise<void> {
+    await this.redis.set(
+      REDIS_KEY_JUDGE_CLIENT_SYSTEM_INFO.format(judgeClient.id),
+      JSON.stringify(systemInfo),
+    );
   }
 
-  async getJudgeClientSystemInfo(judgeClient: JudgeClientEntity): Promise<JudgeClientSystemInfo> {
-    const str = await this.redis.get(REDIS_KEY_JUDGE_CLIENT_SYSTEM_INFO.format(judgeClient.id));
+  async getJudgeClientSystemInfo(
+    judgeClient: JudgeClientEntity,
+  ): Promise<JudgeClientSystemInfo> {
+    const str = await this.redis.get(
+      REDIS_KEY_JUDGE_CLIENT_SYSTEM_INFO.format(judgeClient.id),
+    );
     try {
       return JSON.parse(str);
     } catch (e) {
@@ -105,6 +137,8 @@ export class JudgeClientService {
   }
 
   async isJudgeClientOnline(judgeClient: JudgeClientEntity): Promise<boolean> {
-    return !!(await this.redis.get(REDIS_KEY_JUDGE_CLIENT_SESSION_ID.format(judgeClient.id)));
+    return !!(await this.redis.get(
+      REDIS_KEY_JUDGE_CLIENT_SESSION_ID.format(judgeClient.id),
+    ));
   }
 }

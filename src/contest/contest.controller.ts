@@ -1,16 +1,15 @@
 import { CurrentUser } from "@/common/user.decorator";
 import { UserEntity } from "@/user/user.entity";
-import { Controller, Get, Post, Body, HttpCode } from "@nestjs/common";
+import { Controller, Post, Body, HttpCode } from "@nestjs/common";
 
 import { ApiTags, ApiBearerAuth, ApiOperation } from "@nestjs/swagger";
 
 import { ConfigService } from "@/config/config.service";
 import { ProblemService } from "@/problem/problem.service";
-import { ContestService, ContestPermissionType, ContestStatusType } from "./contest.service";
+import { ContestService, ContestPermissionType } from "./contest.service";
 import { SubmissionService } from "@/submission/submission.service";
 import { UserService } from "@/user/user.service";
 import { MailService, MailTemplate } from "@/mail/mail.service";
-
 
 import {
   CreateContestRequestDto,
@@ -88,14 +87,18 @@ export class ContestController {
   @ApiBearerAuth()
   @Post("createContest")
   @ApiOperation({
-    summary: "Create a contest."
+    summary: "Create a contest.",
   })
   async createContest(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: CreateContestRequestDto,
   ): Promise<CreateContestResponseDto> {
-
-    if (!await this.contestService.userHasPermission(currentUser, ContestPermissionType.Create)) {
+    if (
+      !(await this.contestService.userHasPermission(
+        currentUser,
+        ContestPermissionType.Create,
+      ))
+    ) {
       return {
         error: CreateContestResponseError.PERMISSION_DENIED,
       };
@@ -113,32 +116,38 @@ export class ContestController {
     return {
       id: id,
     };
-
   }
 
   @ApiBearerAuth()
   @Post("editContest")
   @ApiOperation({
-    summary: "Edit a contest."
+    summary: "Edit a contest.",
   })
   async editContest(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: EditContestRequestDto,
   ): Promise<EditContestResponseDto> {
-
-    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.Edit))) {
+    if (
+      !(await this.contestService.userHasPermission(
+        currentUser,
+        ContestPermissionType.Edit,
+      ))
+    ) {
       return {
         error: EditContestResponseError.PERMISSION_DENIED,
       };
     }
 
-    const contest = await this.contestService.findContestById(request.contestId);
+    const contest = await this.contestService.findContestById(
+      request.contestId,
+    );
     if (!contest) {
       return {
         error: EditContestResponseError.NO_SUCH_CONTEST,
       };
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const id = await this.contestService.editContest(
       contest,
       request.contestName,
@@ -155,23 +164,29 @@ export class ContestController {
   @ApiBearerAuth()
   @Post("deleteContest")
   @ApiOperation({
-    summary: "Delete a contest."
+    summary: "Delete a contest.",
   })
   async deleteContest(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: DeleteContestRequestDto,
-  ) : Promise<DeleteContestResponseDto> {
-
-    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.Delete))) {
+  ): Promise<DeleteContestResponseDto> {
+    if (
+      !(await this.contestService.userHasPermission(
+        currentUser,
+        ContestPermissionType.Delete,
+      ))
+    ) {
       return {
-        error: DeleteContestResponseError.PERMISSION_DENIED
+        error: DeleteContestResponseError.PERMISSION_DENIED,
       };
     }
 
-    const contest = await this.contestService.findContestById(request.contestId);
+    const contest = await this.contestService.findContestById(
+      request.contestId,
+    );
     if (!contest) {
       return {
-        error: DeleteContestResponseError.NO_SUCH_CONTEST
+        error: DeleteContestResponseError.NO_SUCH_CONTEST,
       };
     }
 
@@ -181,7 +196,7 @@ export class ContestController {
   @ApiBearerAuth()
   @Post("getContest")
   @ApiOperation({
-    summary: "Get any parts of contest."
+    summary: "Get any parts of contest.",
   })
   @HttpCode(200)
   async getContest(
@@ -192,18 +207,33 @@ export class ContestController {
 
     if (!contest) {
       return {
-        error: GetContestResponseDtoError.NO_SUCH_CONTEST
+        error: GetContestResponseDtoError.NO_SUCH_CONTEST,
       };
     }
 
-    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.ViewContestMeta, contest))) {
+    if (
+      !(await this.contestService.userHasPermission(
+        currentUser,
+        ContestPermissionType.ViewContestMeta,
+        contest,
+      ))
+    ) {
       return {
         error: GetContestResponseDtoError.PERMISSION_DENIED,
       };
     }
 
-    if (await this.contestService.userHasPermission(currentUser, ContestPermissionType.ViewProblemMeta, contest)) {
-      const problemMetaList = await this.contestService.getProblemMetaList(contest, currentUser);
+    if (
+      await this.contestService.userHasPermission(
+        currentUser,
+        ContestPermissionType.ViewProblemMeta,
+        contest,
+      )
+    ) {
+      const problemMetaList = await this.contestService.getProblemMetaList(
+        contest,
+        currentUser,
+      );
       return {
         contestMeta: contest,
         problemMetas: problemMetaList,
@@ -213,13 +243,12 @@ export class ContestController {
         contestMeta: contest,
       };
     }
-
   }
 
   @ApiBearerAuth()
   @Post("getContestList")
   @ApiOperation({
-    summary: "Get a contest list."
+    summary: "Get a contest list.",
   })
   @HttpCode(200)
   async getContestList(
@@ -228,62 +257,83 @@ export class ContestController {
   ): Promise<GetContestListResponseDto> {
     if (request.takeCount > this.configService.config.queryLimit.contestList) {
       return {
-        error: GetContestListResponseError.TAKE_TOO_MANY
+        error: GetContestListResponseError.TAKE_TOO_MANY,
       };
     }
 
     if (currentUser && currentUser.isContestUser) {
-      const contest = await this.contestService.findContestById(currentUser.contestId);
+      const contest = await this.contestService.findContestById(
+        currentUser.contestId,
+      );
       return {
         contestMetas: [await this.contestService.getContestMeta(contest)],
-        count: 1
+        count: 1,
       };
     }
 
-    let hasPrivate = request.hasPrivate && (await this.contestService.userHasPermission(currentUser, ContestPermissionType.ViewPrivateContest));
+    const hasPrivate =
+      request.hasPrivate &&
+      (await this.contestService.userHasPermission(
+        currentUser,
+        ContestPermissionType.ViewPrivateContest,
+      ));
 
-    const [contests, count] = await this.contestService.getContestList(hasPrivate, request.skipCount, request.takeCount);
+    const [contests, count] = await this.contestService.getContestList(
+      hasPrivate,
+      request.skipCount,
+      request.takeCount,
+    );
 
     return {
-      contestMetas: await Promise.all(contests.map(contest => this.contestService.getContestMeta(contest))),
-      count
+      contestMetas: await Promise.all(
+        contests.map((contest) => this.contestService.getContestMeta(contest)),
+      ),
+      count,
     };
   }
 
   @ApiBearerAuth()
   @Post("addProblem")
   @ApiOperation({
-    summary: "Add a problem to a contest."
+    summary: "Add a problem to a contest.",
   })
   async addProblem(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: AddProblemRequestDto,
   ): Promise<AddProblemResponseDto> {
-
-    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.Edit))) {
+    if (
+      !(await this.contestService.userHasPermission(
+        currentUser,
+        ContestPermissionType.Edit,
+      ))
+    ) {
       return {
-        error: AddProblemResponseError.PERMISSION_DENIED
+        error: AddProblemResponseError.PERMISSION_DENIED,
       };
     }
 
-    const contest = await this.contestService.findContestById(request.contestId);
+    const contest = await this.contestService.findContestById(
+      request.contestId,
+    );
 
     if (!contest) {
       return {
-        error: AddProblemResponseError.NO_SUCH_CONTEST
+        error: AddProblemResponseError.NO_SUCH_CONTEST,
       };
     }
 
-    const problem = await this.problemService.findProblemById(request.problemId);
+    const problem = await this.problemService.findProblemById(
+      request.problemId,
+    );
     if (!problem) {
       return {
-        error: AddProblemResponseError.NO_SUCH_PROBLEM
+        error: AddProblemResponseError.NO_SUCH_PROBLEM,
       };
     }
 
     if (await this.contestService.isProblemExistInContest(problem, contest)) {
       return {
-        error: AddProblemResponseError.PROBLEM_ALREADY_EXISTS
+        error: AddProblemResponseError.PROBLEM_ALREADY_EXISTS,
       };
     }
 
@@ -295,36 +345,46 @@ export class ContestController {
   @ApiBearerAuth()
   @Post("deleteProblem")
   @ApiOperation({
-    summary: "Delete a problem by contestId and problemId."
+    summary: "Delete a problem by contestId and problemId.",
   })
   async deleteProblem(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: DeleteProblemRequestDto,
   ): Promise<DeleteProblemResponseDto> {
-
-    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.Edit))) {
+    if (
+      !(await this.contestService.userHasPermission(
+        currentUser,
+        ContestPermissionType.Edit,
+      ))
+    ) {
       return {
-        error: DeleteProblemResponseError.PERMISSION_DENIED
+        error: DeleteProblemResponseError.PERMISSION_DENIED,
       };
     }
 
-    const contest = await this.contestService.findContestById(request.contestId);
+    const contest = await this.contestService.findContestById(
+      request.contestId,
+    );
     if (!contest) {
       return {
-        error: DeleteProblemResponseError.NO_SUCH_CONTEST
+        error: DeleteProblemResponseError.NO_SUCH_CONTEST,
       };
     }
 
-    const problem = await this.problemService.findProblemById(request.problemId);
+    const problem = await this.problemService.findProblemById(
+      request.problemId,
+    );
     if (!problem) {
       return {
-        error: DeleteProblemResponseError.NO_SUCH_PROBLEM
+        error: DeleteProblemResponseError.NO_SUCH_PROBLEM,
       };
     }
 
-    if (!(await this.contestService.isProblemExistInContest(problem, contest))) {
+    if (
+      !(await this.contestService.isProblemExistInContest(problem, contest))
+    ) {
       return {
-        error: DeleteProblemResponseError.PROBLEM_NOT_IN_CONTEST
+        error: DeleteProblemResponseError.PROBLEM_NOT_IN_CONTEST,
       };
     }
 
@@ -336,55 +396,74 @@ export class ContestController {
   @ApiBearerAuth()
   @Post("swapTwoProblemOrder")
   @ApiOperation({
-    summary: "Swap two problem order."
+    summary: "Swap two problem order.",
   })
   async swapTwoProblemOrder(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: SwapTwoProblemOrderRequestDto,
   ): Promise<SwapTwoProblemOrderResponseDto> {
-
-    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.Edit))) {
+    if (
+      !(await this.contestService.userHasPermission(
+        currentUser,
+        ContestPermissionType.Edit,
+      ))
+    ) {
       return {
-        error: SwapTwoProblemOrderResponseError.PERMISSION_DENIED
+        error: SwapTwoProblemOrderResponseError.PERMISSION_DENIED,
       };
     }
 
-    const contest = await this.contestService.findContestById(request.contestId);
+    const contest = await this.contestService.findContestById(
+      request.contestId,
+    );
     if (!contest) {
       return {
-        error: SwapTwoProblemOrderResponseError.NO_SUCH_CONTEST
+        error: SwapTwoProblemOrderResponseError.NO_SUCH_CONTEST,
       };
     }
 
-    const problemOrigin = await this.problemService.findProblemById(request.problemOriginId);
+    const problemOrigin = await this.problemService.findProblemById(
+      request.problemOriginId,
+    );
     if (!problemOrigin) {
       return {
-        error: SwapTwoProblemOrderResponseError.INVALID_PROBLEM_ORGIN_ID
+        error: SwapTwoProblemOrderResponseError.INVALID_PROBLEM_ORGIN_ID,
       };
     }
 
-    const problemNew = await this.problemService.findProblemById(request.problemNewId);
+    const problemNew = await this.problemService.findProblemById(
+      request.problemNewId,
+    );
     if (!problemNew) {
       return {
-        error: SwapTwoProblemOrderResponseError.INVALID_PROBLEM_NEW_ID
+        error: SwapTwoProblemOrderResponseError.INVALID_PROBLEM_NEW_ID,
       };
     }
 
-    const contestProblemOrigin = await this.contestService.findContestProblem(contest, problemOrigin);
+    const contestProblemOrigin = await this.contestService.findContestProblem(
+      contest,
+      problemOrigin,
+    );
     if (!contestProblemOrigin) {
       return {
-        error: SwapTwoProblemOrderResponseError.INVALID_PROBLEM_ORGIN_ID
+        error: SwapTwoProblemOrderResponseError.INVALID_PROBLEM_ORGIN_ID,
       };
     }
 
-    const contestProblemNew = await this.contestService.findContestProblem(contest, problemNew);
+    const contestProblemNew = await this.contestService.findContestProblem(
+      contest,
+      problemNew,
+    );
     if (!contestProblemNew) {
       return {
-        error: SwapTwoProblemOrderResponseError.INVALID_PROBLEM_NEW_ID
+        error: SwapTwoProblemOrderResponseError.INVALID_PROBLEM_NEW_ID,
       };
     }
 
-    await this.contestService.swapTwoProblemOrder(contestProblemOrigin, contestProblemNew);
+    await this.contestService.swapTwoProblemOrder(
+      contestProblemOrigin,
+      contestProblemNew,
+    );
 
     return {};
   }
@@ -392,56 +471,73 @@ export class ContestController {
   @ApiBearerAuth()
   @Post("getProblemMetaList")
   @ApiOperation({
-    summary: "Get Problem Meta List by contestId."
+    summary: "Get Problem Meta List by contestId.",
   })
   @HttpCode(200)
   async getProblemMetaList(
     @CurrentUser() currentUser: UserEntity,
-    @Body() request: GetProblemMetaListRequestDto
+    @Body() request: GetProblemMetaListRequestDto,
   ): Promise<GetProblemMetaListResponseDto> {
-
-    const contest = await this.contestService.findContestById(request.contestId);
+    const contest = await this.contestService.findContestById(
+      request.contestId,
+    );
 
     if (!contest) {
       return {
-        error: GetProblemMetaListResponseError.NO_SUCH_CONTEST
+        error: GetProblemMetaListResponseError.NO_SUCH_CONTEST,
       };
     }
 
-    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.ViewProblemMeta, contest))) {
+    if (
+      !(await this.contestService.userHasPermission(
+        currentUser,
+        ContestPermissionType.ViewProblemMeta,
+        contest,
+      ))
+    ) {
       return {
-        error: GetProblemMetaListResponseError.PERMISSION_DENIED
+        error: GetProblemMetaListResponseError.PERMISSION_DENIED,
       };
     }
 
-    const problemMetaList = await this.contestService.getProblemMetaList(contest, currentUser);
+    const problemMetaList = await this.contestService.getProblemMetaList(
+      contest,
+      currentUser,
+    );
 
     return {
-      problemMetas: problemMetaList
+      problemMetas: problemMetaList,
     };
   }
 
   @ApiBearerAuth()
   @Post("registerContestUser")
   @ApiOperation({
-    summary: "Register a user in a contest."
+    summary: "Register a user in a contest.",
   })
   async registerContestUser(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: RegisterContestUserRequestDto,
   ): Promise<RegisterContestUserResponseDto> {
-
-    const contest = await this.contestService.findContestById(request.contestId);
+    const contest = await this.contestService.findContestById(
+      request.contestId,
+    );
 
     if (!contest) {
       return {
-        error: RegisterContestUserResponseError.NO_SUCH_CONTEST
+        error: RegisterContestUserResponseError.NO_SUCH_CONTEST,
       };
     }
 
-    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.Register, contest))) {
+    if (
+      !(await this.contestService.userHasPermission(
+        currentUser,
+        ContestPermissionType.Register,
+        contest,
+      ))
+    ) {
       return {
-        error: RegisterContestUserResponseError.PERMISSION_DENIED
+        error: RegisterContestUserResponseError.PERMISSION_DENIED,
       };
     }
 
@@ -453,14 +549,15 @@ export class ContestController {
   @ApiBearerAuth()
   @Post("importContestUsers")
   @ApiOperation({
-    summary: "Import a user list as a Contest User List."
+    summary: "Import a user list as a Contest User List.",
   })
   async importContestUsers(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: ImportContestUsersRequestDto,
   ): Promise<ImportContestUsersResponseDto> {
-
-    const contest = await this.contestService.findContestById(request.contestId);
+    const contest = await this.contestService.findContestById(
+      request.contestId,
+    );
 
     if (!contest) {
       return {
@@ -468,7 +565,13 @@ export class ContestController {
       };
     }
 
-    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.Edit, contest))) {
+    if (
+      !(await this.contestService.userHasPermission(
+        currentUser,
+        ContestPermissionType.Edit,
+        contest,
+      ))
+    ) {
       return {
         error: ImportContestUsersResponseError.PERMISSION_DENIED,
       };
@@ -476,7 +579,7 @@ export class ContestController {
 
     await this.contestService.importContestUsers(
       request.contestUserList,
-      contest
+      contest,
     );
 
     return {};
@@ -485,35 +588,42 @@ export class ContestController {
   @ApiBearerAuth()
   @Post("deleteContestUser")
   @ApiOperation({
-    summary: "Delete a contest user."
+    summary: "Delete a contest user.",
   })
   async deleteContestUser(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: DeleteContestUserRequestDto,
   ): Promise<DeleteContestUserResponseDto> {
-    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.Edit))) {
+    if (
+      !(await this.contestService.userHasPermission(
+        currentUser,
+        ContestPermissionType.Edit,
+      ))
+    ) {
       return {
-        error: DeleteContestUserResponseError.PERMISSION_DENIED
+        error: DeleteContestUserResponseError.PERMISSION_DENIED,
       };
     }
 
-    const contest = await this.contestService.findContestById(request.contestId);
+    const contest = await this.contestService.findContestById(
+      request.contestId,
+    );
     if (!contest) {
       return {
-        error: DeleteContestUserResponseError.NO_SUCH_CONTEST
+        error: DeleteContestUserResponseError.NO_SUCH_CONTEST,
       };
     }
 
     const user = await this.userService.findUserById(request.userId);
     if (!user) {
       return {
-        error: DeleteContestUserResponseError.NO_SUCH_USER
+        error: DeleteContestUserResponseError.NO_SUCH_USER,
       };
     }
 
     if (!(await this.contestService.isUserRegisteredContest(user, contest))) {
       return {
-        error: DeleteContestUserResponseError.USER_NOT_REGISTERED_CONTEST
+        error: DeleteContestUserResponseError.USER_NOT_REGISTERED_CONTEST,
       };
     }
 
@@ -524,15 +634,16 @@ export class ContestController {
   @ApiBearerAuth()
   @Post("getContestUserList")
   @ApiOperation({
-    summary: "Get User List from a contest."
+    summary: "Get User List from a contest.",
   })
   @HttpCode(200)
   async getContestUserList(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: GetContestUserListRequestDto,
   ): Promise<GetContestUserListResponseDto> {
-
-    const contest = await this.contestService.findContestById(request.contestId);
+    const contest = await this.contestService.findContestById(
+      request.contestId,
+    );
 
     if (!contest) {
       return {
@@ -540,28 +651,35 @@ export class ContestController {
       };
     }
 
-    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.ViewContestUserList, contest))) {
+    if (
+      !(await this.contestService.userHasPermission(
+        currentUser,
+        ContestPermissionType.ViewContestUserList,
+        contest,
+      ))
+    ) {
       return {
         error: GetContestUserListResponseError.PERMISSION_DENIED,
       };
     }
 
     return {
-      contestUserList: await this.contestService.getContestUserList(contest)
+      contestUserList: await this.contestService.getContestUserList(contest),
     };
   }
 
   @ApiBearerAuth()
   @Post("createClarification")
   @ApiOperation({
-    summary: "Create clarification."
+    summary: "Create clarification.",
   })
   async createClarification(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: CreateClarificationRequestDto,
   ): Promise<CreateClarificationResponseDto> {
-
-    const contest = await this.contestService.findContestById(request.contestId);
+    const contest = await this.contestService.findContestById(
+      request.contestId,
+    );
 
     if (!contest) {
       return {
@@ -569,13 +687,24 @@ export class ContestController {
       };
     }
 
-    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.View, contest))) {
+    if (
+      !(await this.contestService.userHasPermission(
+        currentUser,
+        ContestPermissionType.View,
+        contest,
+      ))
+    ) {
       return {
         error: CreateClarificationResponseError.PERMISSION_DENIED,
       };
     }
 
-    await this.contestService.createClarification(currentUser, contest, request.content, request.replyId);
+    await this.contestService.createClarification(
+      currentUser,
+      contest,
+      request.content,
+      request.replyId,
+    );
 
     return {};
   }
@@ -583,15 +712,16 @@ export class ContestController {
   @ApiBearerAuth()
   @Post("getClarifications")
   @ApiOperation({
-    summary: "Get clarifications."
+    summary: "Get clarifications.",
   })
   @HttpCode(200)
   async getClarifications(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: GetClarificationsRequestDto,
   ): Promise<GetClarificationsResponseDto> {
-
-    const contest = await this.contestService.findContestById(request.contestId);
+    const contest = await this.contestService.findContestById(
+      request.contestId,
+    );
 
     if (!contest) {
       return {
@@ -599,29 +729,39 @@ export class ContestController {
       };
     }
 
-    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.View, contest))) {
+    if (
+      !(await this.contestService.userHasPermission(
+        currentUser,
+        ContestPermissionType.View,
+        contest,
+      ))
+    ) {
       return {
         error: GetClarificationsResponseError.PERMISSION_DENIED,
       };
     }
 
     return {
-      clarifications: await this.contestService.getClarifications(contest, currentUser)
+      clarifications: await this.contestService.getClarifications(
+        contest,
+        currentUser,
+      ),
     };
   }
 
   @ApiBearerAuth()
   @Post("getStandingsData")
   @ApiOperation({
-    summary: "Get Standings Data."
+    summary: "Get Standings Data.",
   })
   @HttpCode(200)
   async getStandingsData(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: GetStandingsDataRequestDto,
   ): Promise<GetStandingsDataResponseDto> {
-
-    const contest = await this.contestService.findContestById(request.contestId);
+    const contest = await this.contestService.findContestById(
+      request.contestId,
+    );
 
     if (!contest) {
       return {
@@ -629,7 +769,13 @@ export class ContestController {
       };
     }
 
-    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.ViewStandings, contest))) {
+    if (
+      !(await this.contestService.userHasPermission(
+        currentUser,
+        ContestPermissionType.ViewStandings,
+        contest,
+      ))
+    ) {
       return {
         error: GetStandingsDataResponseError.PERMISSION_DENIED,
       };
@@ -647,8 +793,13 @@ export class ContestController {
       1000000,
     );
 
-    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.ViewFrozenStatus))) {
-      submissionMetas.forEach(async submission => {
+    if (
+      !(await this.contestService.userHasPermission(
+        currentUser,
+        ContestPermissionType.ViewFrozenStatus,
+      ))
+    ) {
+      submissionMetas.forEach(async (submission) => {
         if (await this.contestService.isSubmissionFrozen(submission, contest)) {
           submission.status = SubmissionStatus.Frozen;
           submission.score = 0;
@@ -665,15 +816,16 @@ export class ContestController {
   @ApiBearerAuth()
   @Post("getContestSubmissions")
   @ApiOperation({
-    summary: "Get Contest Submissions."
+    summary: "Get Contest Submissions.",
   })
   @HttpCode(200)
   async getContestSubmissions(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: GetContestSubmissionsRequestDto,
   ): Promise<GetContestSubmissionsResponseDto> {
-
-    const contest = await this.contestService.findContestById(request.contestId);
+    const contest = await this.contestService.findContestById(
+      request.contestId,
+    );
 
     if (!contest) {
       return {
@@ -687,7 +839,7 @@ export class ContestController {
       if (!user) {
         return {
           error: GetContestSubmissionsResponseError.NO_SUCH_USER,
-        }
+        };
       }
     }
 
@@ -697,7 +849,7 @@ export class ContestController {
       if (!problem) {
         return {
           error: GetContestSubmissionsResponseError.NO_SUCH_PROBLEM,
-        }
+        };
       }
     }
 
@@ -713,9 +865,17 @@ export class ContestController {
       request.takeCount ?? 1000000,
     );
 
-    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.ViewFrozenStatus))) {
-      submissionMetas.forEach(async submission => {
-        if (!(submission.submitter.id == currentUser.id) && await this.contestService.isSubmissionFrozen(submission, contest)) {
+    if (
+      !(await this.contestService.userHasPermission(
+        currentUser,
+        ContestPermissionType.ViewFrozenStatus,
+      ))
+    ) {
+      submissionMetas.forEach(async (submission) => {
+        if (
+          !(submission.submitter.id == currentUser.id) &&
+          (await this.contestService.isSubmissionFrozen(submission, contest))
+        ) {
           submission.status = SubmissionStatus.Frozen;
           submission.score = 0;
         }
@@ -730,32 +890,41 @@ export class ContestController {
   @ApiBearerAuth()
   @Post("sendContestNotification")
   @ApiOperation({
-    summary: "Send Contest Notification."
+    summary: "Send Contest Notification.",
   })
   async sendContestNotification(
     @CurrentUser() currentUser: UserEntity,
     @Body() request: SendContestNotificationRequestDto,
   ): Promise<SendContestNotificationResponseDto> {
-
-    if (!(await this.contestService.userHasPermission(currentUser, ContestPermissionType.Edit))) {
+    if (
+      !(await this.contestService.userHasPermission(
+        currentUser,
+        ContestPermissionType.Edit,
+      ))
+    ) {
       return {
-        error: SendContestNotificationResponseError.PERMISSION_DENIED
+        error: SendContestNotificationResponseError.PERMISSION_DENIED,
       };
     }
 
-    const contest = await this.contestService.findContestById(request.contestId);
+    const contest = await this.contestService.findContestById(
+      request.contestId,
+    );
     if (!contest) {
       return {
-        error: SendContestNotificationResponseError.NO_SUCH_CONTEST
+        error: SendContestNotificationResponseError.NO_SUCH_CONTEST,
       };
     }
 
-    var userMetas: ContestUserMetaDto[] = [];
+    let userMetas: ContestUserMetaDto[] = [];
 
     if (!request.usernames) {
       userMetas = await this.contestService.getContestUserListAll(contest);
     } else {
-      userMetas = await this.contestService.getContestUserListAll(contest, request.usernames);
+      userMetas = await this.contestService.getContestUserListAll(
+        contest,
+        request.usernames,
+      );
     }
 
     userMetas.forEach((user) => {
@@ -768,13 +937,12 @@ export class ContestController {
           startTime: contest.startTime,
           endTime: contest.endTime,
           username: user.username,
-          password: user.contestUserPassword
+          password: user.contestUserPassword,
         },
         user.notificationEmail,
-      )
+      );
     });
 
     return {};
   }
-
 }

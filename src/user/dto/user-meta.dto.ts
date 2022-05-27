@@ -35,5 +35,4 @@ export class UserMetaDto {
 
   @ApiProperty()
   registrationTime: Date;
-
 }

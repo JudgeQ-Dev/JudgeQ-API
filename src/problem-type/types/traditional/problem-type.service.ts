@@ -26,19 +26,29 @@ export class ProblemTypeTraditionalService
       ProblemJudgeInfoTraditional,
       SubmissionContentTraditional,
       SubmissionTestcaseResultTraditional
-    > {
-  constructor(private configService: ConfigService, private codeLanguageService: CodeLanguageService) {}
+    >
+{
+  constructor(
+    private configService: ConfigService,
+    private codeLanguageService: CodeLanguageService,
+  ) {}
 
   getDefaultJudgeInfo(): ProblemJudgeInfoTraditional {
     return {
-      timeLimit: Math.min(1000, this.configService.config.resourceLimit.problemTimeLimit),
-      memoryLimit: Math.min(512, this.configService.config.resourceLimit.problemTimeLimit),
+      timeLimit: Math.min(
+        1000,
+        this.configService.config.resourceLimit.problemTimeLimit,
+      ),
+      memoryLimit: Math.min(
+        512,
+        this.configService.config.resourceLimit.problemTimeLimit,
+      ),
       runSamples: true,
       subtasks: null,
       checker: {
         type: "lines",
-        caseSensitive: false
-      }
+        caseSensitive: false,
+      },
     };
   }
 
@@ -52,20 +62,20 @@ export class ProblemTypeTraditionalService
 
   preprocessJudgeInfo(
     judgeInfo: ProblemJudgeInfoTraditional,
-    testData: ProblemFileEntity[]
+    testData: ProblemFileEntity[],
   ): ProblemJudgeInfoTraditional {
     return Array.isArray(judgeInfo.subtasks)
       ? judgeInfo
       : {
           ...judgeInfo,
-          subtasks: autoMatchInputToOutput(testData)
+          subtasks: autoMatchInputToOutput(testData),
         };
   }
 
   validateAndFilterJudgeInfo(
     judgeInfo: ProblemJudgeInfoTraditional,
     testData: ProblemFileEntity[],
-    ignoreLimits: boolean
+    ignoreLimits: boolean,
   ): void {
     validateMetaAndSubtasks(judgeInfo, testData, {
       enableTimeMemoryLimit: true,
@@ -73,16 +83,29 @@ export class ProblemTypeTraditionalService
       enableInputFile: true,
       enableOutputFile: true,
       enableUserOutputFilename: false,
-      hardTimeLimit: ignoreLimits ? null : this.configService.config.resourceLimit.problemTimeLimit,
-      hardMemoryLimit: ignoreLimits ? null : this.configService.config.resourceLimit.problemMemoryLimit,
-      testcaseLimit: ignoreLimits ? null : this.configService.config.resourceLimit.problemTestcases
+      hardTimeLimit: ignoreLimits
+        ? null
+        : this.configService.config.resourceLimit.problemTimeLimit,
+      hardMemoryLimit: ignoreLimits
+        ? null
+        : this.configService.config.resourceLimit.problemMemoryLimit,
+      testcaseLimit: ignoreLimits
+        ? null
+        : this.configService.config.resourceLimit.problemTestcases,
     });
 
     validateChecker(judgeInfo, testData, {
       validateCompileAndRunOptions: (language, compileAndRunOptions) =>
-        this.codeLanguageService.validateCompileAndRunOptions(language, compileAndRunOptions).length === 0,
-      hardTimeLimit: ignoreLimits ? null : this.configService.config.resourceLimit.problemTimeLimit,
-      hardMemoryLimit: ignoreLimits ? null : this.configService.config.resourceLimit.problemMemoryLimit
+        this.codeLanguageService.validateCompileAndRunOptions(
+          language,
+          compileAndRunOptions,
+        ).length === 0,
+      hardTimeLimit: ignoreLimits
+        ? null
+        : this.configService.config.resourceLimit.problemTimeLimit,
+      hardMemoryLimit: ignoreLimits
+        ? null
+        : this.configService.config.resourceLimit.problemMemoryLimit,
     });
 
     validateExtraSourceFiles(judgeInfo, testData);
@@ -94,41 +117,48 @@ export class ProblemTypeTraditionalService
       "runSamples",
       "subtasks",
       "checker",
-      "extraSourceFiles"
+      "extraSourceFiles",
     ]);
     restrictProperties(judgeInfo.fileIo, ["inputFilename", "outputFilename"]);
   }
 
-  async validateSubmissionContent(submissionContent: SubmissionContentTraditional): Promise<ValidationError[]> {
-    const errors = await validate(plainToClass(SubmissionContentTraditional, submissionContent), {
-      whitelist: true,
-      forbidNonWhitelisted: true
-    });
+  async validateSubmissionContent(
+    submissionContent: SubmissionContentTraditional,
+  ): Promise<ValidationError[]> {
+    const errors = await validate(
+      plainToClass(SubmissionContentTraditional, submissionContent),
+      {
+        whitelist: true,
+        forbidNonWhitelisted: true,
+      },
+    );
     if (errors.length > 0) return errors;
     return this.codeLanguageService.validateCompileAndRunOptions(
       submissionContent.language,
-      submissionContent.compileAndRunOptions
+      submissionContent.compileAndRunOptions,
     );
   }
 
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-  async getCodeLanguageAndAnswerSizeFromSubmissionContentAndFile(submissionContent: SubmissionContentTraditional) {
+  async getCodeLanguageAndAnswerSizeFromSubmissionContentAndFile(
+    submissionContent: SubmissionContentTraditional,
+  ) {
     return {
       language: submissionContent.language,
 
       // string.length returns the number of charactars in the string
       // Convert to a buffer to get the number of bytes
-      answerSize: Buffer.from(submissionContent.code).length
+      answerSize: Buffer.from(submissionContent.code).length,
     };
   }
 
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
   getTimeAndMemoryUsedFromFinishedSubmissionProgress(
-    submissionProgress: SubmissionProgress<SubmissionTestcaseResultTraditional>
+    submissionProgress: SubmissionProgress<SubmissionTestcaseResultTraditional>,
   ) {
     const result = {
       timeUsed: 0,
-      memoryUsed: 0
+      memoryUsed: 0,
     };
 
     if (submissionProgress) {
@@ -138,12 +168,12 @@ export class ProblemTypeTraditionalService
             if (!testcase?.testcaseHash) continue;
             result.timeUsed = Math.max(
               result.timeUsed,
-              submissionProgress.testcaseResult[testcase.testcaseHash].time
+              submissionProgress.testcaseResult[testcase.testcaseHash].time,
             );
             // result.timeUsed += submissionProgress.testcaseResult[testcase.testcaseHash].time;
             result.memoryUsed = Math.max(
               result.memoryUsed,
-              submissionProgress.testcaseResult[testcase.testcaseHash].memory
+              submissionProgress.testcaseResult[testcase.testcaseHash].memory,
             );
           }
         }

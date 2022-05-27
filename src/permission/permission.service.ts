@@ -24,7 +24,7 @@ export class PermissionService {
     objectId: number,
     objectType: PermissionObjectType,
     permissionLevel: PermissionLevel,
-    transactionalEntityManager?: EntityManager
+    transactionalEntityManager?: EntityManager,
   ): Promise<void> {
     const permissionForUser = new PermissionForUserEntity();
     permissionForUser.objectId = objectId;
@@ -47,26 +47,27 @@ export class PermissionService {
     user?: UserEntity,
     objectId?: number,
     objectType?: PermissionObjectType,
-    transactionalEntityManager?: EntityManager
+    transactionalEntityManager?: EntityManager,
   ): Promise<void> {
     const match: FindConditions<PermissionForUserEntity> = {};
     if (objectId) match.objectId = objectId;
     if (objectType) match.objectType = objectType;
     if (user) match.userId = user.id;
 
-    if (transactionalEntityManager) await transactionalEntityManager.delete(PermissionForUserEntity, match);
+    if (transactionalEntityManager)
+      await transactionalEntityManager.delete(PermissionForUserEntity, match);
     else await this.permissionForUserRepository.delete(match);
   }
 
   private async getUserPermissionLevel<PermissionLevel extends number>(
     user: UserEntity,
     objectId: number,
-    objectType: PermissionObjectType
+    objectType: PermissionObjectType,
   ): Promise<PermissionLevel> {
     const permissionForUser = await this.permissionForUserRepository.findOne({
       objectId,
       objectType,
-      userId: user.id
+      userId: user.id,
     });
     if (!permissionForUser) return null;
     return permissionForUser.permissionLevel as PermissionLevel;
@@ -77,14 +78,14 @@ export class PermissionService {
     objectId: number,
     objectType: PermissionObjectType,
     permission: PermissionLevel,
-    transactionalEntityManager?: EntityManager
+    transactionalEntityManager?: EntityManager,
   ): Promise<void> {
     return await this.setUserPermissionLevel(
       user,
       objectId,
       objectType,
       permission,
-      transactionalEntityManager
+      transactionalEntityManager,
     );
   }
 
@@ -92,15 +93,20 @@ export class PermissionService {
     user: UserEntity,
     objectId?: number,
     objectType?: PermissionObjectType,
-    transactionalEntityManager?: EntityManager
+    transactionalEntityManager?: EntityManager,
   ): Promise<void> {
-    return await this.revokeUserPermission(user, objectId, objectType, transactionalEntityManager);
+    return await this.revokeUserPermission(
+      user,
+      objectId,
+      objectType,
+      transactionalEntityManager,
+    );
   }
 
   async getPermissionLevel<PermissionLevel extends number>(
     user: UserEntity,
     objectId: number,
-    objectType: PermissionObjectType
+    objectType: PermissionObjectType,
   ): Promise<PermissionLevel> {
     return await this.getUserPermissionLevel(user, objectId, objectType);
   }
@@ -109,59 +115,72 @@ export class PermissionService {
     user: UserEntity,
     objectId: number,
     objectType: PermissionObjectType,
-    permissionLevelRequired: PermissionLevel
+    permissionLevelRequired: PermissionLevel,
   ): Promise<boolean> {
     if (!user) return false;
-    const userPermissionLevel = await this.getUserPermissionLevel(user, objectId, objectType);
+    const userPermissionLevel = await this.getUserPermissionLevel(
+      user,
+      objectId,
+      objectType,
+    );
     return userPermissionLevel >= permissionLevelRequired;
   }
 
   async getUserMaxPermissionLevel<PermissionLevel extends number>(
     user: UserEntity,
     objectId: number,
-    objectType: PermissionObjectType
+    objectType: PermissionObjectType,
   ): Promise<PermissionLevel> {
-    const userPermission = await this.getPermissionLevel(user, objectId, objectType);
+    const userPermission = await this.getPermissionLevel(
+      user,
+      objectId,
+      objectType,
+    );
     return userPermission as PermissionLevel;
   }
 
   async getUsersWithExactPermissionLevel<PermissionLevel extends number>(
     objectId: number,
     objectType: PermissionObjectType,
-    permissionLevel: PermissionLevel
+    permissionLevel: PermissionLevel,
   ): Promise<number[]> {
     return (
       await this.permissionForUserRepository.find({
         objectId,
         objectType,
-        permissionLevel
+        permissionLevel,
       })
-    ).map(permissionForUser => permissionForUser.userId);
+    ).map((permissionForUser) => permissionForUser.userId);
   }
 
   async getUserPermissionListOfObject<PermissionLevel extends number>(
     objectId: number,
-    objectType: PermissionObjectType
+    objectType: PermissionObjectType,
   ): Promise<[userId: number, permissionLevel: PermissionLevel][]> {
     return (
       await this.permissionForUserRepository.find({
         objectId,
-        objectType
+        objectType,
       })
-    ).map(permissionForUser => [permissionForUser.userId, permissionForUser.permissionLevel as PermissionLevel]);
+    ).map((permissionForUser) => [
+      permissionForUser.userId,
+      permissionForUser.permissionLevel as PermissionLevel,
+    ]);
   }
 
   async replaceUsersPermissionForObject<PermissionLevel extends number>(
     objectId: number,
     objectType: PermissionObjectType,
     userPermissions: [UserEntity, PermissionLevel][],
-    transactionalEntityManager?: EntityManager
+    transactionalEntityManager?: EntityManager,
   ): Promise<void> {
     // eslint-disable-next-line @typescript-eslint/no-shadow
-    const runInTransaction = async (transactionalEntityManager: EntityManager) => {
+    const runInTransaction = async (
+      transactionalEntityManager: EntityManager,
+    ) => {
       await transactionalEntityManager.delete(PermissionForUserEntity, {
         objectId,
-        objectType
+        objectType,
       });
 
       if (userPermissions.length > 0) {
@@ -174,14 +193,15 @@ export class PermissionService {
               objectId,
               objectType,
               userId: user.id,
-              permissionLevel
-            }))
+              permissionLevel,
+            })),
           )
           .execute();
       }
     };
 
-    if (transactionalEntityManager) await runInTransaction(transactionalEntityManager);
+    if (transactionalEntityManager)
+      await runInTransaction(transactionalEntityManager);
     else await this.connection.transaction("READ COMMITTED", runInTransaction);
   }
 }

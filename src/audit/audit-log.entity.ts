@@ -1,4 +1,11 @@
-import { Entity, ManyToOne, Column, JoinColumn, Index, PrimaryGeneratedColumn } from "typeorm";
+import {
+  Entity,
+  ManyToOne,
+  Column,
+  JoinColumn,
+  Index,
+  PrimaryGeneratedColumn,
+} from "typeorm";
 
 import { UserEntity } from "@/user/user.entity";
 
@@ -9,7 +16,7 @@ export enum AuditLogObjectType {
   ProblemTag = "ProblemTag",
   Submission = "Submission",
   Discussion = "Discussion",
-  DiscussionReply = "DiscussionReply"
+  DiscussionReply = "DiscussionReply",
 }
 
 @Entity("audit_log")
@@ -18,7 +25,7 @@ export class AuditLogEntity {
   id: number;
 
   @ManyToOne(() => UserEntity, {
-    onDelete: "CASCADE"
+    onDelete: "CASCADE",
   })
   @JoinColumn()
   user: Promise<UserEntity>;

@@ -10,7 +10,7 @@ export enum AddProblemFileResponseError {
 
   // Below only happen when user uploaded the file and call this API twice.
   FILE_UUID_EXISTS = "FILE_UUID_EXISTS",
-  FILE_NOT_UPLOADED = "FILE_NOT_UPLOADED"
+  FILE_NOT_UPLOADED = "FILE_NOT_UPLOADED",
 }
 
 export class AddProblemFileResponseDto {

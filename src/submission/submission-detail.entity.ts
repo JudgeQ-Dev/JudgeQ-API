@@ -1,4 +1,11 @@
-import { Entity, PrimaryColumn, OneToOne, Column, JoinColumn, Index } from "typeorm";
+import {
+  Entity,
+  PrimaryColumn,
+  OneToOne,
+  Column,
+  JoinColumn,
+  Index,
+} from "typeorm";
 
 import { SubmissionProgress } from "./submission-progress.interface";
 import { SubmissionEntity } from "./submission.entity";

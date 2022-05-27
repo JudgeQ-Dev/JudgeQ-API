@@ -21,8 +21,18 @@ import { AuthIpLocationService } from "./auth-ip-location.service";
     forwardRef(() => MailModule),
     forwardRef(() => AuditModule),
   ],
-  providers: [AuthService, AuthEmailVerificationCodeService, AuthSessionService, AuthIpLocationService],
+  providers: [
+    AuthService,
+    AuthEmailVerificationCodeService,
+    AuthSessionService,
+    AuthIpLocationService,
+  ],
   controllers: [AuthController],
-  exports: [AuthService, AuthEmailVerificationCodeService, AuthSessionService, AuthIpLocationService]
+  exports: [
+    AuthService,
+    AuthEmailVerificationCodeService,
+    AuthSessionService,
+    AuthIpLocationService,
+  ],
 })
 export class AuthModule {}

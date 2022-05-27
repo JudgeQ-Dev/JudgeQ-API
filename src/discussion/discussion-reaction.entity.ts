@@ -13,13 +13,13 @@ export class DiscussionReactionEntity {
   discussionId: number;
 
   @ManyToOne(() => DiscussionEntity, {
-    onDelete: "CASCADE"
+    onDelete: "CASCADE",
   })
   @JoinColumn()
   discussion: Promise<DiscussionEntity>;
 
   @ManyToOne(() => UserEntity, {
-    onDelete: "CASCADE"
+    onDelete: "CASCADE",
   })
   @JoinColumn()
   user: Promise<UserEntity>;

@@ -1,4 +1,4 @@
-import { Module, forwardRef, NestModule, MiddlewareConsumer, RequestMethod } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { ContestController } from "./contest.controller";
 import { ContestService } from "./contest.service";
@@ -15,7 +15,7 @@ import { ClarificationEntity } from "./clarification.entity";
 import { UserModule } from "@/user/user.module";
 import { SubmissionModule } from "@/submission/submission.module";
 import { ProblemModule } from "@/problem/problem.module";
-import { LocalizedContentModule } from "@/localized-content/localized-content.module"
+import { LocalizedContentModule } from "@/localized-content/localized-content.module";
 import { RedisModule } from "@/redis/redis.module";
 import { ProblemTypeModule } from "@/problem-type/problem-type.module";
 import { SubmissionDetailEntity } from "@/submission/submission-detail.entity";
@@ -43,8 +43,11 @@ import { MailModule } from "@/mail/mail.module";
     forwardRef(() => MailModule),
   ],
   controllers: [ContestController],
-  providers: [ContestService, SubmissionProgressService, SubmissionProgressGateway],
+  providers: [
+    ContestService,
+    SubmissionProgressService,
+    SubmissionProgressGateway,
+  ],
   exports: [ContestService],
 })
-
-export class ContestModule { }
+export class ContestModule {}

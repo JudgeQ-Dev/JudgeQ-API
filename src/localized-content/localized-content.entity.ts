@@ -5,7 +5,7 @@ import { Locale } from "@/common/locale.type";
 export enum LocalizedContentType {
   ProblemTitle = "ProblemTitle",
   ProblemContent = "ProblemContent",
-  ProblemTagName = "ProblemTagName"
+  ProblemTagName = "ProblemTagName",
 }
 
 @Entity("localized_content")

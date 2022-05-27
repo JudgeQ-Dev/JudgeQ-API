@@ -8,26 +8,29 @@ interface Subtask {
   }[];
 }
 
-export function autoMatchInputToOutput(testData: ProblemFileEntity[], outputOptional?: boolean): Subtask[] {
+export function autoMatchInputToOutput(
+  testData: ProblemFileEntity[],
+  outputOptional?: boolean,
+): Subtask[] {
   return [
     {
       scoringType: "Sum",
       testcases: testData
-        .filter(file => file.filename.toLowerCase().endsWith(".in"))
-        .map<[ProblemFileEntity, ProblemFileEntity, number[]]>(input => [
+        .filter((file) => file.filename.toLowerCase().endsWith(".in"))
+        .map<[ProblemFileEntity, ProblemFileEntity, number[]]>((input) => [
           input,
-          testData.find(file =>
+          testData.find((file) =>
             [".out", ".ans"]
-              .map(ext => input.filename.slice(0, -3).toLowerCase() + ext)
-              .includes(file.filename.toLowerCase())
+              .map((ext) => input.filename.slice(0, -3).toLowerCase() + ext)
+              .includes(file.filename.toLowerCase()),
           ),
-          (input.filename.match(/\d+/g) || []).map(Number)
+          (input.filename.match(/\d+/g) || []).map(Number),
         ])
         .filter(([, outputFile]) => (outputOptional ? true : outputFile))
         .sort(([inputA, , numbersA], [inputB, , numbersB]) => {
-          const firstNonEqualIndex = [...Array(Math.max(numbersA.length, numbersB.length)).keys()].findIndex(
-            i => numbersA[i] !== numbersB[i]
-          );
+          const firstNonEqualIndex = [
+            ...Array(Math.max(numbersA.length, numbersB.length)).keys(),
+          ].findIndex((i) => numbersA[i] !== numbersB[i]);
           // eslint-disable-next-line no-nested-ternary
           return firstNonEqualIndex === -1
             ? inputA.filename < inputB.filename
@@ -37,28 +40,39 @@ export function autoMatchInputToOutput(testData: ProblemFileEntity[], outputOpti
         })
         .map(([input, output]) => ({
           inputFile: input.filename,
-          outputFile: output?.filename
-        }))
-    }
+          outputFile: output?.filename,
+        })),
+    },
   ];
 }
 
-export function autoMatchOutputToInput(testData: ProblemFileEntity[], inputOptional?: boolean): Subtask[] {
+export function autoMatchOutputToInput(
+  testData: ProblemFileEntity[],
+  inputOptional?: boolean,
+): Subtask[] {
   return [
     {
       scoringType: "Sum",
       testcases: testData
-        .filter(file => ((str: string) => str.endsWith(".out") || str.endsWith(".ans"))(file.filename.toLowerCase()))
-        .map<[ProblemFileEntity, ProblemFileEntity, number[]]>(input => [
+        .filter((file) =>
+          ((str: string) => str.endsWith(".out") || str.endsWith(".ans"))(
+            file.filename.toLowerCase(),
+          ),
+        )
+        .map<[ProblemFileEntity, ProblemFileEntity, number[]]>((input) => [
           input,
-          testData.find(file => `${input.filename.slice(0, -4).toLowerCase()}.in` === file.filename.toLowerCase()),
-          (input.filename.match(/\d+/g) || []).map(Number)
+          testData.find(
+            (file) =>
+              `${input.filename.slice(0, -4).toLowerCase()}.in` ===
+              file.filename.toLowerCase(),
+          ),
+          (input.filename.match(/\d+/g) || []).map(Number),
         ])
         .filter(([, inputFile]) => (inputOptional ? true : inputFile))
         .sort(([outputA, , numbersA], [outputB, , numbersB]) => {
-          const firstNonEqualIndex = [...Array(Math.max(numbersA.length, numbersB.length)).keys()].findIndex(
-            i => numbersA[i] !== numbersB[i]
-          );
+          const firstNonEqualIndex = [
+            ...Array(Math.max(numbersA.length, numbersB.length)).keys(),
+          ].findIndex((i) => numbersA[i] !== numbersB[i]);
           // eslint-disable-next-line no-nested-ternary
           return firstNonEqualIndex === -1
             ? outputA.filename < outputB.filename
@@ -68,8 +82,8 @@ export function autoMatchOutputToInput(testData: ProblemFileEntity[], inputOptio
         })
         .map(([output, input]) => ({
           inputFile: input?.filename,
-          outputFile: output.filename
-        }))
-    }
+          outputFile: output.filename,
+        })),
+    },
   ];
 }

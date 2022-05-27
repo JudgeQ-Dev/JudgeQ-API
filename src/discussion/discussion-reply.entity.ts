@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Index, Column, ManyToOne, JoinColumn } from "typeorm";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Index,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from "typeorm";
 
 import { UserEntity } from "@/user/user.entity";
 
@@ -26,7 +33,7 @@ export class DiscussionReplyEntity {
   isPublic: boolean;
 
   @ManyToOne(() => DiscussionEntity, {
-    onDelete: "CASCADE"
+    onDelete: "CASCADE",
   })
   @JoinColumn()
   discussion: Promise<DiscussionEntity>;
@@ -36,7 +43,7 @@ export class DiscussionReplyEntity {
   discussionId: number;
 
   @ManyToOne(() => UserEntity, {
-    onDelete: "CASCADE"
+    onDelete: "CASCADE",
   })
   @JoinColumn()
   publisher: Promise<UserEntity>;

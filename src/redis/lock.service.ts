@@ -32,11 +32,15 @@ export class LockService {
     this.redis = this.redisService.getClient() as RedisWithLock;
     this.redis.defineCommand("callLock", {
       numberOfKeys: 1,
-      lua: fs.readFileSync(join(__dirname, "scripts", "lock.lua")).toString("utf-8")
+      lua: fs
+        .readFileSync(join(__dirname, "scripts", "lock.lua"))
+        .toString("utf-8"),
     });
     this.redis.defineCommand("callReadWriteLock", {
       numberOfKeys: 3,
-      lua: fs.readFileSync(join(__dirname, "scripts", "read-write-lock.lua")).toString("utf-8")
+      lua: fs
+        .readFileSync(join(__dirname, "scripts", "read-write-lock.lua"))
+        .toString("utf-8"),
     });
   }
 
@@ -48,7 +52,7 @@ export class LockService {
     doLock: () => Promise<boolean>,
     doUnlock: () => Promise<boolean>,
     doRefresh: () => Promise<boolean>,
-    callback: () => Promise<T>
+    callback: () => Promise<T>,
   ): Promise<T> {
     // Try locking
     let retries = 0;
@@ -56,7 +60,11 @@ export class LockService {
     /* eslint-disable no-await-in-loop */
     while (!(await doLock())) {
       if (++retries === LOCK_MAX_RETRY)
-        throw new Error(`Retries limit exceeded while attempting to lock ${JSON.stringify(name)}`);
+        throw new Error(
+          `Retries limit exceeded while attempting to lock ${JSON.stringify(
+            name,
+          )}`,
+        );
       await delay(LOCK_RETRY_DELAY);
     }
     /* eslint-enable no-await-in-loop */
@@ -64,7 +72,11 @@ export class LockService {
     // If the locked lock token mismatch, means the lock expired while this node hold the lock
     // This is a dangerous situation
     const onLockTokenMismatch = () => {
-      throw new Error(`Lock refresh failure detected on ${JSON.stringify(name)}, is the system overloaded?`);
+      throw new Error(
+        `Lock refresh failure detected on ${JSON.stringify(
+          name,
+        )}, is the system overloaded?`,
+      );
     };
 
     let unlocked = false;
@@ -120,7 +132,7 @@ export class LockService {
       () => this.redis.callLock(name, "lock", lockToken, LOCK_TTL),
       () => this.redis.callLock(name, "unlock", lockToken),
       () => this.redis.callLock(name, "refresh", lockToken, LOCK_TTL),
-      callback
+      callback,
     );
   }
 
@@ -133,10 +145,16 @@ export class LockService {
    * @param callback The function to execute while the lock is held.
    * @return The value returned in `callback`.
    */
-  async lockReadWrite<T>(name: string, type: "Read" | "Write", callback: () => Promise<T>): Promise<T> {
-    const keys = [REDIS_KEY_RWLOCK_WRITE_INTENT, REDIS_KEY_RWLOCK_WRITE_LOCK, REDIS_KEY_RWLOCK_READERS].map(key =>
-      key.format(name)
-    );
+  async lockReadWrite<T>(
+    name: string,
+    type: "Read" | "Write",
+    callback: () => Promise<T>,
+  ): Promise<T> {
+    const keys = [
+      REDIS_KEY_RWLOCK_WRITE_INTENT,
+      REDIS_KEY_RWLOCK_WRITE_LOCK,
+      REDIS_KEY_RWLOCK_READERS,
+    ].map((key) => key.format(name));
 
     if (type === "Read") {
       return await this.internalLock(
@@ -144,17 +162,29 @@ export class LockService {
         () => this.redis.callReadWriteLock(...keys, "read_lock", LOCK_TTL),
         () => this.redis.callReadWriteLock(...keys, "read_unlock"),
         () => this.redis.callReadWriteLock(...keys, "read_refresh", LOCK_TTL),
-        callback
+        callback,
       );
     } else {
       const lockToken = uuid();
 
       return await this.internalLock(
         `Write(${name})`,
-        () => this.redis.callReadWriteLock(...keys, "write_lock", lockToken, LOCK_TTL),
+        () =>
+          this.redis.callReadWriteLock(
+            ...keys,
+            "write_lock",
+            lockToken,
+            LOCK_TTL,
+          ),
         () => this.redis.callReadWriteLock(...keys, "write_unlock", lockToken),
-        () => this.redis.callReadWriteLock(...keys, "write_refresh", lockToken, LOCK_TTL),
-        callback
+        () =>
+          this.redis.callReadWriteLock(
+            ...keys,
+            "write_refresh",
+            lockToken,
+            LOCK_TTL,
+          ),
+        callback,
       );
     }
   }

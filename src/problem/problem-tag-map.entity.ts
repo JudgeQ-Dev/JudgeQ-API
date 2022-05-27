@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Index, ManyToOne, Column, JoinColumn } from "typeorm";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Index,
+  ManyToOne,
+  Column,
+  JoinColumn,
+} from "typeorm";
 
 import { ProblemEntity } from "./problem.entity";
 import { ProblemTagEntity } from "./problem-tag.entity";
@@ -10,7 +17,7 @@ export class ProblemTagMapEntity {
   id: number;
 
   @ManyToOne(() => ProblemEntity, {
-    onDelete: "CASCADE"
+    onDelete: "CASCADE",
   })
   @JoinColumn()
   problem: Promise<ProblemEntity>;
@@ -20,7 +27,7 @@ export class ProblemTagMapEntity {
   problemId: number;
 
   @ManyToOne(() => ProblemTagEntity, {
-    onDelete: "CASCADE"
+    onDelete: "CASCADE",
   })
   @JoinColumn()
   problemTag: Promise<ProblemTagEntity>;

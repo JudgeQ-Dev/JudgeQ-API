@@ -12,10 +12,11 @@ export enum SubmissionTestcaseStatusSubmitAnswer {
   WrongAnswer = "WrongAnswer",
   Accepted = "Accepted",
 
-  JudgementFailed = "JudgementFailed"
+  JudgementFailed = "JudgementFailed",
 }
 
-export interface SubmissionTestcaseResultSubmitAnswer extends SubmissionTestcaseResult {
+export interface SubmissionTestcaseResultSubmitAnswer
+  extends SubmissionTestcaseResult {
   testcaseInfo: {
     inputFile: string;
     outputFile: string;

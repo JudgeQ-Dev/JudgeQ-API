@@ -3,7 +3,6 @@ import { ApiProperty } from "@nestjs/swagger";
 import { DateType } from "../contest.service";
 
 export class CreateContestRequestDto {
-
   @ApiProperty()
   readonly contestName: string;
 

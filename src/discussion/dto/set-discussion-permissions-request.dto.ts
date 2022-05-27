@@ -10,7 +10,11 @@ class SetDiscussionPermissionsRequestUserPermissionDto {
   @IsInt()
   userId: number;
 
-  @ApiProperty({ enum: Object.values(DiscussionPermissionLevel).filter(x => typeof x === "number") })
+  @ApiProperty({
+    enum: Object.values(DiscussionPermissionLevel).filter(
+      (x) => typeof x === "number",
+    ),
+  })
   @IsEnum(DiscussionPermissionLevel)
   permissionLevel: DiscussionPermissionLevel;
 }
@@ -20,9 +24,11 @@ export class SetDiscussionPermissionsRequestDto {
   @IsInt()
   discussionId: number;
 
-  @ApiProperty({ type: SetDiscussionPermissionsRequestUserPermissionDto, isArray: true })
+  @ApiProperty({
+    type: SetDiscussionPermissionsRequestUserPermissionDto,
+    isArray: true,
+  })
   @ValidateNested({ each: true })
   @Type(() => SetDiscussionPermissionsRequestUserPermissionDto)
   userPermissions: SetDiscussionPermissionsRequestUserPermissionDto[];
-
 }

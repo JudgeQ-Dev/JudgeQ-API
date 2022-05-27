@@ -3,13 +3,16 @@ import { ValidationError } from "class-validator";
 import { ProblemJudgeInfo } from "@/problem/problem-judge-info.interface";
 import { ProblemFileEntity } from "@/problem/problem-file.entity";
 import { SubmissionContent } from "@/submission/submission-content.interface";
-import { SubmissionTestcaseResult, SubmissionProgress } from "@/submission/submission-progress.interface";
+import {
+  SubmissionTestcaseResult,
+  SubmissionProgress,
+} from "@/submission/submission-progress.interface";
 import { FileEntity } from "@/file/file.entity";
 
 export interface ProblemTypeServiceInterface<
   JudgeInfoType extends ProblemJudgeInfo,
   SubmissionContentType extends SubmissionContent,
-  SubmissionTestcaseResultType extends SubmissionTestcaseResult
+  SubmissionTestcaseResultType extends SubmissionTestcaseResult,
 > {
   /**
    * Return the default judge info for a newly created problem.
@@ -32,7 +35,10 @@ export interface ProblemTypeServiceInterface<
    * @param testData The problem's testdata files.
    * @return The preprocessed judge info to be sent to judge.
    */
-  preprocessJudgeInfo(judgeInfo: JudgeInfoType, testData: ProblemFileEntity[]): JudgeInfoType;
+  preprocessJudgeInfo(
+    judgeInfo: JudgeInfoType,
+    testData: ProblemFileEntity[],
+  ): JudgeInfoType;
 
   /**
    * Validate a preprocessed judge info and remove non-whitelisted properties from it.
@@ -42,14 +48,20 @@ export interface ProblemTypeServiceInterface<
    * @param ignoreLimits Ignore the limits in the config (e.g. the judge info is submitted by a privileged user).
    * @throws An array of error info `[error, arg1, arg2, ...]` if failed.
    */
-  validateAndFilterJudgeInfo(judgeInfo: JudgeInfoType, testData: ProblemFileEntity[], ignoreLimits: boolean): void;
+  validateAndFilterJudgeInfo(
+    judgeInfo: JudgeInfoType,
+    testData: ProblemFileEntity[],
+    ignoreLimits: boolean,
+  ): void;
 
   /**
    * Validate a submission content submitted by user. Return the validation errors by class-validator.
    * @param submissionContent The submission content submitted by user.
    * @returns The validation errors by class-validator.
    */
-  validateSubmissionContent(submissionContent: SubmissionContentType): Promise<ValidationError[]>;
+  validateSubmissionContent(
+    submissionContent: SubmissionContentType,
+  ): Promise<ValidationError[]>;
 
   /**
    * Get code language and answer size from submission content and file submitted by user.
@@ -59,7 +71,7 @@ export interface ProblemTypeServiceInterface<
    */
   getCodeLanguageAndAnswerSizeFromSubmissionContentAndFile(
     submissionContent: SubmissionContentType,
-    file?: FileEntity
+    file?: FileEntity,
   ): Promise<{
     language: string;
     answerSize: number;
@@ -71,7 +83,7 @@ export interface ProblemTypeServiceInterface<
    * @returns An object containing the time and memory used.
    */
   getTimeAndMemoryUsedFromFinishedSubmissionProgress(
-    submissionProgress: SubmissionProgress<SubmissionTestcaseResultType>
+    submissionProgress: SubmissionProgress<SubmissionTestcaseResultType>,
   ): {
     timeUsed: number;
     memoryUsed: number;

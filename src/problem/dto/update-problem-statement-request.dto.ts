@@ -9,7 +9,7 @@ import {
   IsArray,
   ArrayMaxSize,
   IsInt,
-  ArrayNotEmpty
+  ArrayNotEmpty,
 } from "class-validator";
 import { Type } from "class-transformer";
 
@@ -46,17 +46,20 @@ export class UpdateProblemStatementRequestDto {
 
   @ApiProperty({
     type: UpdateProblemRequestUpdatingLocalizedContentDto,
-    isArray: true
+    isArray: true,
   })
   @ValidateNested({ each: true })
   @Type(() => UpdateProblemRequestUpdatingLocalizedContentDto)
   @If<UpdateProblemRequestUpdatingLocalizedContentDto[]>(
-    updatingLocalizedContents =>
-      new Set(updatingLocalizedContents.map(updatingLocalizedContent => updatingLocalizedContent.locale)).size ===
-      updatingLocalizedContents.length,
+    (updatingLocalizedContents) =>
+      new Set(
+        updatingLocalizedContents.map(
+          (updatingLocalizedContent) => updatingLocalizedContent.locale,
+        ),
+      ).size === updatingLocalizedContents.length,
     {
-      message: "locale is not unique"
-    }
+      message: "locale is not unique",
+    },
   )
   @IsArray()
   @ArrayNotEmpty()

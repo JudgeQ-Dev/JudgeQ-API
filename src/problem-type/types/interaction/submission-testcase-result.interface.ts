@@ -14,10 +14,11 @@ export enum SubmissionTestcaseStatusInteraction {
   WrongAnswer = "WrongAnswer",
   Accepted = "Accepted",
 
-  JudgementFailed = "JudgementFailed"
+  JudgementFailed = "JudgementFailed",
 }
 
-export interface SubmissionTestcaseResultInteraction extends SubmissionTestcaseResult {
+export interface SubmissionTestcaseResultInteraction
+  extends SubmissionTestcaseResult {
   testcaseInfo: {
     timeLimit: number;
     memoryLimit: number;

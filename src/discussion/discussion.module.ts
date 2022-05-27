@@ -26,10 +26,10 @@ import { DiscussionReplyReactionEntity } from "./discussion-reply-reaction.entit
     forwardRef(() => AuditModule),
     forwardRef(() => PermissionModule),
     forwardRef(() => ProblemModule),
-    forwardRef(() => RedisModule)
+    forwardRef(() => RedisModule),
   ],
   providers: [DiscussionService],
   controllers: [DiscussionController],
-  exports: [DiscussionService]
+  exports: [DiscussionService],
 })
 export class DiscussionModule {}

@@ -44,15 +44,20 @@ function parseMainEndpointUrl(endpoint: string): MinioEndpointConfig {
   const url = new URL(endpoint);
   const result: Partial<MinioEndpointConfig> = {};
 
-  if (url.pathname !== "/") throw new Error("Main MinIO endpoint URL of a sub-directory is not supported.");
+  if (url.pathname !== "/")
+    throw new Error(
+      "Main MinIO endpoint URL of a sub-directory is not supported.",
+    );
   if (url.username || url.password || url.hash || url.search)
-    throw new Error("Authorization, search parameters and hash are not supported for main MinIO endpoint URL.");
+    throw new Error(
+      "Authorization, search parameters and hash are not supported for main MinIO endpoint URL.",
+    );
 
   if (url.protocol === "http:") result.useSSL = false;
   else if (url.protocol === "https:") result.useSSL = true;
   else
     throw new Error(
-      `Invalid protocol "${url.protocol}" for main MinIO endpoint URL. Only HTTP and HTTPS are supported.`
+      `Invalid protocol "${url.protocol}" for main MinIO endpoint URL. Only HTTP and HTTPS are supported.`,
     );
 
   result.endPoint = url.hostname;
@@ -61,23 +66,35 @@ function parseMainEndpointUrl(endpoint: string): MinioEndpointConfig {
   return result as MinioEndpointConfig;
 }
 
-function parseAlternativeEndpointUrl(endpoint: string): (originalUrl: string) => string {
-  if (!endpoint) return originalUrl => originalUrl;
+function parseAlternativeEndpointUrl(
+  endpoint: string,
+): (originalUrl: string) => string {
+  if (!endpoint) return (originalUrl) => originalUrl;
 
   const url = new URL(endpoint);
   if (url.hash || url.search)
-    throw new Error("Search parameters and hash are not supported for alternative MinIO endpoint URL.");
-  if (!url.pathname.endsWith("/")) throw new Error("Alternative MinIO endpoint URL's pathname must ends with '/'.");
+    throw new Error(
+      "Search parameters and hash are not supported for alternative MinIO endpoint URL.",
+    );
+  if (!url.pathname.endsWith("/"))
+    throw new Error(
+      "Alternative MinIO endpoint URL's pathname must ends with '/'.",
+    );
 
-  return originalUrl => {
+  return (originalUrl) => {
     const parsedOriginUrl = new URL(originalUrl);
-    return new URL(parsedOriginUrl.pathname.slice(1) + parsedOriginUrl.search + parsedOriginUrl.hash, url).toString();
+    return new URL(
+      parsedOriginUrl.pathname.slice(1) +
+        parsedOriginUrl.search +
+        parsedOriginUrl.hash,
+      url,
+    ).toString();
   };
 }
 
 export enum AlternativeUrlFor {
   User,
-  Judge
+  Judge,
 }
 
 @Injectable()
@@ -86,51 +103,73 @@ export class FileService implements OnModuleInit {
 
   private readonly bucket: string;
 
-  private readonly replaceWithAlternativeUrlFor: Record<AlternativeUrlFor, (originalUrl: string) => string>;
+  private readonly replaceWithAlternativeUrlFor: Record<
+    AlternativeUrlFor,
+    (originalUrl: string) => string
+  >;
 
   constructor(
     @InjectConnection()
     private readonly connection: Connection,
     @InjectRepository(FileEntity)
     private readonly fileRepository: Repository<FileEntity>,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
   ) {
     const config = this.configService.config.services.minio;
 
     this.minioClient = new MinioClient({
       ...parseMainEndpointUrl(config.endpoint),
       accessKey: config.accessKey,
-      secretKey: config.secretKey
+      secretKey: config.secretKey,
     });
     this.bucket = config.bucket;
     this.replaceWithAlternativeUrlFor = {
-      [AlternativeUrlFor.User]: parseAlternativeEndpointUrl(config.endpointForUser),
-      [AlternativeUrlFor.Judge]: parseAlternativeEndpointUrl(config.endpointForJudge)
+      [AlternativeUrlFor.User]: parseAlternativeEndpointUrl(
+        config.endpointForUser,
+      ),
+      [AlternativeUrlFor.Judge]: parseAlternativeEndpointUrl(
+        config.endpointForJudge,
+      ),
     };
   }
 
   fileExistsInMinio(uuid: string): Promise<boolean> {
-    return new Promise(resolve =>
+    return new Promise((resolve) =>
       this.minioClient
         .statObject(this.bucket, uuid)
         .then(() => resolve(true))
-        .catch(() => resolve(false))
+        .catch(() => resolve(false)),
     );
   }
 
-  async uploadFile(uuid: string, streamOrBufferOrFile: string | Buffer | Readable, retryCount = 10): Promise<void> {
+  async uploadFile(
+    uuid: string,
+    streamOrBufferOrFile: string | Buffer | Readable,
+    retryCount = 10,
+  ): Promise<void> {
     for (let i = 0; i < retryCount; i++) {
       try {
         /* eslint-disable no-await-in-loop */
         if (typeof streamOrBufferOrFile === "string")
-          await this.minioClient.fPutObject(this.bucket, uuid, streamOrBufferOrFile, {});
-        else await this.minioClient.putObject(this.bucket, uuid, streamOrBufferOrFile, {});
+          await this.minioClient.fPutObject(
+            this.bucket,
+            uuid,
+            streamOrBufferOrFile,
+            {},
+          );
+        else
+          await this.minioClient.putObject(
+            this.bucket,
+            uuid,
+            streamOrBufferOrFile,
+            {},
+          );
         /* eslint-enable no-await-in-loop */
       } catch (e) {
         if (i === retryCount - 1) throw e;
         else {
           // eslint-disable-next-line no-await-in-loop
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise((resolve) => setTimeout(resolve, 1000));
           continue;
         }
       }
@@ -143,13 +182,13 @@ export class FileService implements OnModuleInit {
       bucketExists = await this.minioClient.bucketExists(this.bucket);
     } catch (e) {
       throw new Error(
-        `Error initializing the MinIO client. Please check your configuration file and MinIO server. ${e}`
+        `Error initializing the MinIO client. Please check your configuration file and MinIO server. ${e}`,
       );
     }
 
     if (!bucketExists)
       throw new Error(
-        `MinIO bucket ${this.bucket} doesn't exist. Please check your configuration file and MinIO server.`
+        `MinIO bucket ${this.bucket} doesn't exist. Please check your configuration file and MinIO server.`,
       );
   }
 
@@ -173,9 +212,17 @@ export class FileService implements OnModuleInit {
    */
   async processUploadRequest<LimitCheckErrorType extends string>(
     uploadInfo: FileUploadInfoDto,
-    checkLimit: (size: number) => Promise<LimitCheckErrorType> | LimitCheckErrorType,
-    transactionalEntityManager: EntityManager
-  ): Promise<FileEntity | SignedFileUploadRequestDto | LimitCheckErrorType | "FILE_UUID_EXISTS" | "FILE_NOT_UPLOADED"> {
+    checkLimit: (
+      size: number,
+    ) => Promise<LimitCheckErrorType> | LimitCheckErrorType,
+    transactionalEntityManager: EntityManager,
+  ): Promise<
+    | FileEntity
+    | SignedFileUploadRequestDto
+    | LimitCheckErrorType
+    | "FILE_UUID_EXISTS"
+    | "FILE_NOT_UPLOADED"
+  > {
     const limitCheckError = await checkLimit(uploadInfo.size);
     if (limitCheckError) {
       if (uploadInfo.uuid) this.deleteUnfinishedUploadedFile(uploadInfo.uuid);
@@ -185,7 +232,11 @@ export class FileService implements OnModuleInit {
     if (uploadInfo.uuid) {
       // The client says the file is uploaded
 
-      if ((await transactionalEntityManager.count(FileEntity, { uuid: uploadInfo.uuid })) !== 0)
+      if (
+        (await transactionalEntityManager.count(FileEntity, {
+          uuid: uploadInfo.uuid,
+        })) !== 0
+      )
         return "FILE_UUID_EXISTS";
 
       // Check file existance
@@ -217,7 +268,10 @@ export class FileService implements OnModuleInit {
   /**
    * Sign a upload request for given size. The alternative MinIO endpoint for user will be used in the POST URL.
    */
-  private async signUploadRequest(minSize?: number, maxSize?: number): Promise<SignedFileUploadRequestDto> {
+  private async signUploadRequest(
+    minSize?: number,
+    maxSize?: number,
+  ): Promise<SignedFileUploadRequestDto> {
     const uuid = UUID();
     const policy = this.minioClient.newPostPolicy();
     policy.setBucket(this.bucket);
@@ -231,27 +285,32 @@ export class FileService implements OnModuleInit {
     return {
       uuid,
       method: "POST",
-      url: this.replaceWithAlternativeUrlFor[AlternativeUrlFor.User](policyResult.postURL),
+      url: this.replaceWithAlternativeUrlFor[AlternativeUrlFor.User](
+        policyResult.postURL,
+      ),
       extraFormData: policyResult.formData,
-      fileFieldName: "file"
+      fileFieldName: "file",
     };
   }
 
   /**
    * @return A function to run after transaction, to delete the file(s) actually.
    */
-  async deleteFile(uuid: string | string[], transactionalEntityManager: EntityManager): Promise<() => void> {
+  async deleteFile(
+    uuid: string | string[],
+    transactionalEntityManager: EntityManager,
+  ): Promise<() => void> {
     if (typeof uuid === "string") {
       await transactionalEntityManager.delete(FileEntity, { uuid });
       return () =>
-        this.minioClient.removeObject(this.bucket, uuid).catch(e => {
+        this.minioClient.removeObject(this.bucket, uuid).catch((e) => {
           logger.error(`Failed to delete file ${uuid}: ${e}`);
         });
     }
     if (uuid.length > 0) {
       await transactionalEntityManager.delete(FileEntity, { uuid: In(uuid) });
       return () =>
-        this.minioClient.removeObjects(this.bucket, uuid).catch(e => {
+        this.minioClient.removeObjects(this.bucket, uuid).catch((e) => {
           logger.error(`Failed to delete file [${uuid}]: ${e}`);
         });
     }
@@ -264,27 +323,30 @@ export class FileService implements OnModuleInit {
    * Delete a user-uploaded file before calling finishUpload()
    */
   deleteUnfinishedUploadedFile(uuid: string): void {
-    this.minioClient.removeObject(this.bucket, uuid).catch(e => {
+    this.minioClient.removeObject(this.bucket, uuid).catch((e) => {
       if (e.message === "The specified key does not exist.") return;
       logger.error(`Failed to delete unfinished uploaded file ${uuid}: ${e}`);
     });
   }
 
-  async getFileSizes(uuids: string[], transcationalEntityManager: EntityManager): Promise<number[]> {
+  async getFileSizes(
+    uuids: string[],
+    transcationalEntityManager: EntityManager,
+  ): Promise<number[]> {
     if (uuids.length === 0) return [];
     const uniqueUuids = Array.from(new Set(uuids));
     const files = await transcationalEntityManager.find(FileEntity, {
-      uuid: In(uniqueUuids)
+      uuid: In(uniqueUuids),
     });
-    const map = Object.fromEntries(files.map(file => [file.uuid, file]));
-    return uuids.map(uuid => map[uuid].size);
+    const map = Object.fromEntries(files.map((file) => [file.uuid, file]));
+    return uuids.map((uuid) => map[uuid].size);
   }
 
   async signDownloadLink({
     uuid,
     downloadFilename,
     noExpire,
-    useAlternativeEndpointFor
+    useAlternativeEndpointFor,
   }: {
     uuid: string;
     downloadFilename?: string;
@@ -299,11 +361,14 @@ export class FileService implements OnModuleInit {
       !downloadFilename
         ? {}
         : {
-            "response-content-disposition": `attachment; filename="${encodeRFC5987ValueChars(downloadFilename)}"`
-          }
+            "response-content-disposition": `attachment; filename="${encodeRFC5987ValueChars(
+              downloadFilename,
+            )}"`,
+          },
     );
 
-    if (useAlternativeEndpointFor != null) return this.replaceWithAlternativeUrlFor[useAlternativeEndpointFor](url);
+    if (useAlternativeEndpointFor != null)
+      return this.replaceWithAlternativeUrlFor[useAlternativeEndpointFor](url);
     else return url;
   }
 
@@ -314,14 +379,14 @@ export class FileService implements OnModuleInit {
     const deleteList: string[] = [];
     await new Promise((resolve, reject) => {
       const promises: Promise<void>[] = [];
-      stream.on("data", object => {
+      stream.on("data", (object) => {
         promises.push(
           (async () => {
             const uuid = object.name;
             if (!(await this.fileRepository.count({ uuid }))) {
               deleteList.push(uuid);
             }
-          })()
+          })(),
         );
       });
       stream.on("end", () => Promise.all(promises).then(resolve).catch(reject));

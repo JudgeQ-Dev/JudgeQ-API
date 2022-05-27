@@ -19,5 +19,5 @@ export enum SubmissionStatus {
 
   JudgementFailed = "JudgementFailed",
 
-  Frozen = "Frozen"
+  Frozen = "Frozen",
 }

@@ -4,10 +4,14 @@ export enum ConfigRelationType {
   LessThan = "LessThan",
   LessThanOrEqual = "LessThanOrEqual",
   MoreThan = "MoreThan",
-  MoreThanOrEqual = "MoreThanOrEqual"
+  MoreThanOrEqual = "MoreThanOrEqual",
 }
 
-function satisfy(thisValue: number, referencedValue: number, relationType: ConfigRelationType) {
+function satisfy(
+  thisValue: number,
+  referencedValue: number,
+  relationType: ConfigRelationType,
+) {
   switch (relationType) {
     case ConfigRelationType.LessThan:
       return thisValue < referencedValue;
@@ -36,36 +40,52 @@ const CONFIG_RELATION_METADATA_KEY = "config-relation";
  * @param referencedValuePath
  * @param type
  */
-export function ConfigRelation(referencedValuePath: string, relationType: ConfigRelationType) {
-  return Reflect.metadata(CONFIG_RELATION_METADATA_KEY, <ConfigRelationMetadata>{
+export function ConfigRelation(
+  referencedValuePath: string,
+  relationType: ConfigRelationType,
+) {
+  return Reflect.metadata(CONFIG_RELATION_METADATA_KEY, <
+    ConfigRelationMetadata
+  >{
     referencedValuePath,
-    relationType
+    relationType,
   });
 }
 
 function checkConfigRelationRecursively(
   configSubtree: Record<string, unknown>,
   currentPath: string,
-  configRoot: Record<string, unknown>
+  configRoot: Record<string, unknown>,
 ) {
   if (!configSubtree) return;
 
-  Object.keys(configSubtree).forEach(key => {
-    const metadata = Reflect.getMetadata(CONFIG_RELATION_METADATA_KEY, configSubtree, key) as ConfigRelationMetadata;
+  Object.keys(configSubtree).forEach((key) => {
+    const metadata = Reflect.getMetadata(
+      CONFIG_RELATION_METADATA_KEY,
+      configSubtree,
+      key,
+    ) as ConfigRelationMetadata;
     const item = configSubtree[key];
 
     if (typeof item === "number" && metadata) {
       const thisValue = item;
-      const referencedValue = objectPath.get(configRoot, metadata.referencedValuePath) as number;
+      const referencedValue = objectPath.get(
+        configRoot,
+        metadata.referencedValuePath,
+      ) as number;
       if (!satisfy(thisValue, referencedValue, metadata.relationType)) {
         throw new Error(
-          `Config validation error: ${currentPath}${key} must satisfy the relation "${metadata.relationType}" when comparing to ${metadata.referencedValuePath}`
+          `Config validation error: ${currentPath}${key} must satisfy the relation "${metadata.relationType}" when comparing to ${metadata.referencedValuePath}`,
         );
       }
     }
 
     if (typeof item === "object") {
-      checkConfigRelationRecursively(item as Record<string, unknown>, `${currentPath}.${key}`, configRoot);
+      checkConfigRelationRecursively(
+        item as Record<string, unknown>,
+        `${currentPath}.${key}`,
+        configRoot,
+      );
     }
   });
 }

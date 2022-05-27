@@ -14,13 +14,13 @@ export enum JudgeTaskPriorityType {
   High = 1,
   Medium = 2,
   Low = 3,
-  Lowest = 4
+  Lowest = 4,
 }
 
 export enum JudgeTaskType {
   Submission = "Submission",
   CustomTest = "CustomTest",
-  Hack = "Hack"
+  Hack = "Hack",
 }
 
 export interface JudgeTaskMeta {
@@ -32,19 +32,21 @@ export interface JudgeTaskMeta {
 export interface JudgeTaskExtraInfo {}
 
 // Extra info is also send to judge client while ONLY meta is used to identity the task
-export class JudgeTask<ExtraInfo extends JudgeTaskExtraInfo> implements JudgeTaskMeta {
+export class JudgeTask<ExtraInfo extends JudgeTaskExtraInfo>
+  implements JudgeTaskMeta
+{
   constructor(
     public taskId: string, // Passed by the task creator, to indentify the task
     public type: JudgeTaskType,
     public priorityType: JudgeTaskPriorityType,
     public priority: number,
-    public extraInfo: ExtraInfo
+    public extraInfo: ExtraInfo,
   ) {}
 
   getMeta(): JudgeTaskMeta {
     return {
       taskId: this.taskId,
-      type: this.type
+      type: this.type,
     };
   }
 }
@@ -70,21 +72,32 @@ export class JudgeQueueService {
 
   registerTaskType<TaskProgress>(
     taskType: JudgeTaskType,
-    service: JudgeTaskService<TaskProgress, JudgeTaskExtraInfo>
+    service: JudgeTaskService<TaskProgress, JudgeTaskExtraInfo>,
   ): void {
     this.taskServices.set(taskType, service);
   }
 
-  async pushTask(taskId: string, type: JudgeTaskType, priority: number, repush = false): Promise<void> {
-    if (repush) logger.verbose(`Repush judge task: { taskId: ${taskId}, type: ${type}, priority: ${priority} }`);
-    else logger.verbose(`New judge task: { taskId: ${taskId}, type: ${type}, priority: ${priority} }`);
+  async pushTask(
+    taskId: string,
+    type: JudgeTaskType,
+    priority: number,
+    repush = false,
+  ): Promise<void> {
+    if (repush)
+      logger.verbose(
+        `Repush judge task: { taskId: ${taskId}, type: ${type}, priority: ${priority} }`,
+      );
+    else
+      logger.verbose(
+        `New judge task: { taskId: ${taskId}, type: ${type}, priority: ${priority} }`,
+      );
     await this.redisForPush.zadd(
       REDIS_KEY_JUDGE_QUEUE,
       priority,
       JSON.stringify({
         taskId,
-        type
-      })
+        type,
+      }),
     );
   }
 
@@ -93,10 +106,12 @@ export class JudgeQueueService {
 
     // ioredis's definition doesn't have bzpopmin method
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const redisResponse: [key: string, element: string, score: string] = await (this.redisForConsume as any).bzpopmin(
-      REDIS_KEY_JUDGE_QUEUE,
-      REDIS_CONSUME_TIMEOUT
-    );
+    const redisResponse: [key: string, element: string, score: string] =
+      await // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (this.redisForConsume as any).bzpopmin(
+        REDIS_KEY_JUDGE_QUEUE,
+        REDIS_CONSUME_TIMEOUT,
+      );
     if (!redisResponse) {
       logger.verbose("Consuming task queue - timeout or empty");
       return null;
@@ -105,18 +120,20 @@ export class JudgeQueueService {
     const [, taskJson, priorityString] = redisResponse;
     const priority = Number(priorityString);
     const taskMeta: JudgeTaskMeta = JSON.parse(taskJson);
-    const task = await this.taskServices.get(taskMeta.type).getTaskToBeSentToJudgeByTaskId(taskMeta.taskId, priority);
+    const task = await this.taskServices
+      .get(taskMeta.type)
+      .getTaskToBeSentToJudgeByTaskId(taskMeta.taskId, priority);
     if (!task) {
       logger.verbose(
-        `Consumed judge task { taskId: ${taskMeta.taskId}, type: ${taskMeta.type} }, but taskId is invalid, maybe canceled?`
+        `Consumed judge task { taskId: ${taskMeta.taskId}, type: ${taskMeta.type} }, but taskId is invalid, maybe canceled?`,
       );
       return null;
     }
 
     logger.verbose(
-      `Consumed judge task { taskId: ${task.taskId}, type: ${task.type}, priority: ${priority} (${
-        JudgeTaskPriorityType[task.priorityType]
-      }) }`
+      `Consumed judge task { taskId: ${task.taskId}, type: ${
+        task.type
+      }, priority: ${priority} (${JudgeTaskPriorityType[task.priorityType]}) }`,
     );
     return task;
   }
@@ -124,7 +141,12 @@ export class JudgeQueueService {
   /**
    * @return `false` means the task is canceled.
    */
-  async onTaskProgress(taskMeta: JudgeTaskMeta, progress: JudgeTaskProgress): Promise<boolean> {
-    return await this.taskServices.get(taskMeta.type).onTaskProgress(taskMeta.taskId, progress);
+  async onTaskProgress(
+    taskMeta: JudgeTaskMeta,
+    progress: JudgeTaskProgress,
+  ): Promise<boolean> {
+    return await this.taskServices
+      .get(taskMeta.type)
+      .onTaskProgress(taskMeta.taskId, progress);
   }
 }

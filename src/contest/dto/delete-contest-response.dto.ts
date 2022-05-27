@@ -8,5 +8,4 @@ export enum DeleteContestResponseError {
 export class DeleteContestResponseDto {
   @ApiProperty({ enum: DeleteContestResponseError })
   error?: DeleteContestResponseError;
-
 }

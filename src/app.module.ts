@@ -1,4 +1,10 @@
-import { Module, forwardRef, NestModule, MiddlewareConsumer, RequestMethod } from "@nestjs/common";
+import {
+  Module,
+  forwardRef,
+  NestModule,
+  MiddlewareConsumer,
+  RequestMethod,
+} from "@nestjs/common";
 
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
@@ -45,13 +51,13 @@ import { EventReportModule } from "./event-report/event-report.module";
     forwardRef(() => EventReportModule),
   ],
   controllers: [AppController],
-  providers: [AppService, ErrorFilter, RecaptchaFilter]
+  providers: [AppService, ErrorFilter, RecaptchaFilter],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
     consumer.apply(AuthMiddleware).forRoutes({
       path: "*",
-      method: RequestMethod.ALL
+      method: RequestMethod.ALL,
     });
   }
 }

@@ -6,14 +6,14 @@ import { IsUsername } from "@/common/validators";
 
 export class GetUserMetaRequestDto {
   @ApiProperty({
-    required: false
+    required: false,
   })
   @IsInt()
   @IsOptional()
   readonly userId?: number;
 
   @ApiProperty({
-    required: false
+    required: false,
   })
   @IsUsername()
   @IsOptional()

@@ -4,7 +4,7 @@ import { DiscussionReplyDto } from "./get-discussion-and-replies-response.dto";
 
 export enum CreateDiscussionReplyResponseError {
   PERMISSION_DENIED = "PERMISSION_DENIED",
-  NO_SUCH_DISCUSSION = "NO_SUCH_DISCUSSION"
+  NO_SUCH_DISCUSSION = "NO_SUCH_DISCUSSION",
 }
 
 export class CreateDiscussionReplyResponseDto {

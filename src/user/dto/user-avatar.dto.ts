@@ -3,7 +3,7 @@ import { ApiProperty } from "@nestjs/swagger";
 export enum UserAvatarType {
   Gravatar = "gravatar",
   GitHub = "github",
-  QQ = "qq"
+  QQ = "qq",
 }
 
 export class UserAvatarDto {

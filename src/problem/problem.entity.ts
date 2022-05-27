@@ -6,7 +6,7 @@ import {
   ManyToMany,
   Column,
   JoinColumn,
-  OneToOne
+  OneToOne,
 } from "typeorm";
 
 import { UserEntity } from "@/user/user.entity";
@@ -19,7 +19,7 @@ import { ProblemSampleEntity } from "./problem-sample.entity";
 export enum ProblemType {
   Traditional = "Traditional",
   Interaction = "Interaction",
-  SubmitAnswer = "SubmitAnswer"
+  SubmitAnswer = "SubmitAnswer",
 }
 
 @Entity("problem")
@@ -66,12 +66,15 @@ export class ProblemEntity {
   @Column({ type: "integer" })
   acceptedSubmissionCount: number;
 
-  @OneToOne(() => ProblemSampleEntity, problemSample => problemSample.problem)
+  @OneToOne(() => ProblemSampleEntity, (problemSample) => problemSample.problem)
   sample: Promise<ProblemSampleEntity>;
 
-  @OneToOne(() => ProblemJudgeInfoEntity, problemJudgeInfo => problemJudgeInfo.problem)
+  @OneToOne(
+    () => ProblemJudgeInfoEntity,
+    (problemJudgeInfo) => problemJudgeInfo.problem,
+  )
   judgeInfo: Promise<ProblemJudgeInfoEntity>;
 
-  @ManyToMany(() => ContestEntity, contest => contest.problems)
+  @ManyToMany(() => ContestEntity, (contest) => contest.problems)
   contests?: ContestEntity[];
 }

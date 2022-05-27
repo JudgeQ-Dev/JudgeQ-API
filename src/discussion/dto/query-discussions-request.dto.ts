@@ -1,6 +1,13 @@
 import { ApiProperty } from "@nestjs/swagger";
 
-import { IsBoolean, IsEnum, IsInt, IsOptional, Length, Min } from "class-validator";
+import {
+  IsBoolean,
+  IsEnum,
+  IsInt,
+  IsOptional,
+  Length,
+  Min,
+} from "class-validator";
 
 import { Locale } from "@/common/locale.type";
 
@@ -30,7 +37,8 @@ export class QueryDiscussionsRequestDto {
   nonpublic?: boolean;
 
   @ApiProperty({
-    description: "Pass true to return discussion title only. For a preview in search bar."
+    description:
+      "Pass true to return discussion title only. For a preview in search bar.",
   })
   @IsBoolean()
   @IsOptional()

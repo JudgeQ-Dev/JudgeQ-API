@@ -6,7 +6,7 @@ export enum SendEmailVerificationCodeResponseError {
   NO_SUCH_USER = "NO_SUCH_USER", // Reset password
   ALREADY_LOGGEDIN = "ALREADY_LOGGEDIN", // Register, Reset password
   FAILED_TO_SEND = "FAILED_TO_SEND",
-  RATE_LIMITED = "RATE_LIMITED"
+  RATE_LIMITED = "RATE_LIMITED",
 }
 
 export class SendEmailVerificationCodeResponseDto {

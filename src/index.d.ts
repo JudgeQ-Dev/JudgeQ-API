@@ -1,4 +1,4 @@
 // String.prototype.format
 interface String {
-    format(...param: unknown[]): string;
+  format(...param: unknown[]): string;
 }

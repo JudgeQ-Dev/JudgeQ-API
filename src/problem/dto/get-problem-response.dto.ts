@@ -1,6 +1,9 @@
 import { ApiProperty } from "@nestjs/swagger";
 
-import { ProblemPermissionType, ProblemPermissionLevel } from "@/problem/problem.service";
+import {
+  ProblemPermissionType,
+  ProblemPermissionLevel,
+} from "@/problem/problem.service";
 
 import { SubmissionContent } from "@/submission/submission-content.interface";
 
@@ -18,14 +21,18 @@ import { ProblemJudgeInfo } from "../problem-judge-info.interface";
 
 export enum GetProblemResponseError {
   PERMISSION_DENIED = "PERMISSION_DENIED",
-  NO_SUCH_PROBLEM = "NO_SUCH_PROBLEM"
+  NO_SUCH_PROBLEM = "NO_SUCH_PROBLEM",
 }
 
 class ProblemUserPermissionDto {
   @ApiProperty()
   user: UserMetaDto;
 
-  @ApiProperty({ enum: Object.values(ProblemPermissionLevel).filter(x => typeof x === "number") })
+  @ApiProperty({
+    enum: Object.values(ProblemPermissionLevel).filter(
+      (x) => typeof x === "number",
+    ),
+  })
   permissionLevel: ProblemPermissionLevel;
 }
 

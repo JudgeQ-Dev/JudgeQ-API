@@ -14,19 +14,20 @@ const sharedModules = [
     imports: [ConfigModule],
     useFactory: (configService: ConfigService) => ({
       secretKey: configService.config.security.recaptcha.secretKey,
-      response: (req: RequestWithSession) => String(req.headers["x-recaptcha-token"]),
+      response: (req: RequestWithSession) =>
+        String(req.headers["x-recaptcha-token"]),
       skipIf: async (req: RequestWithSession) =>
         !configService.config.preference.security.recaptchaEnabled ||
         (String(req.headers["x-recaptcha-token"]).toLowerCase() === "skip" &&
-          (await req.session?.userCanSkipRecaptcha?.()))
+          (await req.session?.userCanSkipRecaptcha?.())),
     }),
-    inject: [ConfigService]
-  })
+    inject: [ConfigService],
+  }),
 ];
 
 @Global()
 @Module({
   imports: sharedModules,
-  exports: sharedModules
+  exports: sharedModules,
 })
 export class SharedModule {}

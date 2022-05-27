@@ -6,7 +6,10 @@ import { Repository, EntityManager, FindConditions } from "typeorm";
 import { Locale } from "@/common/locale.type";
 import { RedisService } from "@/redis/redis.service";
 
-import { LocalizedContentEntity, LocalizedContentType } from "./localized-content.entity";
+import {
+  LocalizedContentEntity,
+  LocalizedContentType,
+} from "./localized-content.entity";
 
 const REDIS_KEY_LOCALIZED_CONTENT = "localized-content:%s:%d:%s";
 
@@ -15,7 +18,7 @@ export class LocalizedContentService {
   constructor(
     @InjectRepository(LocalizedContentEntity)
     private readonly localizedContentRepository: Repository<LocalizedContentEntity>,
-    private readonly redisService: RedisService
+    private readonly redisService: RedisService,
   ) {}
 
   async createOrUpdate(
@@ -23,7 +26,7 @@ export class LocalizedContentService {
     type: LocalizedContentType,
     locale: Locale,
     data: string,
-    transactionalEntityManager?: EntityManager
+    transactionalEntityManager?: EntityManager,
   ): Promise<void> {
     const localizedContent = new LocalizedContentEntity();
     localizedContent.objectId = objectId;
@@ -35,14 +38,18 @@ export class LocalizedContentService {
       ? transactionalEntityManager.createQueryBuilder()
       : this.localizedContentRepository.createQueryBuilder();
 
-    await this.redisService.cacheDelete(REDIS_KEY_LOCALIZED_CONTENT.format(type, objectId, locale));
+    await this.redisService.cacheDelete(
+      REDIS_KEY_LOCALIZED_CONTENT.format(type, objectId, locale),
+    );
     await queryBuilder
       .insert()
       .into(LocalizedContentEntity)
       .values(localizedContent)
       .orUpdate({ overwrite: ["data"] })
       .execute();
-    await this.redisService.cacheDelete(REDIS_KEY_LOCALIZED_CONTENT.format(type, objectId, locale));
+    await this.redisService.cacheDelete(
+      REDIS_KEY_LOCALIZED_CONTENT.format(type, objectId, locale),
+    );
   }
 
   // If locale is null, deletes all matching (objectId, type)
@@ -50,22 +57,31 @@ export class LocalizedContentService {
     objectId: number,
     type: LocalizedContentType,
     locale?: Locale,
-    transactionalEntityManager?: EntityManager
+    transactionalEntityManager?: EntityManager,
   ): Promise<void> {
     const match: FindConditions<LocalizedContentEntity> = {
       objectId,
-      type
+      type,
     };
 
     if (locale) match.locale = locale;
 
-    await this.redisService.cacheDelete(REDIS_KEY_LOCALIZED_CONTENT.format(type, objectId, locale));
-    if (transactionalEntityManager) await transactionalEntityManager.delete(LocalizedContentEntity, match);
+    await this.redisService.cacheDelete(
+      REDIS_KEY_LOCALIZED_CONTENT.format(type, objectId, locale),
+    );
+    if (transactionalEntityManager)
+      await transactionalEntityManager.delete(LocalizedContentEntity, match);
     else await this.localizedContentRepository.delete(match);
-    await this.redisService.cacheDelete(REDIS_KEY_LOCALIZED_CONTENT.format(type, objectId, locale));
+    await this.redisService.cacheDelete(
+      REDIS_KEY_LOCALIZED_CONTENT.format(type, objectId, locale),
+    );
   }
 
-  async get(objectId: number, type: LocalizedContentType, locale: Locale): Promise<string> {
+  async get(
+    objectId: number,
+    type: LocalizedContentType,
+    locale: Locale,
+  ): Promise<string> {
     const key = REDIS_KEY_LOCALIZED_CONTENT.format(type, objectId, locale);
     const cachedResult = await this.redisService.cacheGet(key);
     if (cachedResult) return cachedResult;
@@ -73,7 +89,7 @@ export class LocalizedContentService {
     const localizedContent = await this.localizedContentRepository.findOne({
       objectId,
       type,
-      locale
+      locale,
     });
 
     if (!localizedContent) return null;
@@ -82,30 +98,42 @@ export class LocalizedContentService {
     return localizedContent.data;
   }
 
-  async getOfAllLocales(objectId: number, type: LocalizedContentType): Promise<Partial<Record<Locale, string>>> {
+  async getOfAllLocales(
+    objectId: number,
+    type: LocalizedContentType,
+  ): Promise<Partial<Record<Locale, string>>> {
     const localizedContents = await this.localizedContentRepository.find({
       objectId,
-      type
+      type,
     });
 
     const result: Partial<Record<Locale, string>> = {};
-    for (const localizedContent of localizedContents) result[localizedContent.locale] = localizedContent.data;
+    for (const localizedContent of localizedContents)
+      result[localizedContent.locale] = localizedContent.data;
     return result;
   }
 
-  async getOfAnyLocale(objectId: number, type: LocalizedContentType): Promise<[locale: Locale, content: string]> {
+  async getOfAnyLocale(
+    objectId: number,
+    type: LocalizedContentType,
+  ): Promise<[locale: Locale, content: string]> {
     const localizedContent = await this.localizedContentRepository.findOne({
       objectId,
-      type
+      type,
     });
 
-    return localizedContent ? [localizedContent.locale, localizedContent.data] : null;
+    return localizedContent
+      ? [localizedContent.locale, localizedContent.data]
+      : null;
   }
 
-  async countLocales(objectId: number, type: LocalizedContentType): Promise<number> {
+  async countLocales(
+    objectId: number,
+    type: LocalizedContentType,
+  ): Promise<number> {
     return await this.localizedContentRepository.count({
       objectId,
-      type
+      type,
     });
   }
 }

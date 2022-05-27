@@ -1,7 +1,12 @@
 import { Inject, forwardRef } from "@nestjs/common";
-import { WebSocketGateway, WebSocketServer, OnGatewayConnection, OnGatewayDisconnect } from "@nestjs/websockets";
+import {
+  WebSocketGateway,
+  WebSocketServer,
+  OnGatewayConnection,
+  OnGatewayDisconnect,
+} from "@nestjs/websockets";
 
-import { Server, Socket } from "socket.io"; // eslint-disable-line import/no-extraneous-dependencies
+import { Server, Socket } from "socket.io";
 import jwt from "jsonwebtoken";
 import { diff } from "jsondiffpatch";
 import SocketIOParser from "socket.io-msgpack-parser";
@@ -9,7 +14,10 @@ import SocketIOParser from "socket.io-msgpack-parser";
 import { logger } from "@/logger";
 import { ConfigService } from "@/config/config.service";
 
-import { SubmissionProgress, SubmissionProgressType } from "./submission-progress.interface";
+import {
+  SubmissionProgress,
+  SubmissionProgressType,
+} from "./submission-progress.interface";
 import { SubmissionService } from "./submission.service";
 import { SubmissionStatus } from "./submission-status.enum";
 import { SubmissionEventType } from "./submission-progress.service";
@@ -18,7 +26,7 @@ import { SubmissionBasicMetaDto } from "./dto";
 
 export enum SubmissionProgressSubscriptionType {
   Meta,
-  Detail
+  Detail,
 }
 
 export interface SubmissionProgressSubscription {
@@ -44,9 +52,11 @@ interface SubmissionProgressMessage {
   namespace: "submission-progress",
   path: "/api/socket",
   transports: ["websocket"],
-  parser: SocketIOParser
+  parser: SocketIOParser,
 })
-export class SubmissionProgressGateway implements OnGatewayConnection, OnGatewayDisconnect {
+export class SubmissionProgressGateway
+  implements OnGatewayConnection, OnGatewayDisconnect
+{
   @WebSocketServer()
   private server: Server;
 
@@ -62,12 +72,15 @@ export class SubmissionProgressGateway implements OnGatewayConnection, OnGateway
   // This map of arraies is used to store the last message sent to each client,
   // to help us calculate the delta with jsondiffpatch
   // clientId => (submissionId => message)
-  private clientLastMessages: Map<string, Map<number, SubmissionProgressMessage>> = new Map();
+  private clientLastMessages: Map<
+    string,
+    Map<number, SubmissionProgressMessage>
+  > = new Map();
 
   constructor(
     private readonly configService: ConfigService,
     @Inject(forwardRef(() => SubmissionService))
-    private readonly submissionService: SubmissionService
+    private readonly submissionService: SubmissionService,
   ) {
     // Use a different key with session secret to prevent someone attempt to use the session key
     // as subscription key
@@ -83,14 +96,20 @@ export class SubmissionProgressGateway implements OnGatewayConnection, OnGateway
 
   decodeSubscription(subscriptionKey: string): SubmissionProgressSubscription {
     try {
-      return jwt.verify(subscriptionKey, this.secret) as SubmissionProgressSubscription;
+      return jwt.verify(
+        subscriptionKey,
+        this.secret,
+      ) as SubmissionProgressSubscription;
     } catch (e) {
       logger.log(`Invalid subscription key: ${subscriptionKey}`);
       return null;
     }
   }
 
-  private getRoom(subscriptionType: SubmissionProgressSubscriptionType, submissionId: number) {
+  private getRoom(
+    subscriptionType: SubmissionProgressSubscriptionType,
+    submissionId: number,
+  ) {
     return `${subscriptionType}_${submissionId}`;
   }
 
@@ -141,7 +160,11 @@ export class SubmissionProgressGateway implements OnGatewayConnection, OnGateway
   }
 
   // sendMessage: send a message to a client or a room of clients
-  private sendMessage(to: Socket | string, submissionId: number, message: SubmissionProgressMessage) {
+  private sendMessage(
+    to: Socket | string,
+    submissionId: number,
+    message: SubmissionProgressMessage,
+  ) {
     // sendTo: calculate the message delta and send to a specfied client
     const sendTo = (clientId: string) => {
       const lastMessageBySubmissionId = this.clientLastMessages.get(clientId);
@@ -156,7 +179,11 @@ export class SubmissionProgressGateway implements OnGatewayConnection, OnGateway
       if (delta) this.server.to(clientId).send(submissionId, delta);
     };
 
-    logger.log(`Sending to ${typeof to === "string" ? to : (to as Socket).id}: ${JSON.stringify(message)}`);
+    logger.log(
+      `Sending to ${
+        typeof to === "string" ? to : (to as Socket).id
+      }: ${JSON.stringify(message)}`,
+    );
 
     if (typeof to === "object") sendTo(to.id);
     else for (const client of this.rooms.get(to) || []) sendTo(client);
@@ -174,7 +201,9 @@ export class SubmissionProgressGateway implements OnGatewayConnection, OnGateway
   }
 
   async handleConnection(client: Socket): Promise<void> {
-    const subscription = this.decodeSubscription(client.handshake.query.subscriptionKey);
+    const subscription = this.decodeSubscription(
+      client.handshake.query.subscriptionKey,
+    );
     if (!subscription) {
       client.disconnect(true);
       return;
@@ -192,31 +221,36 @@ export class SubmissionProgressGateway implements OnGatewayConnection, OnGateway
 
     // Send messages for the already finished submissions
     await Promise.all(
-      subscription.submissionIds.map(async submissionId => {
-        const submission = await this.submissionService.findSubmissionById(submissionId);
+      subscription.submissionIds.map(async (submissionId) => {
+        const submission = await this.submissionService.findSubmissionById(
+          submissionId,
+        );
         if (submission.status === SubmissionStatus.Pending) return;
 
         // This submission has already finished
 
-        const basicMeta = await this.submissionService.getSubmissionBasicMeta(submission);
+        const basicMeta = await this.submissionService.getSubmissionBasicMeta(
+          submission,
+        );
 
         switch (subscription.type) {
           case SubmissionProgressSubscriptionType.Meta:
             this.sendMessage(client, submissionId, {
               progressMeta: {
                 progressType: SubmissionProgressType.Finished,
-                resultMeta: basicMeta
-              }
+                resultMeta: basicMeta,
+              },
             });
             break;
           case SubmissionProgressSubscriptionType.Detail: {
-            const submissionDetail = await this.submissionService.getSubmissionDetail(submission);
+            const submissionDetail =
+              await this.submissionService.getSubmissionDetail(submission);
             this.sendMessage(client, submissionId, {
               progressMeta: {
                 progressType: SubmissionProgressType.Finished,
-                resultMeta: basicMeta
+                resultMeta: basicMeta,
               },
-              progressDetail: submissionDetail.result
+              progressDetail: submissionDetail.result,
             });
             break;
           }
@@ -224,7 +258,7 @@ export class SubmissionProgressGateway implements OnGatewayConnection, OnGateway
         }
 
         this.leaveRoom(client, this.getRoom(subscription.type, submissionId));
-      })
+      }),
     );
   }
 
@@ -232,38 +266,57 @@ export class SubmissionProgressGateway implements OnGatewayConnection, OnGateway
     submissionId: number,
     type: SubmissionEventType,
     // progress == null only when type === SubmissionEventType.(Deleted or Canceled)
-    progress?: SubmissionProgress
+    progress?: SubmissionProgress,
   ): Promise<void> {
     const isDeleted = type === SubmissionEventType.Deleted;
     const isCanceled = !isDeleted && !progress;
 
-    const progressType = isDeleted || isCanceled ? SubmissionProgressType.Finished : progress.progressType;
+    const progressType =
+      isDeleted || isCanceled
+        ? SubmissionProgressType.Finished
+        : progress.progressType;
 
     const isFinished = progressType === SubmissionProgressType.Finished;
 
     if (!isDeleted) {
       // If the progressType is "Finished", it's called after database updated
-      const submission = isFinished && (await this.submissionService.findSubmissionById(submissionId));
-      const basicMeta = isFinished && (await this.submissionService.getSubmissionBasicMeta(submission));
+      const submission =
+        isFinished &&
+        (await this.submissionService.findSubmissionById(submissionId));
+      const basicMeta =
+        isFinished &&
+        (await this.submissionService.getSubmissionBasicMeta(submission));
 
-      this.sendMessage(this.getRoom(SubmissionProgressSubscriptionType.Meta, submissionId), submissionId, {
-        progressMeta: {
-          progressType,
-          resultMeta: basicMeta
-        }
-      });
-      this.sendMessage(this.getRoom(SubmissionProgressSubscriptionType.Detail, submissionId), submissionId, {
-        progressMeta: {
-          progressType,
-          resultMeta: basicMeta
+      this.sendMessage(
+        this.getRoom(SubmissionProgressSubscriptionType.Meta, submissionId),
+        submissionId,
+        {
+          progressMeta: {
+            progressType,
+            resultMeta: basicMeta,
+          },
         },
-        progressDetail: progress
-      });
+      );
+      this.sendMessage(
+        this.getRoom(SubmissionProgressSubscriptionType.Detail, submissionId),
+        submissionId,
+        {
+          progressMeta: {
+            progressType,
+            resultMeta: basicMeta,
+          },
+          progressDetail: progress,
+        },
+      );
     }
 
     if (isFinished) {
-      this.clearRoom(this.getRoom(SubmissionProgressSubscriptionType.Meta, submissionId));
-      this.clearRoom(this.getRoom(SubmissionProgressSubscriptionType.Detail, submissionId));
+      this.clearRoom(
+        this.getRoom(SubmissionProgressSubscriptionType.Meta, submissionId),
+      );
+      this.clearRoom(
+        this.getRoom(SubmissionProgressSubscriptionType.Detail, submissionId),
+      );
     }
   }
 }

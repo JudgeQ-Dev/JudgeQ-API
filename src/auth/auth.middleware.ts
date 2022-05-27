@@ -2,10 +2,13 @@ import { AsyncLocalStorage } from "async_hooks";
 
 import { NestMiddleware, Injectable } from "@nestjs/common";
 
-import { Request, Response } from "express"; // eslint-disable-line import/no-extraneous-dependencies
+import { Request, Response } from "express";
 
 import { UserEntity } from "@/user/user.entity";
-import { UserPrivilegeService, UserPrivilegeType } from "@/user/user-privilege.service";
+import {
+  UserPrivilegeService,
+  UserPrivilegeType,
+} from "@/user/user-privilege.service";
 
 import { AuthSessionService } from "./auth-session.service";
 
@@ -26,20 +29,30 @@ export interface RequestWithSession extends Request {
 export class AuthMiddleware implements NestMiddleware {
   constructor(
     private readonly authSessionService: AuthSessionService,
-    private readonly userPrivilegeService: UserPrivilegeService
+    private readonly userPrivilegeService: UserPrivilegeService,
   ) {}
 
-  async use(req: RequestWithSession, res: Response, next: () => void): Promise<void> {
+  async use(
+    req: RequestWithSession,
+    res: Response,
+    next: () => void,
+  ): Promise<void> {
     const authHeader = req.headers.authorization;
     const sessionKey = authHeader && authHeader.split(" ")[1];
     if (sessionKey) {
-      const [sessionId, user] = await this.authSessionService.accessSession(sessionKey);
+      const [sessionId, user] = await this.authSessionService.accessSession(
+        sessionKey,
+      );
       if (user) {
         req.session = {
           sessionKey,
           sessionId,
           user,
-          userCanSkipRecaptcha: () => this.userPrivilegeService.userHasPrivilege(user, UserPrivilegeType.SkipRecaptcha)
+          userCanSkipRecaptcha: () =>
+            this.userPrivilegeService.userHasPrivilege(
+              user,
+              UserPrivilegeType.SkipRecaptcha,
+            ),
         };
       }
     }

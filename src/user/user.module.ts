@@ -9,7 +9,7 @@ import { AuditModule } from "@/audit/audit.module";
 import { UserEntity } from "./user.entity";
 import { UserPrivilegeEntity } from "./user-privilege.entity";
 import { UserInformationEntity } from "./user-information.entity";
-import {ContestEntity} from "@/contest/contest.entity";
+import { ContestEntity } from "@/contest/contest.entity";
 import { UserService } from "./user.service";
 import { UserPrivilegeService } from "./user-privilege.service";
 import { UserController } from "./user.controller";
@@ -29,6 +29,6 @@ import { ContestModule } from "@/contest/contest.module";
   ],
   providers: [UserService, UserPrivilegeService],
   controllers: [UserController],
-  exports: [UserService, UserPrivilegeService]
+  exports: [UserService, UserPrivilegeService],
 })
 export class UserModule {}

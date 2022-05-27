@@ -8,11 +8,17 @@ import { UserService } from "@/user/user.service";
 import { CurrentUser } from "@/common/user.decorator";
 import { UserEntity } from "@/user/user.entity";
 import { MailService, MailTemplate } from "@/mail/mail.service";
-import { UserPrivilegeService, UserPrivilegeType } from "@/user/user-privilege.service";
+import {
+  UserPrivilegeService,
+  UserPrivilegeType,
+} from "@/user/user-privilege.service";
 import { AuditLogObjectType, AuditService } from "@/audit/audit.service";
 import { delay, DELAY_FOR_SECURITY } from "@/common/delay";
 
-import { AuthEmailVerificationCodeService, EmailVerificationCodeType } from "./auth-email-verification-code.service";
+import {
+  AuthEmailVerificationCodeService,
+  EmailVerificationCodeType,
+} from "./auth-email-verification-code.service";
 import { AuthSessionService } from "./auth-session.service";
 import { AuthIpLocationService } from "./auth-ip-location.service";
 import { RequestWithSession } from "./auth.middleware";
@@ -40,7 +46,7 @@ import {
   ListUserSessionsResponseError,
   RevokeUserSessionRequestDto,
   RevokeUserSessionResponseDto,
-  RevokeUserSessionResponseError
+  RevokeUserSessionResponseError,
 } from "./dto";
 
 // Refer to auth.middleware.ts for req.session
@@ -62,10 +68,14 @@ export class AuthController {
 
   @Get("getSessionInfo")
   @ApiOperation({
-    summary: "A (JSONP or JSON) request to get current user's info and server preference.",
-    description: "In order to support JSONP, this API doesn't use HTTP Authorization header."
+    summary:
+      "A (JSONP or JSON) request to get current user's info and server preference.",
+    description:
+      "In order to support JSONP, this API doesn't use HTTP Authorization header.",
   })
-  async getSessionInfo(@Query() request: GetSessionInfoRequestDto): Promise<GetSessionInfoResponseDto> {
+  async getSessionInfo(
+    @Query() request: GetSessionInfoRequestDto,
+  ): Promise<GetSessionInfoResponseDto> {
     const [, user] = await this.authSessionService.accessSession(request.token);
 
     const result: GetSessionInfoResponseDto = {
@@ -74,12 +84,14 @@ export class AuthController {
 
     if (user) {
       result.userMeta = await this.userService.getUserMeta(user, user);
-      result.userPrivileges = await this.userPrivilegeService.getUserPrivileges(user.id);
+      result.userPrivileges = await this.userPrivilegeService.getUserPrivileges(
+        user.id,
+      );
     }
 
     if (request.jsonp)
       return `(window.getSessionInfoCallback || (function (sessionInfo) { window.sessionInfo = sessionInfo; }))(${JSON.stringify(
-        result
+        result,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
       )});` as any;
     return result;
@@ -93,11 +105,11 @@ export class AuthController {
   async login(
     @Req() req: RequestWithSession,
     @CurrentUser() currentUser: UserEntity,
-    @Body() request: LoginRequestDto
+    @Body() request: LoginRequestDto,
   ): Promise<LoginResponseDto> {
     if (currentUser)
       return {
-        error: LoginResponseError.ALREADY_LOGGEDIN
+        error: LoginResponseError.ALREADY_LOGGEDIN,
       };
 
     const user = request.username
@@ -106,8 +118,8 @@ export class AuthController {
 
     if (!user) {
       return {
-        error: LoginResponseError.NO_SUCH_USER
-      }
+        error: LoginResponseError.NO_SUCH_USER,
+      };
     }
 
     const userAuth = await this.authService.findUserAuthByUserId(user.id);
@@ -116,14 +128,18 @@ export class AuthController {
       await this.auditService.log(user.id, "auth.login_failed.wrong_password");
 
       return {
-        error: LoginResponseError.WRONG_PASSWORD
+        error: LoginResponseError.WRONG_PASSWORD,
       };
     }
 
     await this.auditService.log(user.id, "auth.login");
 
     return {
-      token: await this.authSessionService.newSession(user, req.ip, req.headers["user-agent"]),
+      token: await this.authSessionService.newSession(
+        user,
+        req.ip,
+        req.headers["user-agent"],
+      ),
       username: user.username,
       isContestUser: user.isContestUser,
       contestId: user.contestId,
@@ -134,11 +150,11 @@ export class AuthController {
   @Post("logout")
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "Logout the current session."
+    summary: "Logout the current session.",
   })
   async logout(
     @CurrentUser() currentUser: UserEntity,
-    @Req() req: RequestWithSession
+    @Req() req: RequestWithSession,
   ): Promise<Record<string, unknown>> {
     const sessionKey = req?.session?.sessionKey;
     if (sessionKey) {
@@ -153,16 +169,21 @@ export class AuthController {
   @Get("checkAvailability")
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "Check is a username or email is available."
+    summary: "Check is a username or email is available.",
   })
-  async checkAvailability(@Query() request: CheckAvailabilityRequestDto): Promise<CheckAvailabilityResponseDto> {
+  async checkAvailability(
+    @Query() request: CheckAvailabilityRequestDto,
+  ): Promise<CheckAvailabilityResponseDto> {
     const result: CheckAvailabilityResponseDto = {};
     if (request.username != null) {
-      result.usernameAvailable = await this.userService.checkUsernameAvailability(request.username);
+      result.usernameAvailable =
+        await this.userService.checkUsernameAvailability(request.username);
     }
 
     if (request.email != null) {
-      result.emailAvailable = await this.userService.checkEmailAvailability(request.email);
+      result.emailAvailable = await this.userService.checkEmailAvailability(
+        request.email,
+      );
     }
 
     return result;
@@ -173,47 +194,46 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: "Send email verification code for registering or changing email",
-    description: "Recaptcha required."
+    description: "Recaptcha required.",
   })
   async sendEmailVerificationCode(
     @CurrentUser() currentUser: UserEntity,
-    @Body() request: SendEmailVerificationCodeRequestDto
+    @Body() request: SendEmailVerificationCodeRequestDto,
   ): Promise<SendEmailVerificationCodeResponseDto> {
     if (request.type === EmailVerificationCodeType.Register) {
       if (currentUser) {
         return {
-          error: SendEmailVerificationCodeResponseError.ALREADY_LOGGEDIN
+          error: SendEmailVerificationCodeResponseError.ALREADY_LOGGEDIN,
         };
       }
 
       if (!(await this.userService.checkEmailAvailability(request.email))) {
         return {
-          error: SendEmailVerificationCodeResponseError.DUPLICATE_EMAIL
+          error: SendEmailVerificationCodeResponseError.DUPLICATE_EMAIL,
         };
       }
-
     } else if (request.type === EmailVerificationCodeType.ChangeEmail) {
       if (!currentUser)
         return {
-          error: SendEmailVerificationCodeResponseError.PERMISSION_DENIED
+          error: SendEmailVerificationCodeResponseError.PERMISSION_DENIED,
         };
 
       if (!(await this.userService.checkEmailAvailability(request.email)))
         return {
-          error: SendEmailVerificationCodeResponseError.DUPLICATE_EMAIL
+          error: SendEmailVerificationCodeResponseError.DUPLICATE_EMAIL,
         };
 
       // No need to check old email === new email
     } else if (request.type === EmailVerificationCodeType.ResetPassword) {
       if (currentUser)
         return {
-          error: SendEmailVerificationCodeResponseError.ALREADY_LOGGEDIN
+          error: SendEmailVerificationCodeResponseError.ALREADY_LOGGEDIN,
         };
 
       const user = await this.userService.findUserByEmail(request.email);
       if (!user)
         return {
-          error: SendEmailVerificationCodeResponseError.NO_SUCH_USER
+          error: SendEmailVerificationCodeResponseError.NO_SUCH_USER,
         };
 
       // Audit logging
@@ -223,33 +243,38 @@ export class AuthController {
     if (!this.configService.config.preference.security.requireEmailVerification)
       return {
         error: SendEmailVerificationCodeResponseError.FAILED_TO_SEND,
-        errorMessage: "Email verification code disabled."
+        errorMessage: "Email verification code disabled.",
       };
 
-    const code = await this.authEmailVerificationCodeService.generate(request.email);
+    const code = await this.authEmailVerificationCodeService.generate(
+      request.email,
+    );
     if (!code) {
       return {
-        error: SendEmailVerificationCodeResponseError.RATE_LIMITED
+        error: SendEmailVerificationCodeResponseError.RATE_LIMITED,
       };
     }
 
     const sendMailErrorMessage = await this.mailService.sendMail(
       {
-        [EmailVerificationCodeType.Register]: MailTemplate.RegisterVerificationCode,
-        [EmailVerificationCodeType.ChangeEmail]: MailTemplate.ChangeEmailVerificationCode,
-        [EmailVerificationCodeType.ResetPassword]: MailTemplate.ResetPasswordVerificationCode
+        [EmailVerificationCodeType.Register]:
+          MailTemplate.RegisterVerificationCode,
+        [EmailVerificationCodeType.ChangeEmail]:
+          MailTemplate.ChangeEmailVerificationCode,
+        [EmailVerificationCodeType.ResetPassword]:
+          MailTemplate.ResetPasswordVerificationCode,
       }[request.type],
       request.locale,
       {
-        code
+        code,
       },
-      request.email
+      request.email,
     );
 
     if (sendMailErrorMessage)
       return {
         error: SendEmailVerificationCodeResponseError.FAILED_TO_SEND,
-        errorMessage: sendMailErrorMessage
+        errorMessage: sendMailErrorMessage,
       };
 
     return {};
@@ -260,22 +285,22 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: "Register then login.",
-    description: "Recaptcha required. Return the session token if success."
+    description: "Recaptcha required. Return the session token if success.",
   })
   async register(
     @Req() req: RequestWithSession,
     @CurrentUser() currentUser: UserEntity,
-    @Body() request: RegisterRequestDto
+    @Body() request: RegisterRequestDto,
   ): Promise<RegisterResponseDto> {
     if (currentUser) {
       return {
-        error: RegisterResponseError.ALREADY_LOGGEDIN
+        error: RegisterResponseError.ALREADY_LOGGEDIN,
       };
     }
 
     if (this.configService.config.register.enabled === false) {
       return {
-        error: RegisterResponseError.DISABLE_REGISTER
+        error: RegisterResponseError.DISABLE_REGISTER,
       };
     }
 
@@ -283,21 +308,25 @@ export class AuthController {
       request.username,
       request.email,
       request.emailVerificationCode,
-      request.password
+      request.password,
     );
 
     if (error)
       return {
-        error
+        error,
       };
 
     await this.auditService.log(user.id, "auth.register", {
       username: request.username,
-      email: request.email
+      email: request.email,
     });
 
     return {
-      token: await this.authSessionService.newSession(user, req.ip, req.headers["user-agent"])
+      token: await this.authSessionService.newSession(
+        user,
+        req.ip,
+        req.headers["user-agent"],
+      ),
     };
   }
 
@@ -305,35 +334,45 @@ export class AuthController {
   @Post("resetPassword")
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "Reset a user's password with email verification code and then login.",
-    description: "Recaptcha required."
+    summary:
+      "Reset a user's password with email verification code and then login.",
+    description: "Recaptcha required.",
   })
   async resetPassword(
     @Req() req: RequestWithSession,
     @CurrentUser() currentUser: UserEntity,
-    @Body() request: ResetPasswordRequestDto
+    @Body() request: ResetPasswordRequestDto,
   ): Promise<ResetPasswordResponseDto> {
     if (currentUser)
       return {
-        error: ResetPasswordResponseError.ALREADY_LOGGEDIN
+        error: ResetPasswordResponseError.ALREADY_LOGGEDIN,
       };
 
     const user = await this.userService.findUserByEmail(request.email);
     if (!user)
       return {
-        error: ResetPasswordResponseError.NO_SUCH_USER
+        error: ResetPasswordResponseError.NO_SUCH_USER,
       };
 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const userAuth = await this.authService.findUserAuthByUserId(user.id);
 
     // Delay for security
     await delay(DELAY_FOR_SECURITY);
-    if (!(await this.authEmailVerificationCodeService.verify(request.email, request.emailVerificationCode)))
+    if (
+      !(await this.authEmailVerificationCodeService.verify(
+        request.email,
+        request.emailVerificationCode,
+      ))
+    )
       return {
-        error: ResetPasswordResponseError.INVALID_EMAIL_VERIFICATION_CODE
+        error: ResetPasswordResponseError.INVALID_EMAIL_VERIFICATION_CODE,
       };
 
-    await this.authEmailVerificationCodeService.revoke(request.email, request.emailVerificationCode);
+    await this.authEmailVerificationCodeService.revoke(
+      request.email,
+      request.emailVerificationCode,
+    );
 
     // Revoke ALL previous sessions
     await this.authSessionService.revokeAllSessionsExcept(user.id, null);
@@ -341,29 +380,38 @@ export class AuthController {
     await this.auditService.log(user.id, "auth.reset_password");
 
     return {
-      token: await this.authSessionService.newSession(user, req.ip, req.headers["user-agent"])
+      token: await this.authSessionService.newSession(
+        user,
+        req.ip,
+        req.headers["user-agent"],
+      ),
     };
   }
 
   @Post("listUserSessions")
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "List a user's current logged-in sessions."
+    summary: "List a user's current logged-in sessions.",
   })
   async listUserSessions(
     @Req() req: RequestWithSession,
     @CurrentUser() currentUser: UserEntity,
-    @Body() request: ListUserSessionsRequestDto
+    @Body() request: ListUserSessionsRequestDto,
   ): Promise<ListUserSessionsResponseDto> {
     if (
       !(
         (currentUser &&
-          (request.username ? currentUser.username === request.username : currentUser.id === request.userId)) ||
-        (await this.userPrivilegeService.userHasPrivilege(currentUser, UserPrivilegeType.ManageUser))
+          (request.username
+            ? currentUser.username === request.username
+            : currentUser.id === request.userId)) ||
+        (await this.userPrivilegeService.userHasPrivilege(
+          currentUser,
+          UserPrivilegeType.ManageUser,
+        ))
       )
     )
       return {
-        error: ListUserSessionsResponseError.PERMISSION_DENIED
+        error: ListUserSessionsResponseError.PERMISSION_DENIED,
       };
 
     const userId = request.username
@@ -373,52 +421,78 @@ export class AuthController {
     const sessions = await this.authSessionService.listUserSessions(userId);
 
     return {
-      sessions: sessions.map(sessionInfo => ({
+      sessions: sessions.map((sessionInfo) => ({
         ...sessionInfo,
-        loginIpLocation: this.authIpLocationService.query(sessionInfo.loginIp)
+        loginIpLocation: this.authIpLocationService.query(sessionInfo.loginIp),
       })),
-      currentSessionId: userId === currentUser.id ? req.session.sessionId : null
+      currentSessionId:
+        userId === currentUser.id ? req.session.sessionId : null,
     };
   }
 
   @Post("revokeUserSession")
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "Revoke a user's one session or sessions."
+    summary: "Revoke a user's one session or sessions.",
   })
   async revokeUserSession(
     @Req() req: RequestWithSession,
     @CurrentUser() currentUser: UserEntity,
-    @Body() request: RevokeUserSessionRequestDto
+    @Body() request: RevokeUserSessionRequestDto,
   ): Promise<RevokeUserSessionResponseDto> {
     if (
       !(
         (currentUser && currentUser.id === request.userId) ||
-        (await this.userPrivilegeService.userHasPrivilege(currentUser, UserPrivilegeType.ManageUser))
+        (await this.userPrivilegeService.userHasPrivilege(
+          currentUser,
+          UserPrivilegeType.ManageUser,
+        ))
       )
     )
       return {
-        error: RevokeUserSessionResponseError.PERMISSION_DENIED
+        error: RevokeUserSessionResponseError.PERMISSION_DENIED,
       };
 
-    const user = request.userId === currentUser.id ? currentUser : await this.userService.findUserById(request.userId);
+    const user =
+      request.userId === currentUser.id
+        ? currentUser
+        : await this.userService.findUserById(request.userId);
     if (!user)
       return {
-        error: RevokeUserSessionResponseError.NO_SUCH_USER
+        error: RevokeUserSessionResponseError.NO_SUCH_USER,
       };
 
     if (request.sessionId) {
-      await this.authSessionService.revokeSession(request.userId, request.sessionId);
+      await this.authSessionService.revokeSession(
+        request.userId,
+        request.sessionId,
+      );
 
-      if (request.userId === currentUser.id) await this.auditService.log("auth.session.revoke");
-      else await this.auditService.log("auth.session.revoke_others", AuditLogObjectType.User, request.userId);
+      if (request.userId === currentUser.id)
+        await this.auditService.log("auth.session.revoke");
+      else
+        await this.auditService.log(
+          "auth.session.revoke_others",
+          AuditLogObjectType.User,
+          request.userId,
+        );
     } else {
       if (request.userId === currentUser.id) {
-        await this.authSessionService.revokeAllSessionsExcept(request.userId, req.session.sessionId);
+        await this.authSessionService.revokeAllSessionsExcept(
+          request.userId,
+          req.session.sessionId,
+        );
         await this.auditService.log("auth.session.revoke_all_except_current");
       } else {
-        await this.authSessionService.revokeAllSessionsExcept(request.userId, null);
-        await this.auditService.log("auth.session.revoke_others_all", AuditLogObjectType.User, request.userId);
+        await this.authSessionService.revokeAllSessionsExcept(
+          request.userId,
+          null,
+        );
+        await this.auditService.log(
+          "auth.session.revoke_others_all",
+          AuditLogObjectType.User,
+          request.userId,
+        );
       }
     }
 

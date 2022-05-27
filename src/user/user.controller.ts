@@ -1,4 +1,13 @@
-import { Controller, Get, Post, Body, Query, Inject, forwardRef, HttpCode } from "@nestjs/common";
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Query,
+  Inject,
+  forwardRef,
+  HttpCode,
+} from "@nestjs/common";
 import { ApiOperation, ApiBearerAuth, ApiTags } from "@nestjs/swagger";
 
 import { CurrentUser } from "@/common/user.decorator";
@@ -45,7 +54,7 @@ import {
   UpdateUserSelfEmailResponseError,
   QueryAuditLogsRequestDto,
   QueryAuditLogsResponseDto,
-  QueryAuditLogsResponseError
+  QueryAuditLogsResponseError,
 } from "./dto";
 
 @ApiTags("User")
@@ -65,32 +74,36 @@ export class UserController {
   @Get("searchUser")
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "Search users with a substring of the username"
+    summary: "Search users with a substring of the username",
   })
   async searchUser(
     @CurrentUser() currentUser: UserEntity,
-    @Query() request: SearchUserRequestDto
+    @Query() request: SearchUserRequestDto,
   ): Promise<SearchUserResponseDto> {
     const users = await this.userService.searchUser(
       request.query,
       request.wildcard,
-      this.configService.config.queryLimit.searchUser
+      this.configService.config.queryLimit.searchUser,
     );
 
     return {
-      userMetas: await Promise.all(users.map(async user => await this.userService.getUserMeta(user, currentUser)))
+      userMetas: await Promise.all(
+        users.map(
+          async (user) => await this.userService.getUserMeta(user, currentUser),
+        ),
+      ),
     };
   }
 
   @Post("getUserMeta")
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "Get a user's metadata with its ID or username."
+    summary: "Get a user's metadata with its ID or username.",
   })
   @HttpCode(200)
   async getUserMeta(
     @CurrentUser() currentUser: UserEntity,
-    @Body() request: GetUserMetaRequestDto
+    @Body() request: GetUserMetaRequestDto,
   ): Promise<GetUserMetaResponseDto> {
     let user: UserEntity;
     if (request.userId) {
@@ -101,15 +114,17 @@ export class UserController {
 
     if (!user)
       return {
-        error: GetUserMetaResponseError.NO_SUCH_USER
+        error: GetUserMetaResponseError.NO_SUCH_USER,
       };
 
     const result: GetUserMetaResponseDto = {
-      meta: await this.userService.getUserMeta(user, currentUser)
+      meta: await this.userService.getUserMeta(user, currentUser),
     };
 
     if (request.getPrivileges) {
-      result.privileges = await this.userPrivilegeService.getUserPrivileges(user.id);
+      result.privileges = await this.userPrivilegeService.getUserPrivileges(
+        user.id,
+      );
     }
 
     return result;
@@ -118,65 +133,80 @@ export class UserController {
   @Post("setUserPrivileges")
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "Set a user's privileges."
+    summary: "Set a user's privileges.",
   })
   async setUserPrivileges(
     @CurrentUser() currentUser: UserEntity,
-    @Body() request: SetUserPrivilegesRequestDto
+    @Body() request: SetUserPrivilegesRequestDto,
   ): Promise<SetUserPrivilegesResponseDto> {
     if (!(currentUser && currentUser.isAdmin))
       return {
-        error: SetUserPrivilegesResponseError.PERMISSION_DENIED
+        error: SetUserPrivilegesResponseError.PERMISSION_DENIED,
       };
 
-    const oldPrivileges = await this.userPrivilegeService.getUserPrivileges(request.userId);
+    const oldPrivileges = await this.userPrivilegeService.getUserPrivileges(
+      request.userId,
+    );
 
-    const error = await this.userPrivilegeService.setUserPrivileges(request.userId, request.privileges);
+    const error = await this.userPrivilegeService.setUserPrivileges(
+      request.userId,
+      request.privileges,
+    );
 
-    await this.auditService.log("user.set_privileges", AuditLogObjectType.User, request.userId, {
-      oldPrivileges,
-      newPrivileges: request.privileges
-    });
+    await this.auditService.log(
+      "user.set_privileges",
+      AuditLogObjectType.User,
+      request.userId,
+      {
+        oldPrivileges,
+        newPrivileges: request.privileges,
+      },
+    );
 
     return {
-      error
+      error,
     };
   }
 
   @Post("updateUserProfile")
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "Update a user's username, email, bio or password."
+    summary: "Update a user's username, email, bio or password.",
   })
   async updateUserProfile(
     @CurrentUser() currentUser: UserEntity,
-    @Body() request: UpdateUserProfileRequestDto
+    @Body() request: UpdateUserProfileRequestDto,
   ): Promise<UpdateUserProfileResponseDto> {
     const user = await this.userService.findUserById(request.userId);
     if (!user)
       return {
-        error: UpdateUserProfileResponseError.NO_SUCH_USER
+        error: UpdateUserProfileResponseError.NO_SUCH_USER,
       };
 
     if (!currentUser)
       return {
-        error: UpdateUserProfileResponseError.PERMISSION_DENIED
+        error: UpdateUserProfileResponseError.PERMISSION_DENIED,
       };
 
     const isUserSelf = currentUser.id === user.id;
-    const hasPrivilege = await this.userPrivilegeService.userHasPrivilege(currentUser, UserPrivilegeType.ManageUser);
+    const hasPrivilege = await this.userPrivilegeService.userHasPrivilege(
+      currentUser,
+      UserPrivilegeType.ManageUser,
+    );
 
     if (!(isUserSelf || hasPrivilege))
       return {
-        error: UpdateUserProfileResponseError.PERMISSION_DENIED
+        error: UpdateUserProfileResponseError.PERMISSION_DENIED,
       };
 
     if (request.username !== user.username) {
-      if (!this.configService.config.preference.security.allowUserChangeUsername) {
+      if (
+        !this.configService.config.preference.security.allowUserChangeUsername
+      ) {
         // Normal users are not allowed to change their usernames
         if (!hasPrivilege)
           return {
-            error: UpdateUserProfileResponseError.PERMISSION_DENIED
+            error: UpdateUserProfileResponseError.PERMISSION_DENIED,
           };
       }
     }
@@ -203,20 +233,25 @@ export class UserController {
       request.avatarInfo,
       request.nickname,
       request.bio,
-      request.information
+      request.information,
     );
 
     if (oldUsername !== request.username) {
       if (user.id === currentUser.id) {
         await this.auditService.log("user.change_username", {
           oldUsername,
-          newUsername: request.username
+          newUsername: request.username,
         });
       } else {
-        await this.auditService.log("user.change_others_username", AuditLogObjectType.User, user.id, {
-          oldUsername,
-          newUsername: request.username
-        });
+        await this.auditService.log(
+          "user.change_others_username",
+          AuditLogObjectType.User,
+          user.id,
+          {
+            oldUsername,
+            newUsername: request.username,
+          },
+        );
       }
     }
 
@@ -224,71 +259,92 @@ export class UserController {
       if (user.id === currentUser.id) {
         await this.auditService.log("user.change_email", {
           oldEmail,
-          newEmail: request.email
+          newEmail: request.email,
         });
       } else {
-        await this.auditService.log("user.change_others_email", AuditLogObjectType.User, user.id, {
-          oldEmail,
-          newEmail: request.email
-        });
+        await this.auditService.log(
+          "user.change_others_email",
+          AuditLogObjectType.User,
+          user.id,
+          {
+            oldEmail,
+            newEmail: request.email,
+          },
+        );
       }
     }
 
     return {
-      error
+      error,
     };
   }
 
   @Post("getUserList")
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "Get a user list sorted by rating or accepted problems count."
+    summary: "Get a user list sorted by rating or accepted problems count.",
   })
   @HttpCode(200)
   async getUserList(
     @CurrentUser() currentUser: UserEntity,
-    @Body() request: GetUserListRequestDto
+    @Body() request: GetUserListRequestDto,
   ): Promise<GetUserListResponseDto> {
     if (request.takeCount > this.configService.config.queryLimit.userList)
       return {
-        error: GetUserListResponseError.TAKE_TOO_MANY
+        error: GetUserListResponseError.TAKE_TOO_MANY,
       };
 
-    const [users, count] = await this.userService.getUserList(request.sortBy, request.hasContestUser, request.skipCount, request.takeCount);
+    const [users, count] = await this.userService.getUserList(
+      request.sortBy,
+      request.hasContestUser,
+      request.skipCount,
+      request.takeCount,
+    );
 
     return {
-      userMetas: await Promise.all(users.map(user => this.userService.getUserMeta(user, currentUser))),
-      count
+      userMetas: await Promise.all(
+        users.map((user) => this.userService.getUserMeta(user, currentUser)),
+      ),
+      count,
     };
   }
 
   @Post("getUserDetail")
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "Get a user's meta and related data for user profile page."
+    summary: "Get a user's meta and related data for user profile page.",
   })
   @HttpCode(200)
   async getUserDetail(
     @CurrentUser() currentUser: UserEntity,
-    @Body() request: GetUserDetailRequestDto
+    @Body() request: GetUserDetailRequestDto,
   ): Promise<GetUserDetailResponseDto> {
     const user = request.username
       ? await this.userService.findUserByUsername(request.username)
       : await this.userService.findUserById(request.userId);
     if (!user)
       return {
-        error: GetUserDetailResponseError.NO_SUCH_USER
+        error: GetUserDetailResponseError.NO_SUCH_USER,
       };
 
     const days = 53 * 7 + 6;
-    const [userInformation, submissionCountPerDay, rank, hasPrivilege] = await Promise.all([
-      this.userService.findUserInformationByUserId(user.id),
-      this.submissionService.getUserRecentlySubmissionCountPerDay(user, days, request.timezone, request.now),
-      this.userService.getUserRank(user),
-      currentUser &&
-        (currentUser.id === user.id ||
-          this.userPrivilegeService.userHasPrivilege(currentUser, UserPrivilegeType.ManageUser))
-    ]);
+    const [userInformation, submissionCountPerDay, rank, hasPrivilege] =
+      await Promise.all([
+        this.userService.findUserInformationByUserId(user.id),
+        this.submissionService.getUserRecentlySubmissionCountPerDay(
+          user,
+          days,
+          request.timezone,
+          request.now,
+        ),
+        this.userService.getUserRank(user),
+        currentUser &&
+          (currentUser.id === user.id ||
+            this.userPrivilegeService.userHasPrivilege(
+              currentUser,
+              UserPrivilegeType.ManageUser,
+            )),
+      ]);
 
     return {
       meta: await this.userService.getUserMeta(user, currentUser),
@@ -298,27 +354,27 @@ export class UserController {
         url: userInformation.url,
         telegram: userInformation.telegram,
         qq: userInformation.qq,
-        github: userInformation.github
+        github: userInformation.github,
       },
       submissionCountPerDay,
       rank,
-      hasPrivilege
+      hasPrivilege,
     };
   }
 
   @Post("getUserProfile")
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "Get a user's meta and information for user profile edit page."
+    summary: "Get a user's meta and information for user profile edit page.",
   })
   @HttpCode(200)
   async getUserProfile(
     @CurrentUser() currentUser: UserEntity,
-    @Body() request: GetUserProfileRequestDto
+    @Body() request: GetUserProfileRequestDto,
   ): Promise<GetUserProfileResponseDto> {
     if (!currentUser)
       return {
-        error: GetUserProfileResponseError.PERMISSION_DENIED
+        error: GetUserProfileResponseError.PERMISSION_DENIED,
       };
 
     const user = request.username
@@ -326,18 +382,23 @@ export class UserController {
       : await this.userService.findUserById(request.userId);
     if (!user)
       return {
-        error: GetUserProfileResponseError.NO_SUCH_USER
+        error: GetUserProfileResponseError.NO_SUCH_USER,
       };
 
     if (
       currentUser.id !== user.id &&
-      !(await this.userPrivilegeService.userHasPrivilege(currentUser, UserPrivilegeType.ManageUser))
+      !(await this.userPrivilegeService.userHasPrivilege(
+        currentUser,
+        UserPrivilegeType.ManageUser,
+      ))
     )
       return {
-        error: GetUserProfileResponseError.PERMISSION_DENIED
+        error: GetUserProfileResponseError.PERMISSION_DENIED,
       };
 
-    const userInformation = await this.userService.findUserInformationByUserId(user.id);
+    const userInformation = await this.userService.findUserInformationByUserId(
+      user.id,
+    );
 
     return {
       meta: await this.userService.getUserMeta(user, currentUser),
@@ -349,24 +410,24 @@ export class UserController {
         url: userInformation.url,
         telegram: userInformation.telegram,
         qq: userInformation.qq,
-        github: userInformation.github
-      }
+        github: userInformation.github,
+      },
     };
   }
 
   @Post("getUserSecuritySettings")
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "Get a user's security settings for user settings page."
+    summary: "Get a user's security settings for user settings page.",
   })
   @HttpCode(200)
   async getUserSecuritySettings(
     @CurrentUser() currentUser: UserEntity,
-    @Body() request: GetUserSecuritySettingsRequestDto
+    @Body() request: GetUserSecuritySettingsRequestDto,
   ): Promise<GetUserSecuritySettingsResponseDto> {
     if (!currentUser)
       return {
-        error: GetUserSecuritySettingsResponseError.PERMISSION_DENIED
+        error: GetUserSecuritySettingsResponseError.PERMISSION_DENIED,
       };
 
     const user = request.username
@@ -374,48 +435,56 @@ export class UserController {
       : await this.userService.findUserById(request.userId);
     if (!user)
       return {
-        error: GetUserSecuritySettingsResponseError.NO_SUCH_USER
+        error: GetUserSecuritySettingsResponseError.NO_SUCH_USER,
       };
 
     if (
       currentUser.id !== user.id &&
-      !(await this.userPrivilegeService.userHasPrivilege(currentUser, UserPrivilegeType.ManageUser))
+      !(await this.userPrivilegeService.userHasPrivilege(
+        currentUser,
+        UserPrivilegeType.ManageUser,
+      ))
     )
       return {
-        error: GetUserSecuritySettingsResponseError.PERMISSION_DENIED
+        error: GetUserSecuritySettingsResponseError.PERMISSION_DENIED,
       };
 
     return {
-      meta: await this.userService.getUserMeta(user, currentUser)
+      meta: await this.userService.getUserMeta(user, currentUser),
     };
   }
 
   @Post("queryAuditLogs")
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "Query audit logs."
+    summary: "Query audit logs.",
   })
   @HttpCode(200)
   async queryAuditLogs(
     @CurrentUser() currentUser: UserEntity,
-    @Body() request: QueryAuditLogsRequestDto
+    @Body() request: QueryAuditLogsRequestDto,
   ): Promise<QueryAuditLogsResponseDto> {
     if (request.takeCount > this.configService.config.queryLimit.userAuditLogs)
       return {
-        error: QueryAuditLogsResponseError.TAKE_TOO_MANY
+        error: QueryAuditLogsResponseError.TAKE_TOO_MANY,
       };
 
     if (!currentUser)
       return {
-        error: QueryAuditLogsResponseError.PERMISSION_DENIED
+        error: QueryAuditLogsResponseError.PERMISSION_DENIED,
       };
 
     if (
-      (request.username ? currentUser.username !== request.username : currentUser.id !== request.userId) &&
-      !(await this.userPrivilegeService.userHasPrivilege(currentUser, UserPrivilegeType.ManageUser))
+      (request.username
+        ? currentUser.username !== request.username
+        : currentUser.id !== request.userId) &&
+      !(await this.userPrivilegeService.userHasPrivilege(
+        currentUser,
+        UserPrivilegeType.ManageUser,
+      ))
     )
       return {
-        error: QueryAuditLogsResponseError.PERMISSION_DENIED
+        error: QueryAuditLogsResponseError.PERMISSION_DENIED,
       };
 
     const user = request.username
@@ -423,7 +492,7 @@ export class UserController {
       : await this.userService.findUserById(request.userId);
     if (request.username != null && request.userId != null && !user)
       return {
-        error: QueryAuditLogsResponseError.NO_SUCH_USER
+        error: QueryAuditLogsResponseError.NO_SUCH_USER,
       };
 
     const [results, count] = await this.auditService.query(
@@ -435,15 +504,17 @@ export class UserController {
       request.locale,
       currentUser,
       request.skipCount,
-      request.takeCount
+      request.takeCount,
     );
 
     return {
       results: await Promise.all(
-        results.map(async result => ({
+        results.map(async (result) => ({
           user: await this.userService.getUserMeta(
-            result.userId === user?.id ? user : await this.userService.findUserById(result.userId),
-            currentUser
+            result.userId === user?.id
+              ? user
+              : await this.userService.findUserById(result.userId),
+            currentUser,
           ),
           ip: result.ip,
           ipLocation: this.authIpLocationService.query(result.ip),
@@ -455,47 +526,54 @@ export class UserController {
           secondObjectType: result.secondObjectType,
           secondObjectId: result.secondObjectId,
           secondObject: result.secondObject,
-          details: result.details
-        }))
+          details: result.details,
+        })),
       ),
-      count
+      count,
     };
   }
 
   @Post("updateUserPassword")
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "Change a user's password by its old password."
+    summary: "Change a user's password by its old password.",
   })
   async updateUserPassword(
     @CurrentUser() currentUser: UserEntity,
-    @Body() request: UpdateUserPasswordRequestDto
+    @Body() request: UpdateUserPasswordRequestDto,
   ): Promise<UpdateUserPasswordResponseDto> {
     const user = await this.userService.findUserById(request.userId);
     if (!user)
       return {
-        error: UpdateUserPasswordResponseError.NO_SUCH_USER
+        error: UpdateUserPasswordResponseError.NO_SUCH_USER,
       };
 
     if (!currentUser)
       return {
-        error: UpdateUserPasswordResponseError.PERMISSION_DENIED
+        error: UpdateUserPasswordResponseError.PERMISSION_DENIED,
       };
 
     const isUserSelf = currentUser.id === user.id;
-    const hasPrivilege = await this.userPrivilegeService.userHasPrivilege(currentUser, UserPrivilegeType.ManageUser);
+    const hasPrivilege = await this.userPrivilegeService.userHasPrivilege(
+      currentUser,
+      UserPrivilegeType.ManageUser,
+    );
 
     if (!(isUserSelf || hasPrivilege))
       return {
-        error: UpdateUserPasswordResponseError.PERMISSION_DENIED
+        error: UpdateUserPasswordResponseError.PERMISSION_DENIED,
       };
 
     // A non-admin user must give the old password to change its password
-    const userAuth = await this.authService.findUserAuthByUserId(request.userId);
+    const userAuth = await this.authService.findUserAuthByUserId(
+      request.userId,
+    );
     if (!hasPrivilege) {
-      if (!(await this.authService.checkPassword(userAuth, request.oldPassword)))
+      if (
+        !(await this.authService.checkPassword(userAuth, request.oldPassword))
+      )
         return {
-          error: UpdateUserPasswordResponseError.WRONG_OLD_PASSWORD
+          error: UpdateUserPasswordResponseError.WRONG_OLD_PASSWORD,
         };
     }
 
@@ -504,7 +582,11 @@ export class UserController {
     if (request.userId === user.id) {
       await this.auditService.log("auth.change_password");
     } else {
-      await this.auditService.log("auth.change_others_password", AuditLogObjectType.User, user.id);
+      await this.auditService.log(
+        "auth.change_others_password",
+        AuditLogObjectType.User,
+        user.id,
+      );
     }
 
     return {};
@@ -513,31 +595,35 @@ export class UserController {
   @Post("updateUserSelfEmail")
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "Change the current user itself's email."
+    summary: "Change the current user itself's email.",
   })
   async updateUserSelfEmail(
     @CurrentUser() currentUser: UserEntity,
-    @Body() request: UpdateUserSelfEmailRequestDto
+    @Body() request: UpdateUserSelfEmailRequestDto,
   ): Promise<UpdateUserSelfEmailResponseDto> {
     if (!currentUser)
       return {
-        error: UpdateUserSelfEmailResponseError.PERMISSION_DENIED
+        error: UpdateUserSelfEmailResponseError.PERMISSION_DENIED,
       };
 
     const oldEmail = currentUser.email;
 
-    const error = await this.userService.updateUserSelfEmail(currentUser, request.email, request.emailVerificationCode);
+    const error = await this.userService.updateUserSelfEmail(
+      currentUser,
+      request.email,
+      request.emailVerificationCode,
+    );
 
     if (oldEmail !== request.email) {
       await this.auditService.log("auth.change_email", {
         oldEmail,
-        newEmail: request.email
+        newEmail: request.email,
       });
     }
 
     if (!error) return {};
     return {
-      error
+      error,
     };
   }
 }

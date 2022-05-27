@@ -4,7 +4,7 @@ import { UserMetaDto } from "./user-meta.dto";
 
 export enum GetUserSecuritySettingsResponseError {
   NO_SUCH_USER = "NO_SUCH_USER",
-  PERMISSION_DENIED = "PERMISSION_DENIED"
+  PERMISSION_DENIED = "PERMISSION_DENIED",
 }
 
 export class GetUserSecuritySettingsResponseDto {

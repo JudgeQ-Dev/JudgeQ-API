@@ -8,7 +8,8 @@ export class RevokeUserSessionRequestDto {
   readonly userId: number;
 
   @ApiProperty({
-    description: "Falsy to revoke ALL sessions of the user (except the current session, if the user is current user)"
+    description:
+      "Falsy to revoke ALL sessions of the user (except the current session, if the user is current user)",
   })
   @IsInt()
   @IsOptional()

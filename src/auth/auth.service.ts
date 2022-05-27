@@ -31,7 +31,7 @@ export class AuthService {
     @Inject(forwardRef(() => AuthEmailVerificationCodeService))
     private readonly authEmailVerificationCodeService: AuthEmailVerificationCodeService,
     @Inject(forwardRef(() => ConfigService))
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
   ) {}
 
   private async hashPassword(password: string): Promise<string> {
@@ -40,7 +40,7 @@ export class AuthService {
 
   async findUserAuthByUserId(userId: number): Promise<UserAuthEntity> {
     return await this.userAuthRepository.findOne({
-      userId
+      userId,
     });
   }
 
@@ -48,55 +48,69 @@ export class AuthService {
     username: string,
     email: string,
     emailVerificationCode: string,
-    password: string
+    password: string,
   ): Promise<[error: RegisterResponseError, user: UserEntity]> {
     // There's a race condition on user inserting. If we do checking before inserting,
     // inserting will still fail if another with same username is inserted after we check
 
-    if (this.configService.config.preference.security.requireEmailVerification) {
+    if (
+      this.configService.config.preference.security.requireEmailVerification
+    ) {
       // Delay for security
       await delay(DELAY_FOR_SECURITY);
-      if (!(await this.authEmailVerificationCodeService.verify(email, emailVerificationCode)))
+      if (
+        !(await this.authEmailVerificationCodeService.verify(
+          email,
+          emailVerificationCode,
+        ))
+      )
         return [RegisterResponseError.INVALID_EMAIL_VERIFICATION_CODE, null];
     }
 
     try {
       let user: UserEntity;
-      await this.connection.transaction("READ COMMITTED", async transactionalEntityManager => {
-        user = new UserEntity();
-        user.username = username;
-        user.email = email;
-        user.publicEmail = true;
-        user.nickname = "";
-        user.bio = "";
-        user.avatarInfo = "gravatar:";
-        user.isAdmin = false;
-        user.submissionCount = 0;
-        user.acceptedProblemCount = 0;
-        user.rating = 0;
-        user.registrationTime = new Date();
-        user.notificationEmail = email;
-        await transactionalEntityManager.save(user);
+      await this.connection.transaction(
+        "READ COMMITTED",
+        async (transactionalEntityManager) => {
+          user = new UserEntity();
+          user.username = username;
+          user.email = email;
+          user.publicEmail = true;
+          user.nickname = "";
+          user.bio = "";
+          user.avatarInfo = "gravatar:";
+          user.isAdmin = false;
+          user.submissionCount = 0;
+          user.acceptedProblemCount = 0;
+          user.rating = 0;
+          user.registrationTime = new Date();
+          user.notificationEmail = email;
+          await transactionalEntityManager.save(user);
 
-        const userAuth = new UserAuthEntity();
-        userAuth.userId = user.id;
-        userAuth.password = await this.hashPassword(password);
-        await transactionalEntityManager.save(userAuth);
+          const userAuth = new UserAuthEntity();
+          userAuth.userId = user.id;
+          userAuth.password = await this.hashPassword(password);
+          await transactionalEntityManager.save(userAuth);
 
-        const userInformation = new UserInformationEntity();
-        userInformation.userId = user.id;
-        userInformation.organization = "";
-        userInformation.location = "";
-        userInformation.url = "";
-        userInformation.telegram = "";
-        userInformation.qq = "";
-        userInformation.github = "";
-        await transactionalEntityManager.save(userInformation);
+          const userInformation = new UserInformationEntity();
+          userInformation.userId = user.id;
+          userInformation.organization = "";
+          userInformation.location = "";
+          userInformation.url = "";
+          userInformation.telegram = "";
+          userInformation.qq = "";
+          userInformation.github = "";
+          await transactionalEntityManager.save(userInformation);
+        },
+      );
 
-      });
-
-      if (this.configService.config.preference.security.requireEmailVerification) {
-        await this.authEmailVerificationCodeService.revoke(email, emailVerificationCode);
+      if (
+        this.configService.config.preference.security.requireEmailVerification
+      ) {
+        await this.authEmailVerificationCodeService.revoke(
+          email,
+          emailVerificationCode,
+        );
       }
 
       return [null, user];
@@ -104,7 +118,8 @@ export class AuthService {
       if (!(await this.userService.checkUsernameAvailability(username)))
         return [RegisterResponseError.DUPLICATE_USERNAME, null];
 
-      if (!(await this.userService.checkEmailAvailability(email))) return [RegisterResponseError.DUPLICATE_EMAIL, null];
+      if (!(await this.userService.checkEmailAvailability(email)))
+        return [RegisterResponseError.DUPLICATE_EMAIL, null];
 
       // Unknown error
       // (or the duplicate user's username is just changed?)
@@ -112,17 +127,21 @@ export class AuthService {
     }
   }
 
-  async checkPassword(userAuth: UserAuthEntity, password: string): Promise<boolean> {
+  async checkPassword(
+    userAuth: UserAuthEntity,
+    password: string,
+  ): Promise<boolean> {
     return await bcrypt.compare(password, userAuth.password);
   }
 
   async changePassword(
     userAuth: UserAuthEntity,
     password: string,
-    transactionalEntityManager?: EntityManager
+    transactionalEntityManager?: EntityManager,
   ): Promise<void> {
     userAuth.password = await this.hashPassword(password);
-    if (transactionalEntityManager) await transactionalEntityManager.save(userAuth);
+    if (transactionalEntityManager)
+      await transactionalEntityManager.save(userAuth);
     else await this.userAuthRepository.save(userAuth);
   }
 }

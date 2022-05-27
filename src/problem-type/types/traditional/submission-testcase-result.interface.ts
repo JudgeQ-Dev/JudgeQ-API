@@ -15,10 +15,11 @@ export enum SubmissionTestcaseStatusTraditional {
   WrongAnswer = "WrongAnswer",
   Accepted = "Accepted",
 
-  JudgementFailed = "JudgementFailed"
+  JudgementFailed = "JudgementFailed",
 }
 
-export interface SubmissionTestcaseResultTraditional extends SubmissionTestcaseResult {
+export interface SubmissionTestcaseResultTraditional
+  extends SubmissionTestcaseResult {
   testcaseInfo: {
     timeLimit: number;
     memoryLimit: number;

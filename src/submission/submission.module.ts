@@ -29,10 +29,15 @@ import { SubmissionStatisticsService } from "./submission-statistics.service";
     forwardRef(() => JudgeModule),
     forwardRef(() => UserModule),
     forwardRef(() => AuditModule),
-    forwardRef(() => FileModule)
+    forwardRef(() => FileModule),
   ],
-  providers: [SubmissionService, SubmissionProgressService, SubmissionProgressGateway, SubmissionStatisticsService],
+  providers: [
+    SubmissionService,
+    SubmissionProgressService,
+    SubmissionProgressGateway,
+    SubmissionStatisticsService,
+  ],
   controllers: [SubmissionController],
-  exports: [SubmissionService]
+  exports: [SubmissionService],
 })
 export class SubmissionModule {}

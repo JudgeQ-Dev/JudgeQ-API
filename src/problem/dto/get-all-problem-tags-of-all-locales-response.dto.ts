@@ -3,7 +3,7 @@ import { ApiProperty } from "@nestjs/swagger";
 import { ProblemTagLocalizedNameDto } from "./problem-tag-localized-name.dto";
 
 export enum GetAllProblemTagsOfAllLocalesResponseError {
-  PERMISSION_DENIED = "PERMISSION_DENIED"
+  PERMISSION_DENIED = "PERMISSION_DENIED",
 }
 
 export class ProblemTagWithAllLocalesDto {

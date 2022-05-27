@@ -40,10 +40,10 @@ import { ProblemEntity } from "./problem.entity";
     forwardRef(() => ProblemTypeModule),
     forwardRef(() => ContestModule),
     forwardRef(() => AuditModule),
-    forwardRef(() => DiscussionModule)
+    forwardRef(() => DiscussionModule),
   ],
   providers: [ProblemService],
   controllers: [ProblemController],
-  exports: [ProblemService]
+  exports: [ProblemService],
 })
 export class ProblemModule {}

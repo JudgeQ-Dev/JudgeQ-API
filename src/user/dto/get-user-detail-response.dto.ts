@@ -4,7 +4,7 @@ import { UserMetaDto } from "./user-meta.dto";
 import { UserInformationDto } from "./user-information.dto";
 
 export enum GetUserDetailResponseError {
-  NO_SUCH_USER = "NO_SUCH_USER"
+  NO_SUCH_USER = "NO_SUCH_USER",
 }
 
 export class GetUserDetailResponseDto {

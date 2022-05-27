@@ -13,8 +13,8 @@ import { ProblemTypeSubmitAnswerService } from "./types/submit-answer/problem-ty
     ProblemTypeFactoryService,
     ProblemTypeTraditionalService,
     ProblemTypeInteractionService,
-    ProblemTypeSubmitAnswerService
+    ProblemTypeSubmitAnswerService,
   ],
-  exports: [ProblemTypeFactoryService]
+  exports: [ProblemTypeFactoryService],
 })
 export class ProblemTypeModule {}

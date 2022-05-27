@@ -7,6 +7,6 @@ import { EventReportService } from "./event-report.service";
 @Module({
   imports: [ClusterModule],
   providers: [EventReportService],
-  exports: [EventReportService]
+  exports: [EventReportService],
 })
 export class EventReportModule {}

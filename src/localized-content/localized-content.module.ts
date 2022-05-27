@@ -7,8 +7,11 @@ import { LocalizedContentService } from "./localized-content.service";
 import { LocalizedContentEntity } from "./localized-content.entity";
 
 @Module({
-  imports: [TypeOrmModule.forFeature([LocalizedContentEntity]), forwardRef(() => RedisModule)],
+  imports: [
+    TypeOrmModule.forFeature([LocalizedContentEntity]),
+    forwardRef(() => RedisModule),
+  ],
   providers: [LocalizedContentService],
-  exports: [LocalizedContentService]
+  exports: [LocalizedContentService],
 })
 export class LocalizedContentModule {}

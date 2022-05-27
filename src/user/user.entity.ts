@@ -6,7 +6,7 @@ import {
   ManyToMany,
   Index,
   ManyToOne,
-  JoinColumn
+  JoinColumn,
 } from "typeorm";
 
 import { UserAuthEntity } from "@/auth/user-auth.entity";
@@ -66,23 +66,22 @@ export class UserEntity {
   @Column({ type: "datetime", nullable: true })
   registrationTime: Date;
 
-  @OneToOne(() => UserAuthEntity, userAuth => userAuth.user)
+  @OneToOne(() => UserAuthEntity, (userAuth) => userAuth.user)
   userAuth: Promise<UserAuthEntity>;
 
-  @ManyToMany(() => ContestEntity, contest => contest.users)
+  @ManyToMany(() => ContestEntity, (contest) => contest.users)
   contests?: ContestEntity[];
 
   @ManyToOne(() => ContestEntity, {
-    onDelete: "CASCADE"
+    onDelete: "CASCADE",
   })
   @JoinColumn()
   contest: Promise<ContestEntity>;
 
-  @Column({nullable: true})
+  @Column({ nullable: true })
   @Index()
   contestId: number;
 
   @Column({ type: "char", length: 60, nullable: true })
   contestUserPassword?: string;
-
 }

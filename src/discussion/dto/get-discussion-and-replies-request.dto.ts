@@ -6,7 +6,7 @@ import { Locale } from "@/common/locale.type";
 
 export enum GetDiscussionAndRepliesRequestQueryRepliesType {
   HeadTail = "HeadTail",
-  IdRange = "IdRange"
+  IdRange = "IdRange",
 }
 
 export class GetDiscussionAndRepliesRequestDto {
@@ -21,7 +21,8 @@ export class GetDiscussionAndRepliesRequestDto {
   @IsEnum(GetDiscussionAndRepliesRequestQueryRepliesType)
   @IsOptional()
   @ApiProperty({
-    description: "`HeadTail` is for the first query of a discussion page while `IdRange` is for loading the ramaining."
+    description:
+      "`HeadTail` is for the first query of a discussion page while `IdRange` is for loading the ramaining.",
   })
   queryRepliesType?: GetDiscussionAndRepliesRequestQueryRepliesType;
 

@@ -1,6 +1,16 @@
 import { ApiProperty } from "@nestjs/swagger";
 
-import { IsInt, Min, IsEnum, IsArray, ArrayUnique, ArrayMaxSize, IsOptional, Length, IsBoolean } from "class-validator";
+import {
+  IsInt,
+  Min,
+  IsEnum,
+  IsArray,
+  ArrayUnique,
+  ArrayMaxSize,
+  IsOptional,
+  Length,
+  IsBoolean,
+} from "class-validator";
 
 import { Locale } from "@/common/locale.type";
 
@@ -15,7 +25,7 @@ export class QueryProblemSetRequestDto {
   keyword?: string;
 
   @ApiProperty({
-    description: "The result item by ID may NOT be included in the count."
+    description: "The result item by ID may NOT be included in the count.",
   })
   @IsBoolean()
   @IsOptional()
@@ -40,7 +50,8 @@ export class QueryProblemSetRequestDto {
   nonpublic?: boolean;
 
   @ApiProperty({
-    description: "Pass true to return problem title only. For a preview in search bar."
+    description:
+      "Pass true to return problem title only. For a preview in search bar.",
   })
   @IsBoolean()
   @IsOptional()

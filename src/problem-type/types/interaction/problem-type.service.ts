@@ -26,16 +26,26 @@ export class ProblemTypeInteractionService
       ProblemJudgeInfoInteraction,
       SubmissionContentInteraction,
       SubmissionTestcaseResultInteraction
-    > {
-  constructor(private configService: ConfigService, private codeLanguageService: CodeLanguageService) {}
+    >
+{
+  constructor(
+    private configService: ConfigService,
+    private codeLanguageService: CodeLanguageService,
+  ) {}
 
   getDefaultJudgeInfo(): ProblemJudgeInfoInteraction {
     return {
-      timeLimit: Math.min(1000, this.configService.config.resourceLimit.problemTimeLimit),
-      memoryLimit: Math.min(512, this.configService.config.resourceLimit.problemTimeLimit),
+      timeLimit: Math.min(
+        1000,
+        this.configService.config.resourceLimit.problemTimeLimit,
+      ),
+      memoryLimit: Math.min(
+        512,
+        this.configService.config.resourceLimit.problemTimeLimit,
+      ),
       runSamples: true,
       subtasks: null,
-      interactor: null
+      interactor: null,
     };
   }
 
@@ -49,13 +59,13 @@ export class ProblemTypeInteractionService
 
   preprocessJudgeInfo(
     judgeInfo: ProblemJudgeInfoInteraction,
-    testData: ProblemFileEntity[]
+    testData: ProblemFileEntity[],
   ): ProblemJudgeInfoInteraction {
     return Array.isArray(judgeInfo.subtasks)
       ? judgeInfo
       : {
           ...judgeInfo,
-          subtasks: autoMatchInputToOutput(testData, true)
+          subtasks: autoMatchInputToOutput(testData, true),
         };
   }
 
@@ -63,10 +73,14 @@ export class ProblemTypeInteractionService
   validateAndFilterJudgeInfo(
     judgeInfo: ProblemJudgeInfoInteraction,
     testData: ProblemFileEntity[],
-    ignoreLimits: boolean
+    ignoreLimits: boolean,
   ): void {
-    const hardTimeLimit = ignoreLimits ? null : this.configService.config.resourceLimit.problemTimeLimit;
-    const hardMemoryLimit = ignoreLimits ? null : this.configService.config.resourceLimit.problemMemoryLimit;
+    const hardTimeLimit = ignoreLimits
+      ? null
+      : this.configService.config.resourceLimit.problemTimeLimit;
+    const hardMemoryLimit = ignoreLimits
+      ? null
+      : this.configService.config.resourceLimit.problemMemoryLimit;
 
     validateMetaAndSubtasks(judgeInfo, testData, {
       enableTimeMemoryLimit: true,
@@ -76,12 +90,15 @@ export class ProblemTypeInteractionService
       enableUserOutputFilename: false,
       hardTimeLimit,
       hardMemoryLimit,
-      testcaseLimit: ignoreLimits ? null : this.configService.config.resourceLimit.problemTestcases
+      testcaseLimit: ignoreLimits
+        ? null
+        : this.configService.config.resourceLimit.problemTestcases,
     });
 
     const { interactor } = judgeInfo;
     if (!interactor) throw ["INVALID_INTERACTOR"];
-    if (!["stdio", "shm"].includes(interactor.interface)) throw ["INVALID_INTERACTOR_INTERFACE"];
+    if (!["stdio", "shm"].includes(interactor.interface))
+      throw ["INVALID_INTERACTOR_INTERFACE"];
     if (interactor.interface === "shm") {
       if (
         !Number.isSafeInteger(interactor.sharedMemorySize) ||
@@ -91,21 +108,32 @@ export class ProblemTypeInteractionService
         throw ["INVALID_INTERACTOR_SHARED_MEMORY_SIZE"];
     }
     if (
-      this.codeLanguageService.validateCompileAndRunOptions(interactor.language, interactor.compileAndRunOptions)
-        .length > 0
+      this.codeLanguageService.validateCompileAndRunOptions(
+        interactor.language,
+        interactor.compileAndRunOptions,
+      ).length > 0
     )
       throw ["INVALID_INTERACTOR_COMPILE_AND_RUN_OPTIONS"];
-    if (!Object.values(CodeLanguage).includes(interactor.language)) throw ["INVALID_INTERACTOR_LANGUAGE"];
-    if (!testData.some(file => file.filename === interactor.filename))
+    if (!Object.values(CodeLanguage).includes(interactor.language))
+      throw ["INVALID_INTERACTOR_LANGUAGE"];
+    if (!testData.some((file) => file.filename === interactor.filename))
       throw ["NO_SUCH_INTERACTOR_FILE", interactor.filename];
 
-    const timeLimit = judgeInfo.interactor.timeLimit == null ? judgeInfo.timeLimit : judgeInfo.interactor.timeLimit;
-    if (!Number.isSafeInteger(timeLimit) || timeLimit <= 0) throw [`INVALID_TIME_LIMIT_INTERACTOR`];
-    if (hardTimeLimit != null && timeLimit > hardTimeLimit) throw [`TIME_LIMIT_TOO_LARGE_INTERACTOR`, timeLimit];
+    const timeLimit =
+      judgeInfo.interactor.timeLimit == null
+        ? judgeInfo.timeLimit
+        : judgeInfo.interactor.timeLimit;
+    if (!Number.isSafeInteger(timeLimit) || timeLimit <= 0)
+      throw [`INVALID_TIME_LIMIT_INTERACTOR`];
+    if (hardTimeLimit != null && timeLimit > hardTimeLimit)
+      throw [`TIME_LIMIT_TOO_LARGE_INTERACTOR`, timeLimit];
 
     const memoryLimit =
-      judgeInfo.interactor.memoryLimit == null ? judgeInfo.memoryLimit : judgeInfo.interactor.memoryLimit;
-    if (!Number.isSafeInteger(memoryLimit) || memoryLimit <= 0) throw [`INVALID_MEMORY_LIMIT_INTERACTOR`];
+      judgeInfo.interactor.memoryLimit == null
+        ? judgeInfo.memoryLimit
+        : judgeInfo.interactor.memoryLimit;
+    if (!Number.isSafeInteger(memoryLimit) || memoryLimit <= 0)
+      throw [`INVALID_MEMORY_LIMIT_INTERACTOR`];
     if (hardMemoryLimit != null && memoryLimit > hardMemoryLimit)
       throw [`MEMORY_LIMIT_TOO_LARGE_INTERACTOR`, memoryLimit];
 
@@ -116,7 +144,7 @@ export class ProblemTypeInteractionService
       "compileAndRunOptions",
       "filename",
       "timeLimit",
-      "memoryLimit"
+      "memoryLimit",
     ]);
 
     validateExtraSourceFiles(judgeInfo, testData);
@@ -127,41 +155,48 @@ export class ProblemTypeInteractionService
       "runSamples",
       "subtasks",
       "interactor",
-      "extraSourceFiles"
+      "extraSourceFiles",
     ]);
   }
   /* eslint-enable no-throw-literal */
 
-  async validateSubmissionContent(submissionContent: SubmissionContentInteraction): Promise<ValidationError[]> {
-    const errors = await validate(plainToClass(SubmissionContentInteraction, submissionContent), {
-      whitelist: true,
-      forbidNonWhitelisted: true
-    });
+  async validateSubmissionContent(
+    submissionContent: SubmissionContentInteraction,
+  ): Promise<ValidationError[]> {
+    const errors = await validate(
+      plainToClass(SubmissionContentInteraction, submissionContent),
+      {
+        whitelist: true,
+        forbidNonWhitelisted: true,
+      },
+    );
     if (errors.length > 0) return errors;
     return this.codeLanguageService.validateCompileAndRunOptions(
       submissionContent.language,
-      submissionContent.compileAndRunOptions
+      submissionContent.compileAndRunOptions,
     );
   }
 
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-  async getCodeLanguageAndAnswerSizeFromSubmissionContentAndFile(submissionContent: SubmissionContentInteraction) {
+  async getCodeLanguageAndAnswerSizeFromSubmissionContentAndFile(
+    submissionContent: SubmissionContentInteraction,
+  ) {
     return {
       language: submissionContent.language,
 
       // string.length returns the number of charactars in the string
       // Convert to a buffer to get the number of bytes
-      answerSize: Buffer.from(submissionContent.code).length
+      answerSize: Buffer.from(submissionContent.code).length,
     };
   }
 
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
   getTimeAndMemoryUsedFromFinishedSubmissionProgress(
-    submissionProgress: SubmissionProgress<SubmissionTestcaseResultInteraction>
+    submissionProgress: SubmissionProgress<SubmissionTestcaseResultInteraction>,
   ) {
     const result = {
       timeUsed: 0,
-      memoryUsed: 0
+      memoryUsed: 0,
     };
 
     if (submissionProgress) {
@@ -171,12 +206,12 @@ export class ProblemTypeInteractionService
             if (!testcase?.testcaseHash) continue;
             result.timeUsed = Math.max(
               result.timeUsed,
-              submissionProgress.testcaseResult[testcase.testcaseHash].time
+              submissionProgress.testcaseResult[testcase.testcaseHash].time,
             );
             // result.timeUsed += submissionProgress.testcaseResult[testcase.testcaseHash].time;
             result.memoryUsed = Math.max(
               result.memoryUsed,
-              submissionProgress.testcaseResult[testcase.testcaseHash].memory
+              submissionProgress.testcaseResult[testcase.testcaseHash].memory,
             );
           }
         }

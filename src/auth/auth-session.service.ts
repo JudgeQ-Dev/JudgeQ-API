@@ -34,38 +34,63 @@ export class AuthSessionService {
   constructor(
     private readonly configService: ConfigService,
     private readonly userService: UserService,
-    private readonly redisService: RedisService
+    private readonly redisService: RedisService,
   ) {
     this.redis = this.redisService.getClient() as RedisWithSessionManager;
     this.redis.defineCommand("callSessionManager", {
       numberOfKeys: 0,
-      lua: fs.readFileSync(join(__dirname, "scripts", "session-manager.lua")).toString("utf-8")
+      lua: fs
+        .readFileSync(join(__dirname, "scripts", "session-manager.lua"))
+        .toString("utf-8"),
     });
   }
 
-  async newSession(user: UserEntity, loginIp: string, userAgent: string): Promise<string> {
+  async newSession(
+    user: UserEntity,
+    loginIp: string,
+    userAgent: string,
+  ): Promise<string> {
     const timeStamp = +new Date();
     const sessionInfo: SessionInfoInternal = {
       loginIp,
       userAgent,
-      loginTime: timeStamp
+      loginTime: timeStamp,
     };
 
-    const sessionId = await this.redis.callSessionManager("new", timeStamp, user.id, JSON.stringify(sessionInfo));
+    const sessionId = await this.redis.callSessionManager(
+      "new",
+      timeStamp,
+      user.id,
+      JSON.stringify(sessionInfo),
+    );
 
-    return jwt.sign(`${user.id.toString()} ${sessionId}`, this.configService.config.security.sessionSecret);
+    return jwt.sign(
+      `${user.id.toString()} ${sessionId}`,
+      this.configService.config.security.sessionSecret,
+    );
   }
 
-  private decodeSessionKey(sessionKey: string): [userId: number, sessionId: number] {
-    const jwtString = jwt.verify(sessionKey, this.configService.config.security.sessionSecret) as string;
-    return jwtString.split(" ").map(s => Number(s)) as [userId: number, sessionId: number];
+  private decodeSessionKey(
+    sessionKey: string,
+  ): [userId: number, sessionId: number] {
+    const jwtString = jwt.verify(
+      sessionKey,
+      this.configService.config.security.sessionSecret,
+    ) as string;
+    return jwtString.split(" ").map((s) => Number(s)) as [
+      userId: number,
+      sessionId: number,
+    ];
   }
 
   async revokeSession(userId: number, sessionId: number): Promise<void> {
     await this.redis.callSessionManager("revoke", userId, sessionId);
   }
 
-  async revokeAllSessionsExcept(userId: number, sessionId: number): Promise<void> {
+  async revokeAllSessionsExcept(
+    userId: number,
+    sessionId: number,
+  ): Promise<void> {
     await this.redis.callSessionManager("revoke_all_except", userId, sessionId);
   }
 
@@ -78,11 +103,18 @@ export class AuthSessionService {
     }
   }
 
-  async accessSession(sessionKey: string): Promise<[sessionId: number, user: UserEntity]> {
+  async accessSession(
+    sessionKey: string,
+  ): Promise<[sessionId: number, user: UserEntity]> {
     try {
       const [userId, sessionId] = this.decodeSessionKey(sessionKey);
 
-      const success = await this.redis.callSessionManager("access", +new Date(), userId, sessionId);
+      const success = await this.redis.callSessionManager(
+        "access",
+        +new Date(),
+        userId,
+        sessionId,
+      );
       if (!success) return [null, null];
 
       return [sessionId, await this.userService.findUserById(userId)];
@@ -95,14 +127,14 @@ export class AuthSessionService {
     const result = (await this.redis.callSessionManager("list", userId)) as [
       sessionId: string,
       lastAccessTime: string,
-      sessionInfo: string
+      sessionInfo: string,
     ][];
     return result.map(
       ([sessionId, lastAccessTime, sessionInfo]): SessionInfo => ({
         sessionId: Number(sessionId),
         lastAccessTime: Number(lastAccessTime),
-        ...JSON.parse(sessionInfo)
-      })
+        ...JSON.parse(sessionInfo),
+      }),
     );
   }
 }

@@ -7,9 +7,10 @@ export enum SubmissionProgressType {
   Preparing = "Preparing",
   Compiling = "Compiling",
   Running = "Running",
-  Finished = "Finished"
+  Finished = "Finished",
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface SubmissionTestcaseResult {}
 
 interface TestcaseProgressReference {
@@ -19,8 +20,9 @@ interface TestcaseProgressReference {
   testcaseHash?: string;
 }
 
-export interface SubmissionProgress<TestcaseResult extends SubmissionTestcaseResult = SubmissionTestcaseResult>
-  extends JudgeTaskProgress {
+export interface SubmissionProgress<
+  TestcaseResult extends SubmissionTestcaseResult = SubmissionTestcaseResult,
+> extends JudgeTaskProgress {
   progressType: SubmissionProgressType;
 
   // Only valid when finished

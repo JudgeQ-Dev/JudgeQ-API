@@ -4,7 +4,7 @@ import { UserMetaDto } from "./user-meta.dto";
 
 export enum GetUserPreferenceResponseError {
   NO_SUCH_USER = "NO_SUCH_USER",
-  PERMISSION_DENIED = "PERMISSION_DENIED"
+  PERMISSION_DENIED = "PERMISSION_DENIED",
 }
 
 export class GetUserPreferenceResponseDto {
@@ -13,5 +13,4 @@ export class GetUserPreferenceResponseDto {
 
   @ApiProperty()
   meta?: UserMetaDto;
-
 }

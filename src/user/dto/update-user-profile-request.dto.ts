@@ -1,6 +1,15 @@
 import { ApiProperty } from "@nestjs/swagger";
 
-import { IsInt, IsEmail, Length, IsString, IsOptional, IsBoolean, ValidateNested, MaxLength } from "class-validator";
+import {
+  IsInt,
+  IsEmail,
+  Length,
+  IsString,
+  IsOptional,
+  IsBoolean,
+  ValidateNested,
+  MaxLength,
+} from "class-validator";
 import { Type } from "class-transformer";
 
 import { IsUsername } from "@/common/validators";

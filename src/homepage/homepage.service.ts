@@ -15,7 +15,6 @@ export enum HomePermissionType {
 
 @Injectable()
 export class HomepageService {
-
   constructor(
     @InjectConnection()
     private connection: Connection,
@@ -26,7 +25,7 @@ export class HomepageService {
     private readonly discussionService: DiscussionService,
     @InjectRepository(AnnouncementEntity)
     private readonly AnnouncementRepository: Repository<AnnouncementEntity>,
-  ) { }
+  ) {}
 
   async userHasPermission(
     user: UserEntity,
@@ -44,71 +43,76 @@ export class HomepageService {
   async findAnnouncementById(id: number): Promise<AnnouncementEntity> {
     return await this.AnnouncementRepository.findOne({
       where: {
-        id
-      }
+        id,
+      },
     });
   }
 
   async isDiscussionInAnnouncement(
-    discussion: DiscussionEntity
+    discussion: DiscussionEntity,
   ): Promise<boolean> {
     const announcement = await this.AnnouncementRepository.findOne({
       where: {
-        discussion: discussion
-      }
+        discussion: discussion,
+      },
     });
     if (!announcement) return false;
     return true;
   }
 
-  async addAnnouncement(
-    discussion: DiscussionEntity,
-  ): Promise<void> {
+  async addAnnouncement(discussion: DiscussionEntity): Promise<void> {
     const announcement = this.AnnouncementRepository.create();
     announcement.discussion = discussion;
-    announcement.orderId = parseInt((
-      await this.AnnouncementRepository
-        .createQueryBuilder()
-        .select("IFNULL(MAX(`orderId`), 0)", "orderId")
-        .getRawOne()).orderId) + 1;
+    announcement.orderId =
+      parseInt(
+        (
+          await this.AnnouncementRepository.createQueryBuilder()
+            .select("IFNULL(MAX(`orderId`), 0)", "orderId")
+            .getRawOne()
+        ).orderId,
+      ) + 1;
     await this.AnnouncementRepository.save(announcement);
   }
 
   async swapTwoAnnouncementOrder(
     announcementOrgin: AnnouncementEntity,
-    announcementNew: AnnouncementEntity
+    announcementNew: AnnouncementEntity,
   ): Promise<void> {
-    await this.connection.transaction("READ COMMITTED", async transactionalEntityManager => {
-      const tmp = announcementNew.orderId;
-      announcementNew.orderId = announcementOrgin.orderId;
-      announcementOrgin.orderId = tmp;
-      await transactionalEntityManager.save(announcementOrgin);
-      await transactionalEntityManager.save(announcementNew);
-    });
+    await this.connection.transaction(
+      "READ COMMITTED",
+      async (transactionalEntityManager) => {
+        const tmp = announcementNew.orderId;
+        announcementNew.orderId = announcementOrgin.orderId;
+        announcementOrgin.orderId = tmp;
+        await transactionalEntityManager.save(announcementOrgin);
+        await transactionalEntityManager.save(announcementNew);
+      },
+    );
   }
 
-  async deleteAnnouncement(
-    announcement: AnnouncementEntity,
-  ): Promise<void> {
+  async deleteAnnouncement(announcement: AnnouncementEntity): Promise<void> {
     await this.AnnouncementRepository.delete(announcement);
   }
 
   async getAnnouncementList(): Promise<AnnouncementMetaDto[]> {
-    const announcements = await this.AnnouncementRepository
-      .createQueryBuilder("announcement")
+    const announcements = await this.AnnouncementRepository.createQueryBuilder(
+      "announcement",
+    )
       .leftJoinAndSelect("announcement.discussion", "discussion")
       .orderBy("announcement.orderId", "DESC")
       .getRawMany();
 
-    return announcements.map((announcement) => (
-      <AnnouncementMetaDto>{
-        id: announcement.announcement_id,
-        discussionId: announcement.discussion_id,
-        title: announcement.discussion_title,
-        lastUpdateTime: announcement.discussion_editTime ?? announcement.discussion_publishTime,
-        orderId: announcement.announcement_orderId,
-      }
-    ));
+    return announcements.map(
+      (announcement) =>
+        <AnnouncementMetaDto>{
+          id: announcement.announcement_id,
+          discussionId: announcement.discussion_id,
+          title: announcement.discussion_title,
+          lastUpdateTime:
+            announcement.discussion_editTime ??
+            announcement.discussion_publishTime,
+          orderId: announcement.announcement_orderId,
+        },
+    );
   }
-
 }

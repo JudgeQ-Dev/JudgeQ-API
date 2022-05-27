@@ -4,6 +4,6 @@ import { ClusterService } from "./cluster.service";
 
 @Module({
   providers: [ClusterService],
-  exports: [ClusterService]
+  exports: [ClusterService],
 })
 export class ClusterModule {}

@@ -4,7 +4,7 @@ import { ProblemEntity } from "@/problem/problem.entity";
 
 export enum ProblemFileType {
   TestData = "TestData",
-  AdditionalFile = "AdditionalFile"
+  AdditionalFile = "AdditionalFile",
 }
 
 @Entity("problem_file")

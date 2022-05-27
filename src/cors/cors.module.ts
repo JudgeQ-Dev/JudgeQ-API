@@ -3,6 +3,6 @@ import { Module } from "@nestjs/common";
 import { CorsController } from "./cors.controller";
 
 @Module({
-  controllers: [CorsController]
+  controllers: [CorsController],
 })
 export class CorsModule {}

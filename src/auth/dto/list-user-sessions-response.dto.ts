@@ -3,7 +3,7 @@ import { ApiProperty } from "@nestjs/swagger";
 import { SessionInfo } from "../auth-session.service";
 
 export enum ListUserSessionsResponseError {
-  PERMISSION_DENIED = "PERMISSION_DENIED"
+  PERMISSION_DENIED = "PERMISSION_DENIED",
 }
 
 export class UserSessionDto implements SessionInfo {
@@ -34,7 +34,7 @@ export class ListUserSessionsResponseDto {
   sessions?: UserSessionDto[];
 
   @ApiProperty({
-    description: "Only available when querying the current user"
+    description: "Only available when querying the current user",
   })
   currentSessionId?: number;
 }

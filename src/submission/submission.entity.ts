@@ -1,7 +1,8 @@
 import {
   Entity,
   PrimaryGeneratedColumn,
-  Index, ManyToOne,
+  Index,
+  ManyToOne,
   Column,
   JoinColumn,
   OneToOne,
@@ -80,7 +81,7 @@ export class SubmissionEntity {
 
   @ManyToOne(() => ContestEntity, {
     onDelete: "CASCADE",
-    nullable: true
+    nullable: true,
   })
   @JoinColumn()
   contest?: Promise<ContestEntity>;
@@ -97,7 +98,9 @@ export class SubmissionEntity {
   @Index()
   submitterId: number;
 
-  @OneToOne(() => SubmissionDetailEntity, submissionDetail => submissionDetail.submission)
+  @OneToOne(
+    () => SubmissionDetailEntity,
+    (submissionDetail) => submissionDetail.submission,
+  )
   detail: Promise<SubmissionDetailEntity>;
-
 }

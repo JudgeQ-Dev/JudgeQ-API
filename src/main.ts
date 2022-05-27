@@ -4,7 +4,11 @@ import cluster from "cluster";
 import { NestFactory } from "@nestjs/core";
 import { NestExpressApplication } from "@nestjs/platform-express";
 import { Logger, ValidationPipe } from "@nestjs/common";
-import { SwaggerModule, DocumentBuilder, SwaggerDocumentOptions } from "@nestjs/swagger";
+import {
+  SwaggerModule,
+  DocumentBuilder,
+  SwaggerDocumentOptions,
+} from "@nestjs/swagger";
 
 import getGitRepoInfo from "git-repo-info";
 import moment from "moment";
@@ -15,7 +19,7 @@ import {
   RateLimiterCluster,
   RateLimiterMemory,
   RateLimiterAbstract,
-  IRateLimiterOptions
+  IRateLimiterOptions,
 } from "rate-limiter-flexible";
 
 import { AppModule } from "./app.module";
@@ -46,10 +50,7 @@ async function initSwaggerDocument(app: NestExpressApplication) {
 
   const options: SwaggerDocumentOptions = {
     ignoreGlobalPrefix: false,
-    operationIdFactory: (
-      controllerKey: string,
-      methodKey: string
-    ) => methodKey
+    operationIdFactory: (controllerKey: string, methodKey: string) => methodKey,
   };
 
   const document = SwaggerModule.createDocument(app, config, options);
@@ -58,20 +59,27 @@ async function initSwaggerDocument(app: NestExpressApplication) {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function initialize(): Promise<[configService: ConfigService, app: NestExpressApplication]> {
-
+async function initialize(): Promise<
+  [configService: ConfigService, app: NestExpressApplication]
+> {
   const appVersion = `v${packageInfo.version}`;
   const gitRepoVersion = appGitRepoInfo.abbreviatedSha
-    ? ` (Git revision ${appGitRepoInfo.abbreviatedSha} on ${moment(appGitRepoInfo.committerDate).format(
-        "YYYY-MM-DD H:mm:ss"
-      )})`
+    ? ` (Git revision ${appGitRepoInfo.abbreviatedSha} on ${moment(
+        appGitRepoInfo.committerDate,
+      ).format("YYYY-MM-DD H:mm:ss")})`
     : "";
 
-  if (cluster.isMaster) Logger.log(`Starting ${packageInfo.name} version ${appVersion}${gitRepoVersion}`, "Bootstrap");
+  if (cluster.isMaster)
+    Logger.log(
+      `Starting ${packageInfo.name} version ${appVersion}${gitRepoVersion}`,
+      "Bootstrap",
+    );
 
   // Create nestjs app
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    ...(process.env.NODE_ENV === "production" ? { logger: ["warn", "error"] } : {})
+    ...(process.env.NODE_ENV === "production"
+      ? { logger: ["warn", "error"] }
+      : {}),
   });
 
   const configService = app.get(ConfigService);
@@ -85,7 +93,7 @@ async function initialize(): Promise<[configService: ConfigService, app: NestExp
     const clusterService = app.get(ClusterService);
     const rateLimiterConfig: IRateLimiterOptions = {
       points: configService.config.security.rateLimit.maxRequests,
-      duration: configService.config.security.rateLimit.durationSeconds
+      duration: configService.config.security.rateLimit.durationSeconds,
     };
 
     let rateLimiter: RateLimiterAbstract;
@@ -108,7 +116,6 @@ async function initialize(): Promise<[configService: ConfigService, app: NestExp
           res.status(429).send("Too Many Requests");
         });
     });
-
   }
 
   app.set("trust proxy", configService.config.server.trustProxy);
@@ -119,11 +126,17 @@ async function initialize(): Promise<[configService: ConfigService, app: NestExp
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function startApp(configService: ConfigService, app: NestExpressApplication) {
-  await app.listen(configService.config.server.port, configService.config.server.hostname);
+async function startApp(
+  configService: ConfigService,
+  app: NestExpressApplication,
+) {
+  await app.listen(
+    configService.config.server.port,
+    configService.config.server.hostname,
+  );
   Logger.log(
     `${packageInfo.name} is listening on ${configService.config.server.hostname}:${configService.config.server.port}`,
-    "Bootstrap"
+    "Bootstrap",
   );
 }
 
@@ -131,10 +144,12 @@ async function bootstrap() {
   const [configService, app] = await initialize();
 
   const clusterService = app.get(ClusterService);
-  await clusterService.initialization(async () => await startApp(configService, app));
+  await clusterService.initialization(
+    async () => await startApp(configService, app),
+  );
 }
 
-bootstrap().catch(err => {
+bootstrap().catch((err) => {
   console.error(err); // eslint-disable-line no-console
   console.error("Error bootstrapping the application, exiting..."); // eslint-disable-line no-console
   process.exit(1);

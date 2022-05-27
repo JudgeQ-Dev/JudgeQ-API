@@ -10,5 +10,5 @@ export enum CodeLanguage {
   Go = "go",
   Haskell = "haskell",
   CSharp = "csharp",
-  FSharp = "fsharp"
+  FSharp = "fsharp",
 }

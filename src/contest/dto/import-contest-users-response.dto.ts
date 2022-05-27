@@ -8,5 +8,4 @@ export enum ImportContestUsersResponseError {
 export class ImportContestUsersResponseDto {
   @ApiProperty({ enum: ImportContestUsersResponseError })
   error?: ImportContestUsersResponseError;
-
 }

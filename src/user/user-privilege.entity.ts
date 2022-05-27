@@ -12,13 +12,13 @@ export enum UserPrivilegeType {
   ManageDiscussion = "ManageDiscussion",
 
   // Other privileges
-  SkipRecaptcha = "SkipRecaptcha"
+  SkipRecaptcha = "SkipRecaptcha",
 }
 
 @Entity("user_privilege")
 export class UserPrivilegeEntity {
   @ManyToOne(() => UserEntity, {
-    onDelete: "CASCADE"
+    onDelete: "CASCADE",
   })
   @JoinColumn()
   user: Promise<UserEntity>;
@@ -29,7 +29,7 @@ export class UserPrivilegeEntity {
 
   @PrimaryColumn({
     type: "enum",
-    enum: UserPrivilegeType
+    enum: UserPrivilegeType,
   })
   @Index()
   privilegeType: UserPrivilegeType;

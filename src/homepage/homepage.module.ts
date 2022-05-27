@@ -24,6 +24,6 @@ import { DiscussionModule } from "@/discussion/discussion.module";
     forwardRef(() => RedisModule),
   ],
   controllers: [HomepageController],
-  providers: [HomepageService]
+  providers: [HomepageService],
 })
 export class HomepageModule {}

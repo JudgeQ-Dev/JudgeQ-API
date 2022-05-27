@@ -16,7 +16,10 @@ import { AuditLogObjectType, AuditService } from "@/audit/audit.service";
 import { delay, DELAY_FOR_SECURITY } from "@/common/delay";
 
 import { UserEntity } from "./user.entity";
-import { UserPrivilegeService, UserPrivilegeType } from "./user-privilege.service";
+import {
+  UserPrivilegeService,
+  UserPrivilegeType,
+} from "./user-privilege.service";
 import { UserInformationDto } from "./dto/user-information.dto";
 import { UserInformationEntity } from "./user-information.entity";
 
@@ -25,7 +28,7 @@ import {
   UserMetaDto,
   UserAvatarDto,
   UserAvatarType,
-  UpdateUserSelfEmailResponseError
+  UpdateUserSelfEmailResponseError,
 } from "./dto";
 
 @Injectable()
@@ -47,23 +50,26 @@ export class UserService {
     private readonly submissionService: SubmissionService,
     @Inject(forwardRef(() => UserPrivilegeService))
     private readonly userPrivilegeService: UserPrivilegeService,
-    private readonly auditService: AuditService
+    private readonly auditService: AuditService,
   ) {
-    this.auditService.registerObjectTypeQueryHandler(AuditLogObjectType.User, async (userId, locale, currentUser) => {
-      const user = await this.findUserById(userId);
-      return !user ? null : await this.getUserMeta(user, currentUser);
-    });
+    this.auditService.registerObjectTypeQueryHandler(
+      AuditLogObjectType.User,
+      async (userId, locale, currentUser) => {
+        const user = await this.findUserById(userId);
+        return !user ? null : await this.getUserMeta(user, currentUser);
+      },
+    );
   }
 
   async findUserById(id: number): Promise<UserEntity> {
     return await this.userRepository.findOne({
-      id
+      id,
     });
   }
 
   async findUserInformationByUserId(id: number): Promise<UserInformationDto> {
     return await this.userInformationRepository.findOne({
-      userId: id
+      userId: id,
     });
   }
 
@@ -71,19 +77,21 @@ export class UserService {
     if (userIds.length === 0) return [];
     const uniqueIds = Array.from(new Set(userIds));
     const records = await this.userRepository.findByIds(uniqueIds);
-    const map = Object.fromEntries(records.map(record => [record.id, record]));
-    return userIds.map(userId => map[userId]);
+    const map = Object.fromEntries(
+      records.map((record) => [record.id, record]),
+    );
+    return userIds.map((userId) => map[userId]);
   }
 
   async findUserByUsername(username: string): Promise<UserEntity> {
     return await this.userRepository.findOne({
-      username
+      username,
     });
   }
 
   async findUserByEmail(email: string): Promise<UserEntity> {
     return await this.userRepository.findOne({
-      email
+      email,
     });
   }
 
@@ -95,12 +103,12 @@ export class UserService {
       case "github":
         return {
           type: UserAvatarType.GitHub,
-          key: plainKey
+          key: plainKey,
         };
       case "qq":
         return {
           type: UserAvatarType.QQ,
-          key: plainKey
+          key: plainKey,
         };
       case "gravatar":
       default:
@@ -109,7 +117,7 @@ export class UserService {
           key: crypto
             .createHash("md5")
             .update((plainKey || user.email).trim().toLowerCase())
-            .digest("hex")
+            .digest("hex"),
         };
     }
   }
@@ -118,7 +126,10 @@ export class UserService {
    * If the current user is admin or have manage user pervilege, the email will be returned
    * even if the user set public email to false.
    */
-  async getUserMeta(user: UserEntity, currentUser: UserEntity): Promise<UserMetaDto> {
+  async getUserMeta(
+    user: UserEntity,
+    currentUser: UserEntity,
+  ): Promise<UserMetaDto> {
     return {
       id: user.id,
       username: user.username,
@@ -126,7 +137,10 @@ export class UserService {
         user.publicEmail ||
         (currentUser &&
           (currentUser.id === user.id ||
-            (await this.userPrivilegeService.userHasPrivilege(currentUser, UserPrivilegeType.ManageUser))))
+            (await this.userPrivilegeService.userHasPrivilege(
+              currentUser,
+              UserPrivilegeType.ManageUser,
+            ))))
           ? user.email
           : null,
       avatar: this.getUserAvatar(user),
@@ -147,7 +161,7 @@ export class UserService {
   async checkUsernameAvailability(username: string): Promise<boolean> {
     return (
       (await this.userRepository.count({
-        username
+        username,
       })) === 0
     );
   }
@@ -155,7 +169,7 @@ export class UserService {
   async checkEmailAvailability(email: string): Promise<boolean> {
     return (
       (await this.userRepository.count({
-        email
+        email,
       })) === 0
     );
   }
@@ -172,10 +186,12 @@ export class UserService {
     avatarInfo: string,
     nickname: string,
     bio: string,
-    information: UserInformationDto
+    information: UserInformationDto,
   ): Promise<UpdateUserProfileResponseError> {
     const changingUsername = username != null;
-    const changingEmail = email != null && !this.configService.config.preference.security.requireEmailVerification;
+    const changingEmail =
+      email != null &&
+      !this.configService.config.preference.security.requireEmailVerification;
 
     try {
       if (changingUsername) user.username = username;
@@ -194,10 +210,13 @@ export class UserService {
       userInformation.qq = information.qq;
       userInformation.github = information.github;
 
-      await this.connection.transaction("READ COMMITTED", async transactionalEntityManager => {
-        await transactionalEntityManager.save(userInformation);
-        await transactionalEntityManager.save(user);
-      });
+      await this.connection.transaction(
+        "READ COMMITTED",
+        async (transactionalEntityManager) => {
+          await transactionalEntityManager.save(userInformation);
+          await transactionalEntityManager.save(user);
+        },
+      );
     } catch (e) {
       if (changingUsername && !(await this.checkUsernameAvailability(username)))
         return UpdateUserProfileResponseError.DUPLICATE_USERNAME;
@@ -214,12 +233,19 @@ export class UserService {
   async updateUserSelfEmail(
     user: UserEntity,
     email: string,
-    emailVerificationCode: string
+    emailVerificationCode: string,
   ): Promise<UpdateUserSelfEmailResponseError> {
-    if (this.configService.config.preference.security.requireEmailVerification) {
+    if (
+      this.configService.config.preference.security.requireEmailVerification
+    ) {
       // Delay for security
       await delay(DELAY_FOR_SECURITY);
-      if (!(await this.authEmailVerificationCodeService.verify(email, emailVerificationCode)))
+      if (
+        !(await this.authEmailVerificationCodeService.verify(
+          email,
+          emailVerificationCode,
+        ))
+      )
         return UpdateUserSelfEmailResponseError.INVALID_EMAIL_VERIFICATION_CODE;
     }
 
@@ -227,30 +253,40 @@ export class UserService {
       user.email = email;
       await this.userRepository.save(user);
     } catch (e) {
-      if (!(await this.checkEmailAvailability(email))) return UpdateUserSelfEmailResponseError.DUPLICATE_EMAIL;
+      if (!(await this.checkEmailAvailability(email)))
+        return UpdateUserSelfEmailResponseError.DUPLICATE_EMAIL;
       throw e;
     }
 
-    if (this.configService.config.preference.security.requireEmailVerification) {
-      await this.authEmailVerificationCodeService.revoke(email, emailVerificationCode);
+    if (
+      this.configService.config.preference.security.requireEmailVerification
+    ) {
+      await this.authEmailVerificationCodeService.revoke(
+        email,
+        emailVerificationCode,
+      );
     }
 
     return null;
   }
 
-  async searchUser(query: string, wildcard: "Start" | "End" | "Both", maxTakeCount: number): Promise<UserEntity[]> {
+  async searchUser(
+    query: string,
+    wildcard: "Start" | "End" | "Both",
+    maxTakeCount: number,
+  ): Promise<UserEntity[]> {
     query = escapeLike(query);
     if (wildcard === "Start" || wildcard === "Both") query = `%${query}`;
     if (wildcard === "End" || wildcard === "Both") query += "%";
 
     return await this.userRepository.find({
       where: {
-        username: Like(query)
+        username: Like(query),
       },
       order: {
-        username: "ASC"
+        username: "ASC",
       },
-      take: maxTakeCount
+      take: maxTakeCount,
     });
   }
 
@@ -258,21 +294,24 @@ export class UserService {
     sortBy: "acceptedProblemCount" | "rating",
     hasContestUser: boolean,
     skipCount: number,
-    takeCount: number
+    takeCount: number,
   ): Promise<[users: UserEntity[], count: number]> {
     return await this.userRepository.findAndCount({
       where: {
         isContestUser: hasContestUser,
       },
       order: {
-        [sortBy]: "DESC"
+        [sortBy]: "DESC",
       },
       skip: skipCount,
-      take: takeCount
+      take: takeCount,
     });
   }
 
-  async onDeleteProblem(problemId: number, transactionalEntityManager: EntityManager): Promise<void> {
+  async onDeleteProblem(
+    problemId: number,
+    transactionalEntityManager: EntityManager,
+  ): Promise<void> {
     // submissionCount
     await transactionalEntityManager.query(
       "UPDATE `user` " +
@@ -280,7 +319,7 @@ export class UserService {
         "(SELECT `submitterId`, COUNT(*) AS `count` FROM `submission` WHERE `problemId` = ? GROUP BY `submitterId`) `statistics`" +
         "ON `user`.`id` = `statistics`.`submitterId` " +
         "SET `submissionCount` = `submissionCount` - `statistics`.`count`",
-      [problemId]
+      [problemId],
     );
 
     // acceptedProblemCount
@@ -293,35 +332,63 @@ export class UserService {
     await transactionalEntityManager
       .createQueryBuilder()
       .update(UserEntity, {
-        acceptedProblemCount: () => "acceptedProblemCount - 1"
+        acceptedProblemCount: () => "acceptedProblemCount - 1",
       })
       .where(() => `id IN (${queryAcceptedUsers.getQuery()})`)
       .setParameters(queryAcceptedUsers.expressionMap.parameters)
       .execute();
   }
 
-  async updateUserSubmissionCount(userId: number, incSubmissionCount: number): Promise<void> {
+  async updateUserSubmissionCount(
+    userId: number,
+    incSubmissionCount: number,
+  ): Promise<void> {
     if (incSubmissionCount !== 0) {
-      await this.userRepository.increment({ id: userId }, "submissionCount", incSubmissionCount);
+      await this.userRepository.increment(
+        { id: userId },
+        "submissionCount",
+        incSubmissionCount,
+      );
     }
   }
 
   async updateUserAcceptedCount(
     userId: number,
     problemId: number,
-    type: "NON_AC_TO_AC" | "AC_TO_NON_AC"
+    type: "NON_AC_TO_AC" | "AC_TO_NON_AC",
   ): Promise<void> {
-    await this.lockService.lock(`updateUserAcceptedCount_${userId}_${problemId}`, async () => {
-      if (type === "NON_AC_TO_AC") {
-        if ((await this.submissionService.getUserProblemAcceptedSubmissionCount(userId, problemId)) === 1) {
-          await this.userRepository.increment({ id: userId }, "acceptedProblemCount", 1);
+    await this.lockService.lock(
+      `updateUserAcceptedCount_${userId}_${problemId}`,
+      async () => {
+        if (type === "NON_AC_TO_AC") {
+          if (
+            (await this.submissionService.getUserProblemAcceptedSubmissionCount(
+              userId,
+              problemId,
+            )) === 1
+          ) {
+            await this.userRepository.increment(
+              { id: userId },
+              "acceptedProblemCount",
+              1,
+            );
+          }
+        } else {
+          if (
+            (await this.submissionService.getUserProblemAcceptedSubmissionCount(
+              userId,
+              problemId,
+            )) === 0
+          ) {
+            await this.userRepository.increment(
+              { id: userId },
+              "acceptedProblemCount",
+              -1,
+            );
+          }
         }
-      } else {
-        if ((await this.submissionService.getUserProblemAcceptedSubmissionCount(userId, problemId)) === 0) {
-          await this.userRepository.increment({ id: userId }, "acceptedProblemCount", -1);
-        }
-      }
-    });
+      },
+    );
   }
 
   async getUserRank(user: UserEntity): Promise<number> {
@@ -330,13 +397,12 @@ export class UserService {
       (await this.userRepository.count(
         this.configService.config.preference.misc.sortUserByRating
           ? {
-              rating: MoreThan(user.rating)
+              rating: MoreThan(user.rating),
             }
           : {
-              acceptedProblemCount: MoreThan(user.acceptedProblemCount)
-            }
+              acceptedProblemCount: MoreThan(user.acceptedProblemCount),
+            },
       ))
     );
   }
-
 }

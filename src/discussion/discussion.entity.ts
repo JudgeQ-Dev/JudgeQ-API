@@ -1,4 +1,12 @@
-import { Entity, PrimaryGeneratedColumn, Index, Column, ManyToOne, JoinColumn, OneToOne } from "typeorm";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Index,
+  Column,
+  ManyToOne,
+  JoinColumn,
+  OneToOne,
+} from "typeorm";
 
 import { ProblemEntity } from "@/problem/problem.entity";
 import { UserEntity } from "@/user/user.entity";
@@ -15,7 +23,10 @@ export class DiscussionEntity {
   @Column({ type: "varchar", length: 80 })
   title: string;
 
-  @OneToOne(() => DiscussionContentEntity, discussionContent => discussionContent.discussion)
+  @OneToOne(
+    () => DiscussionContentEntity,
+    (discussionContent) => discussionContent.discussion,
+  )
   content: Promise<DiscussionContentEntity>;
 
   @Column({ type: "datetime" })
@@ -39,7 +50,7 @@ export class DiscussionEntity {
   isPublic: boolean;
 
   @ManyToOne(() => UserEntity, {
-    onDelete: "CASCADE"
+    onDelete: "CASCADE",
   })
   @JoinColumn()
   publisher: Promise<UserEntity>;
@@ -50,7 +61,7 @@ export class DiscussionEntity {
 
   @ManyToOne(() => ProblemEntity, {
     onDelete: "CASCADE",
-    nullable: true
+    nullable: true,
   })
   @JoinColumn()
   problem?: Promise<ProblemEntity>;

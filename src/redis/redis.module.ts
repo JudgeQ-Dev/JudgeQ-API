@@ -5,6 +5,6 @@ import { LockService } from "./lock.service";
 
 @Module({
   providers: [RedisService, LockService],
-  exports: [RedisService, LockService]
+  exports: [RedisService, LockService],
 })
 export class RedisModule {}

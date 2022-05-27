@@ -11,7 +11,7 @@ export enum QueryDiscussionsResponseError {
   TAKE_TOO_MANY = "TAKE_TOO_MANY",
   NO_SUCH_PROBLEM = "NO_SUCH_PROBLEM",
   NO_SUCH_USER = "NO_SUCH_USER",
-  PERMISSION_DENIED = "PERMISSION_DENIED"
+  PERMISSION_DENIED = "PERMISSION_DENIED",
 }
 
 export class QueryDiscussionsResponsePermissionDto {

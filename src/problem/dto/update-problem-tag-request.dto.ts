@@ -1,6 +1,12 @@
 import { ApiProperty } from "@nestjs/swagger";
 
-import { IsString, Length, ValidateNested, IsInt, ArrayNotEmpty } from "class-validator";
+import {
+  IsString,
+  Length,
+  ValidateNested,
+  IsInt,
+  ArrayNotEmpty,
+} from "class-validator";
 import { Type } from "class-transformer";
 
 import { If } from "@/common/validators";
@@ -14,7 +20,9 @@ export class UpdateProblemTagRequestDto {
 
   @ApiProperty({ type: [ProblemTagLocalizedNameDto] })
   @If<ProblemTagLocalizedNameDto[]>(
-    localizedNames => new Set(localizedNames.map(({ locale }) => locale)).size === localizedNames.length
+    (localizedNames) =>
+      new Set(localizedNames.map(({ locale }) => locale)).size ===
+      localizedNames.length,
   )
   @ValidateNested({ each: true })
   @ArrayNotEmpty()

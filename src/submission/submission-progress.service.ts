@@ -5,13 +5,16 @@ import { Redis } from "ioredis";
 import { logger } from "@/logger";
 import { RedisService } from "@/redis/redis.service";
 
-import { SubmissionProgress, SubmissionProgressType } from "./submission-progress.interface";
+import {
+  SubmissionProgress,
+  SubmissionProgressType,
+} from "./submission-progress.interface";
 import { SubmissionProgressGateway } from "./submission-progress.gateway";
 
 export enum SubmissionEventType {
   Progress,
   Canceled,
-  Deleted
+  Deleted,
 }
 
 const REDIS_KEY_SUBMISSION_PROGRESS = "submission-progress:%d";
@@ -32,7 +35,7 @@ export class SubmissionProgressService {
 
   constructor(
     private readonly redisService: RedisService,
-    private readonly submissionProgressGateway: SubmissionProgressGateway
+    private readonly submissionProgressGateway: SubmissionProgressGateway,
   ) {
     this.redis = this.redisService.getClient();
     this.redisForSubscribe = this.redisService.getClient();
@@ -44,9 +47,17 @@ export class SubmissionProgressService {
     this.redisForSubscribe.subscribe(REDIS_CHANNEL_SUBMISSION_EVENT);
   }
 
-  private async onSubmissionEvent(submissionId: number, type: SubmissionEventType, progress?: SubmissionProgress) {
+  private async onSubmissionEvent(
+    submissionId: number,
+    type: SubmissionEventType,
+    progress?: SubmissionProgress,
+  ) {
     logger.log(`Consume event for submission ${submissionId}`);
-    this.submissionProgressGateway.onSubmissionEvent(submissionId, type, progress);
+    this.submissionProgressGateway.onSubmissionEvent(
+      submissionId,
+      type,
+      progress,
+    );
   }
 
   // If the progress type is "Finished", this method is called after the progress
@@ -54,11 +65,19 @@ export class SubmissionProgressService {
   async emitSubmissionEvent(
     submissionId: number,
     type: SubmissionEventType,
-    progress?: SubmissionProgress
+    progress?: SubmissionProgress,
   ): Promise<void> {
-    logger.log(`Progress for submission ${submissionId} received, pushing to Redis`);
-    if (type === SubmissionEventType.Progress && progress.progressType !== SubmissionProgressType.Finished) {
-      await this.redis.set(REDIS_KEY_SUBMISSION_PROGRESS.format(submissionId), JSON.stringify(progress));
+    logger.log(
+      `Progress for submission ${submissionId} received, pushing to Redis`,
+    );
+    if (
+      type === SubmissionEventType.Progress &&
+      progress.progressType !== SubmissionProgressType.Finished
+    ) {
+      await this.redis.set(
+        REDIS_KEY_SUBMISSION_PROGRESS.format(submissionId),
+        JSON.stringify(progress),
+      );
     } else {
       await this.redis.del(REDIS_KEY_SUBMISSION_PROGRESS.format(submissionId));
     }
@@ -69,13 +88,17 @@ export class SubmissionProgressService {
       JSON.stringify({
         submissionId,
         type,
-        progress
-      })
+        progress,
+      }),
     );
   }
 
-  async getPendingSubmissionProgress(submissionId: number): Promise<SubmissionProgress> {
-    const str = await this.redis.get(REDIS_KEY_SUBMISSION_PROGRESS.format(submissionId));
+  async getPendingSubmissionProgress(
+    submissionId: number,
+  ): Promise<SubmissionProgress> {
+    const str = await this.redis.get(
+      REDIS_KEY_SUBMISSION_PROGRESS.format(submissionId),
+    );
     try {
       return JSON.parse(str);
     } catch (e) {

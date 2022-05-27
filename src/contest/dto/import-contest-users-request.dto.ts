@@ -21,11 +21,9 @@ export class ContestUser {
 }
 
 export class ImportContestUsersRequestDto {
-
   @ApiProperty()
   readonly contestId: number;
 
   @ApiProperty()
   readonly contestUserList: ContestUser[];
-
 }

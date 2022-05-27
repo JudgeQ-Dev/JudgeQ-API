@@ -14,7 +14,7 @@ export class RedisService implements OnModuleInit {
 
   constructor(private readonly configService: ConfigService) {
     this.client = new Redis(this.configService.config.services.redis, {
-      enableReadyCheck: true
+      enableReadyCheck: true,
     });
 
     // TODO: Handle errors after connected?

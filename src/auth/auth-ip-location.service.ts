@@ -9,7 +9,9 @@ export class AuthIpLocationService {
   private readonly ip2region: any; // eslint-disable-line @typescript-eslint/no-explicit-any
 
   constructor(private configService: ConfigService) {
-    this.ip2region = new IP2Region(this.configService.config.vendor.ip2region || {});
+    this.ip2region = new IP2Region(
+      this.configService.config.vendor.ip2region || {},
+    );
   }
 
   query(ip: string): string {
@@ -35,14 +37,19 @@ export class AuthIpLocationService {
     else if (record.country) record.country += " ";
 
     // Fix "北京 北京市"
-    if (record.province === record.city || `${record.province}市` === record.city) record.province = "";
+    if (
+      record.province === record.city ||
+      `${record.province}市` === record.city
+    )
+      record.province = "";
 
     const cityResult = record.country + record.province + record.city;
 
     if (!cityResult) return null;
 
     // Fix "内网IP 内网IP"
-    if (record.isp && cityResult !== record.isp) return `${cityResult} ${record.isp}`;
+    if (record.isp && cityResult !== record.isp)
+      return `${cityResult} ${record.isp}`;
     return cityResult;
   }
 }

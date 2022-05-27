@@ -1,4 +1,10 @@
-import { ExceptionFilter, Catch, ArgumentsHost, HttpException, Logger } from "@nestjs/common";
+import {
+  ExceptionFilter,
+  Catch,
+  ArgumentsHost,
+  HttpException,
+  Logger,
+} from "@nestjs/common";
 
 import { Response } from "express"; // eslint-disable-line import/no-extraneous-dependencies
 
@@ -16,11 +22,12 @@ export class ErrorFilter implements ExceptionFilter {
     if (contextType === "http") {
       request = host.switchToHttp().getRequest<RequestWithSession>();
       const response = host.switchToHttp().getResponse<Response>();
-      if (error instanceof HttpException) response.status(error.getStatus()).send(error.getResponse());
+      if (error instanceof HttpException)
+        response.status(error.getStatus()).send(error.getResponse());
       else
         response.status(500).send({
           error: String(error),
-          stack: error?.stack
+          stack: error?.stack,
         });
     }
 
@@ -30,14 +37,14 @@ export class ErrorFilter implements ExceptionFilter {
 
         logger.error(error.message, error.stack);
       } else logger.error(error);
-
     }
   }
 
   isignoredError(error: Error) {
     if (error.message.includes("Too many connections")) return true;
     if (error.message === "connect ETIMEDOUT") return true;
-    if (error.message === "Connection lost: The server closed the connection.") return true;
+    if (error.message === "Connection lost: The server closed the connection.")
+      return true;
     if (error.message === "read ECONNRESET") return true;
 
     return false;

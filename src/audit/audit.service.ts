@@ -26,18 +26,24 @@ export interface AuditLogObject {
  * An object type query handler will be used to query the object meta when a audit log related to
  * that object is queried. The handler should return a meta object to be sent to the client dierctly.
  */
-type AuditLogObjectTypeQueryHandler<T> = (objectId: number, locale: Locale, currentUser: UserEntity) => Promise<T>;
+type AuditLogObjectTypeQueryHandler<T> = (
+  objectId: number,
+  locale: Locale,
+  currentUser: UserEntity,
+) => Promise<T>;
 
 @Injectable()
 export class AuditService {
   /**
    * Each function should be registered via registerObjectQueryHandler()
    */
-  objectTypeQueryHandlers: Partial<Record<AuditLogObjectType, AuditLogObjectTypeQueryHandler<unknown>>> = {};
+  objectTypeQueryHandlers: Partial<
+    Record<AuditLogObjectType, AuditLogObjectTypeQueryHandler<unknown>>
+  > = {};
 
   constructor(
     @InjectRepository(AuditLogEntity)
-    private readonly auditLogRepository: Repository<AuditLogEntity>
+    private readonly auditLogRepository: Repository<AuditLogEntity>,
   ) {}
 
   /**
@@ -46,7 +52,10 @@ export class AuditService {
    * An object type query handler will be used to query the object meta when a audit log related to
    * that object is queried. The handler should return a meta object to be sent to the client dierctly.
    */
-  registerObjectTypeQueryHandler<T>(type: AuditLogObjectType, handler: AuditLogObjectTypeQueryHandler<T>): void {
+  registerObjectTypeQueryHandler<T>(
+    type: AuditLogObjectType,
+    handler: AuditLogObjectTypeQueryHandler<T>,
+  ): void {
     this.objectTypeQueryHandlers[type] = handler;
   }
 
@@ -57,7 +66,7 @@ export class AuditService {
     action: string,
     objectType: AuditLogObjectType,
     objectId: number,
-    details?: unknown
+    details?: unknown,
   ): Promise<void>;
 
   async log(
@@ -67,12 +76,17 @@ export class AuditService {
     firstObjectId: number,
     secondObjectType: AuditLogObjectType,
     secondObjectId: number,
-    details?: unknown
+    details?: unknown,
   ): Promise<void>;
 
   async log(action: string, details?: unknown): Promise<void>;
 
-  async log(action: string, objectType: AuditLogObjectType, objectId: number, details?: unknown): Promise<void>;
+  async log(
+    action: string,
+    objectType: AuditLogObjectType,
+    objectId: number,
+    details?: unknown,
+  ): Promise<void>;
 
   async log(
     action: string,
@@ -80,18 +94,28 @@ export class AuditService {
     firstObjectId: number,
     secondObjectType: AuditLogObjectType,
     secondObjectId: number,
-    details?: unknown
+    details?: unknown,
   ): Promise<void>;
 
   async log(...argumentsArray: unknown[]): Promise<void> {
-    let userId: number = typeof argumentsArray[0] === "number" ? (argumentsArray.shift() as number) : null;
-    const details: unknown = argumentsArray.length % 2 === 0 ? argumentsArray.pop() : null;
-    const [action, firstObjectType, firstObjectId, secondObjectType, secondObjectId] = argumentsArray as [
+    let userId: number =
+      typeof argumentsArray[0] === "number"
+        ? (argumentsArray.shift() as number)
+        : null;
+    const details: unknown =
+      argumentsArray.length % 2 === 0 ? argumentsArray.pop() : null;
+    const [
+      action,
+      firstObjectType,
+      firstObjectId,
+      secondObjectType,
+      secondObjectId,
+    ] = argumentsArray as [
       string,
       AuditLogObjectType,
       number,
       AuditLogObjectType,
-      number
+      number,
     ];
 
     const req = getCurrentRequest();
@@ -99,8 +123,8 @@ export class AuditService {
       if (!req.session) {
         logger.warn(
           `Failed to get the current request session for audit logging { action: ${JSON.stringify(
-            action
-          )}, firstObject: <${firstObjectType} ${firstObjectId}>, secondObject: <${secondObjectType} ${secondObjectId}> }`
+            action,
+          )}, firstObject: <${firstObjectType} ${firstObjectId}>, secondObject: <${secondObjectType} ${secondObjectId}> }`,
         );
 
         return;
@@ -140,7 +164,7 @@ export class AuditService {
     locale: Locale,
     currentUser: UserEntity,
     skipCount: number,
-    takeCount: number
+    takeCount: number,
   ): Promise<[results: AuditLogQueryResult[], count: number]> {
     const where: FindConditions<AuditLogEntity> = {};
     if (userId != null) where.userId = userId;
@@ -154,13 +178,13 @@ export class AuditService {
       skip: skipCount,
       take: takeCount,
       order: {
-        time: "DESC"
-      }
+        time: "DESC",
+      },
     });
 
     return [
       await Promise.all(
-        results.map<Promise<AuditLogQueryResult>>(async result => ({
+        results.map<Promise<AuditLogQueryResult>>(async (result) => ({
           userId: result.userId,
           ip: result.ip,
           time: result.time,
@@ -169,18 +193,26 @@ export class AuditService {
           firstObjectId: result.firstObjectId,
           firstObject:
             result.firstObjectType in this.objectTypeQueryHandlers
-              ? await this.objectTypeQueryHandlers[result.firstObjectType](result.firstObjectId, locale, currentUser)
+              ? await this.objectTypeQueryHandlers[result.firstObjectType](
+                  result.firstObjectId,
+                  locale,
+                  currentUser,
+                )
               : null,
           secondObjectType: result.secondObjectType,
           secondObjectId: result.secondObjectId,
           secondObject:
             result.secondObjectType in this.objectTypeQueryHandlers
-              ? await this.objectTypeQueryHandlers[result.secondObjectType](result.secondObjectId, locale, currentUser)
+              ? await this.objectTypeQueryHandlers[result.secondObjectType](
+                  result.secondObjectId,
+                  locale,
+                  currentUser,
+                )
               : null,
-          details: result.details
-        }))
+          details: result.details,
+        })),
       ),
-      count
+      count,
     ];
   }
 }

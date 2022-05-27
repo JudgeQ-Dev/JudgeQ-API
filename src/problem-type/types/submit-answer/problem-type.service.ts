@@ -25,16 +25,20 @@ export class ProblemTypeSubmitAnswerService
       ProblemJudgeInfoSubmitAnswer,
       SubmissionContentSubmitAnswer,
       SubmissionTestcaseResultSubmitAnswer
-    > {
-  constructor(private configService: ConfigService, private codeLanguageService: CodeLanguageService) {}
+    >
+{
+  constructor(
+    private configService: ConfigService,
+    private codeLanguageService: CodeLanguageService,
+  ) {}
 
   getDefaultJudgeInfo(): ProblemJudgeInfoSubmitAnswer {
     return {
       subtasks: null,
       checker: {
         type: "lines",
-        caseSensitive: false
-      }
+        caseSensitive: false,
+      },
     };
   }
 
@@ -48,41 +52,50 @@ export class ProblemTypeSubmitAnswerService
 
   preprocessJudgeInfo(
     judgeInfo: ProblemJudgeInfoSubmitAnswer,
-    testData: ProblemFileEntity[]
+    testData: ProblemFileEntity[],
   ): ProblemJudgeInfoSubmitAnswer {
     return Array.isArray(judgeInfo.subtasks)
       ? judgeInfo
       : {
           ...judgeInfo,
-          subtasks: autoMatchOutputToInput(testData, true)
+          subtasks: autoMatchOutputToInput(testData, true),
         };
   }
 
   validateAndFilterJudgeInfo(
     judgeInfo: ProblemJudgeInfoSubmitAnswer,
     testData: ProblemFileEntity[],
-    ignoreLimits: boolean
+    ignoreLimits: boolean,
   ): void {
     validateMetaAndSubtasks(judgeInfo, testData, {
       enableTimeMemoryLimit: false,
       enableFileIo: false,
       enableInputFile: "optional",
       enableOutputFile: true,
-      enableUserOutputFilename: true
+      enableUserOutputFilename: true,
     });
 
     validateChecker(judgeInfo, testData, {
       validateCompileAndRunOptions: (language, compileAndRunOptions) =>
-        this.codeLanguageService.validateCompileAndRunOptions(language, compileAndRunOptions).length === 0,
-      hardTimeLimit: ignoreLimits ? null : this.configService.config.resourceLimit.problemTimeLimit,
-      hardMemoryLimit: ignoreLimits ? null : this.configService.config.resourceLimit.problemMemoryLimit
+        this.codeLanguageService.validateCompileAndRunOptions(
+          language,
+          compileAndRunOptions,
+        ).length === 0,
+      hardTimeLimit: ignoreLimits
+        ? null
+        : this.configService.config.resourceLimit.problemTimeLimit,
+      hardMemoryLimit: ignoreLimits
+        ? null
+        : this.configService.config.resourceLimit.problemMemoryLimit,
     });
 
     restrictProperties(judgeInfo, ["subtasks", "checker"]);
   }
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async validateSubmissionContent(submissionContent: SubmissionContentSubmitAnswer): Promise<ValidationError[]> {
+  async validateSubmissionContent(
+    submissionContent: SubmissionContentSubmitAnswer,
+  ): Promise<ValidationError[]> {
     return [];
   }
 
@@ -90,22 +103,22 @@ export class ProblemTypeSubmitAnswerService
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async getCodeLanguageAndAnswerSizeFromSubmissionContentAndFile(
     submissionContent: SubmissionContentSubmitAnswer,
-    file: FileEntity
+    file: FileEntity,
   ) {
     return {
       language: null,
-      answerSize: file.size
+      answerSize: file.size,
     };
   }
 
   getTimeAndMemoryUsedFromFinishedSubmissionProgress(
     // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    submissionProgress: SubmissionProgress<SubmissionTestcaseResultSubmitAnswer>
+    submissionProgress: SubmissionProgress<SubmissionTestcaseResultSubmitAnswer>,
   ) {
     return {
       timeUsed: null,
-      memoryUsed: null
+      memoryUsed: null,
     };
   }
 }

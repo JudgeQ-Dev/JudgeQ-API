@@ -11,7 +11,7 @@ export class SetUserPrivilegesRequestDto {
 
   @ApiProperty({ enum: UserPrivilegeType, isArray: true })
   @IsEnum(UserPrivilegeType, {
-    each: true
+    each: true,
   })
   @ArrayUnique()
   readonly privileges: UserPrivilegeType[];

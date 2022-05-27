@@ -15,14 +15,14 @@ export enum EventReportType {
   Error = "Error",
   Warning = "Warning",
   Info = "Info",
-  Success = "Success"
+  Success = "Success",
 }
 
 const emoji: Record<EventReportType, string> = {
   [EventReportType.Error]: "❌",
   [EventReportType.Warning]: "⚠️",
   [EventReportType.Info]: "ℹ️",
-  [EventReportType.Success]: "✅"
+  [EventReportType.Success]: "✅",
 };
 
 interface EventMessage {
@@ -34,7 +34,13 @@ interface EventMessage {
 const IPC_CHANNEL = "event-report";
 
 export function escapeTelegramHtml(text: string) {
-  return text.split("&").join("&amp;").split("<").join("&lt;").split(">").join("&gt;");
+  return text
+    .split("&")
+    .join("&amp;")
+    .split("<")
+    .join("&lt;")
+    .split(">")
+    .join("&gt;");
 }
 
 @Injectable()
@@ -43,7 +49,10 @@ export class EventReportService {
 
   private readonly telegramBot: Telegraf;
 
-  constructor(private readonly configService: ConfigService, private readonly clusterSerivce: ClusterService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly clusterSerivce: ClusterService,
+  ) {
     const eventReportConfig = this.configService.config.eventReport;
     this.enabled = !!eventReportConfig.telegramBotToken;
     if (!this.enabled) return;
@@ -56,19 +65,25 @@ export class EventReportService {
             telegram: {
               // ProxyAgent's typing is wrong
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              agent: eventReportConfig.proxyUrl ? (new ProxyAgent(eventReportConfig.proxyUrl) as any) : null,
+              agent: eventReportConfig.proxyUrl
+                ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  (new ProxyAgent(eventReportConfig.proxyUrl) as any)
+                : null,
               ...(eventReportConfig.telegramApiRoot
                 ? {
-                    apiRoot: eventReportConfig.telegramApiRoot
+                    apiRoot: eventReportConfig.telegramApiRoot,
                   }
-                : null)
-            }
+                : null),
+            },
           })
         : null;
       if (this.telegramBot) this.telegramBot.launch();
 
       // Listen worker process's message
-      this.clusterSerivce.onMessageFromWorker<EventMessage>(IPC_CHANNEL, message => this.doReport(message));
+      this.clusterSerivce.onMessageFromWorker<EventMessage>(
+        IPC_CHANNEL,
+        (message) => this.doReport(message),
+      );
     }
   }
 
@@ -76,7 +91,7 @@ export class EventReportService {
     type,
     error,
     request,
-    message
+    message,
   }: {
     type: EventReportType;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -90,7 +105,9 @@ export class EventReportService {
       const { siteName } = this.configService.config.preference;
       const now = moment().format("YYYY-MM-DD HH:mm:ss");
       const eventId = randomstring.generate({ length: 8, charset: "numeric" });
-      const errorDisplayMessage = error && ("stack" in error ? error.stack : JSON.stringify(error, null, 2));
+      const errorDisplayMessage =
+        error &&
+        ("stack" in error ? error.stack : JSON.stringify(error, null, 2));
 
       let requestInfo = "";
       let requestBody = "";
@@ -104,7 +121,10 @@ export class EventReportService {
         if (userInfo) requestInfo += `User: ${userInfo}\n`;
 
         if (request.body) {
-          requestBody = typeof request.body === "string" ? request.body : JSON.stringify(request.body, null, 2);
+          requestBody =
+            typeof request.body === "string"
+              ? request.body
+              : JSON.stringify(request.body, null, 2);
         }
       }
 
@@ -115,7 +135,7 @@ export class EventReportService {
       this.clusterSerivce.postMessageToMaster(IPC_CHANNEL, <EventMessage>{
         message: finalMessage,
         filename: requestBody && `RequestBody_${eventId}.json`,
-        fileContent: requestBody
+        fileContent: requestBody,
       });
     } catch (e) {
       if (e instanceof Error) logger.error(e.message, e.stack);
@@ -128,15 +148,18 @@ export class EventReportService {
       this.configService.config.eventReport.sentTo,
       `<pre>${escapeTelegramHtml(message.message.trim())}</pre>`,
       {
-        parse_mode: "HTML"
-      }
+        parse_mode: "HTML",
+      },
     );
 
     if (message.filename) {
-      await this.telegramBot.telegram.sendDocument(this.configService.config.eventReport.sentTo, {
-        filename: message.filename,
-        source: Buffer.from(message.fileContent)
-      });
+      await this.telegramBot.telegram.sendDocument(
+        this.configService.config.eventReport.sentTo,
+        {
+          filename: message.filename,
+          source: Buffer.from(message.fileContent),
+        },
+      );
     }
   }
 }

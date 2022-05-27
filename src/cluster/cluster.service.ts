@@ -18,11 +18,14 @@ export class ClusterService {
 
   readonly isWorker: boolean;
 
-  private readonly messageListeners = new Map<string, Array<(data: unknown) => void>>();
+  private readonly messageListeners = new Map<
+    string,
+    Array<(data: unknown) => void>
+  >();
 
   constructor(
     @Inject(forwardRef(() => ConfigService))
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
   ) {
     this.enabled = this.configService.config.server.clusters != null;
     this.isMaster = cluster.isMaster;
@@ -41,11 +44,15 @@ export class ClusterService {
       cluster.fork();
     }
 
-    cluster.on("message", (worker, message: IpcMessage) => this.callMessageListeners(message));
+    cluster.on("message", (worker, message: IpcMessage) =>
+      this.callMessageListeners(message),
+    );
   }
 
   private callMessageListeners(message: IpcMessage) {
-    (this.messageListeners.get(message.channel) || []).forEach(callback => callback(message.data));
+    (this.messageListeners.get(message.channel) || []).forEach((callback) =>
+      callback(message.data),
+    );
   }
 
   /**
@@ -54,7 +61,7 @@ export class ClusterService {
   postMessageToMaster<T>(channel: string, data: T) {
     const message = {
       channel,
-      data
+      data,
     };
 
     if (this.isMaster) this.callMessageListeners(message);
@@ -62,7 +69,8 @@ export class ClusterService {
   }
 
   onMessageFromWorker<T>(channel: string, callback: (data: T) => void) {
-    if (!this.messageListeners.has(channel)) this.messageListeners.set(channel, []);
+    if (!this.messageListeners.has(channel))
+      this.messageListeners.set(channel, []);
     this.messageListeners.get(channel).push(callback);
   }
 }

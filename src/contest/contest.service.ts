@@ -16,13 +16,16 @@ import { ClarificationEntity } from "./clarification.entity";
 import { ProblemService } from "@/problem/problem.service";
 import { ProblemEntity } from "@/problem/problem.entity";
 
-import { LocalizedContentEntity, LocalizedContentType } from "@/localized-content/localized-content.entity";
+import {
+  LocalizedContentEntity,
+  LocalizedContentType,
+} from "@/localized-content/localized-content.entity";
 
 import {
   ClarificationMetaDto,
   ContestMetaDto,
   ContestUser,
-  ProblemInContestMetaDto
+  ProblemInContestMetaDto,
 } from "./dto";
 import { SubmissionMetaDto } from "./dto/";
 import { SubmissionService } from "@/submission/submission.service";
@@ -32,7 +35,6 @@ import { UserService } from "@/user/user.service";
 import { Locale } from "@/common/locale.type";
 import { SubmissionStatus } from "@/submission/submission-status.enum";
 import { SubmissionProgressService } from "@/submission/submission-progress.service";
-import { SubmissionEntity } from "@/submission/submission.entity";
 
 export type DateType = Date | string | number;
 
@@ -42,8 +44,7 @@ export function getDate(date: DateType): Date {
       date = date * 1000;
     }
   }
-  if (!(date instanceof Date))
-    return new Date(date);
+  if (!(date instanceof Date)) return new Date(date);
 }
 
 export enum ContestPermissionType {
@@ -71,7 +72,6 @@ export enum ContestStatusType {
 
 @Injectable()
 export class ContestService {
-
   constructor(
     @InjectConnection()
     private connection: Connection,
@@ -109,6 +109,7 @@ export class ContestService {
     let frozen: boolean;
     if (contest) {
       status = await this.getContestStatus(contest);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       frozen = await this.getContestFrozenStatus(contest);
     }
     switch (type) {
@@ -132,18 +133,21 @@ export class ContestService {
         if (user && user.isAdmin) return true;
         if (status === ContestStatusType.Pending) return false;
         if (contest && contest.isPublic) return true;
-        if (user && await this.isUserRegisteredContest(user, contest)) return true;
+        if (user && (await this.isUserRegisteredContest(user, contest)))
+          return true;
         return false;
       case ContestPermissionType.ViewContestMeta:
         if (user && user.isAdmin) return true;
         if (contest && contest.isPublic) return true;
-        if (user && await this.isUserRegisteredContest(user, contest)) return true;
+        if (user && (await this.isUserRegisteredContest(user, contest)))
+          return true;
         return false;
       case ContestPermissionType.ViewProblemMeta:
         if (user && user.isAdmin) return true;
         if (status === ContestStatusType.Pending) return false;
         if (contest && contest.isPublic) return true;
-        if (user && await this.isUserRegisteredContest(user, contest)) return true;
+        if (user && (await this.isUserRegisteredContest(user, contest)))
+          return true;
         return false;
       case ContestPermissionType.ViewContestUserList:
         if (user && user.isAdmin) return true;
@@ -152,7 +156,8 @@ export class ContestService {
       case ContestPermissionType.ViewStandings:
         if (user && user.isAdmin) return true;
         if (contest && contest.isPublic) return true;
-        if (user && await this.isUserRegisteredContest(user, contest)) return true;
+        if (user && (await this.isUserRegisteredContest(user, contest)))
+          return true;
         return false;
       case ContestPermissionType.ViewFrozenStatus:
         if (user && user.isAdmin) return true;
@@ -167,8 +172,13 @@ export class ContestService {
         return false;
       case ContestPermissionType.Submit:
         if (!user) return false;
-        if (!(await this.isProblemExistInContest(problem, contest))) return false;
-        if (status === ContestStatusType.Pending || status === ContestStatusType.Finished) return false;
+        if (!(await this.isProblemExistInContest(problem, contest)))
+          return false;
+        if (
+          status === ContestStatusType.Pending ||
+          status === ContestStatusType.Finished
+        )
+          return false;
         if (user.isAdmin) return true;
         if (await this.isUserRegisteredContest(user, contest)) return true;
         return false;
@@ -180,21 +190,25 @@ export class ContestService {
   async findContestById(contestId: number): Promise<ContestEntity> {
     return await this.contestRepository.findOne({
       where: {
-        id: contestId
-      }
+        id: contestId,
+      },
     });
   }
 
   async findContestProblem(
     contest: ContestEntity,
-    problem: ProblemEntity
+    problem: ProblemEntity,
   ): Promise<ContestProblemEntity> {
-    return Object.assign({}, await this.contestProblemRepository.findOne({
-      where: {
-        contest: contest,
-        problem: problem,
-      }
-    }), {contest, problem});
+    return Object.assign(
+      {},
+      await this.contestProblemRepository.findOne({
+        where: {
+          contest: contest,
+          problem: problem,
+        },
+      }),
+      { contest, problem },
+    );
   }
 
   async getContestStatus(contest: ContestEntity): Promise<ContestStatusType> {
@@ -220,23 +234,29 @@ export class ContestService {
     return false;
   }
 
-  async isUserRegisteredContest(user: UserEntity, contest: ContestEntity): Promise<boolean> {
+  async isUserRegisteredContest(
+    user: UserEntity,
+    contest: ContestEntity,
+  ): Promise<boolean> {
     const contestUser = await this.contestUserRepository.findOne({
       where: {
         contest: contest,
         user: user,
-      }
+      },
     });
     if (!contestUser) return false;
     return true;
   }
 
-  async isProblemExistInContest(problem: ProblemEntity, contest: ContestEntity): Promise<boolean> {
+  async isProblemExistInContest(
+    problem: ProblemEntity,
+    contest: ContestEntity,
+  ): Promise<boolean> {
     const contestProblem = await this.contestProblemRepository.findOne({
       where: {
         contest: contest,
         problem: problem,
-      }
+      },
     });
     if (!contestProblem) return false;
     return true;
@@ -262,7 +282,6 @@ export class ContestService {
     frozenStartTime?: DateType,
     frozenEndTime?: DateType,
   ): Promise<number> {
-
     const contest = new ContestEntity();
     contest.contestName = contestName;
     contest.isPublic = isPublic;
@@ -285,7 +304,6 @@ export class ContestService {
     frozenStartTime?: DateType,
     frozenEndTime?: DateType,
   ): Promise<void> {
-
     if (!contest) return null;
 
     contest.contestName = contestName;
@@ -303,9 +321,9 @@ export class ContestService {
     skipCount: number,
     takeCount: number,
   ): Promise<[contests: ContestEntity[], count: number]> {
-    let findParams = <FindManyOptions<ContestEntity>>{
+    const findParams = <FindManyOptions<ContestEntity>>{
       order: {
-        id: "DESC"
+        id: "DESC",
       },
       skip: skipCount,
       take: takeCount,
@@ -327,11 +345,16 @@ export class ContestService {
     const contestProblem = new ContestProblemEntity();
     contestProblem.contest = contest;
     contestProblem.problem = problem;
-    contestProblem.orderId = parseInt((await this.contestProblemRepository
-                                .createQueryBuilder()
-                                .select("IFNULL(MAX(`orderId`), 0)", "orderId")
-                                .where("contestId = :contestId", { contestId: contest.id })
-                                .getRawOne()).orderId) + 1;
+    contestProblem.orderId =
+      parseInt(
+        (
+          await this.contestProblemRepository
+            .createQueryBuilder()
+            .select("IFNULL(MAX(`orderId`), 0)", "orderId")
+            .where("contestId = :contestId", { contestId: contest.id })
+            .getRawOne()
+        ).orderId,
+      ) + 1;
     await this.contestProblemRepository.save(contestProblem);
   }
 
@@ -349,7 +372,6 @@ export class ContestService {
     contest: ContestEntity,
     currentUser?: UserEntity,
   ): Promise<ProblemInContestMetaDto[]> {
-
     const frozenStatus = await this.getContestFrozenStatus(contest);
 
     const problems = await this.contestProblemRepository
@@ -360,16 +382,26 @@ export class ContestService {
         LocalizedContentEntity,
         "localizedContent",
         "localizedContent.type = :type AND problemId = localizedContent.objectId",
-        { type: LocalizedContentType.ProblemTitle }
+        { type: LocalizedContentType.ProblemTitle },
       )
       .orderBy("contest_problem.orderId", "ASC")
-      .getRawMany()
+      .getRawMany();
 
     const [acceptedSubmissions, nonAcceptedSubmissions] = await Promise.all([
       currentUser &&
-      this.submissionService.getUserLatestSubmissionByProblems(currentUser, problems.map(problem => problem.problem_id), true, contest),
+        this.submissionService.getUserLatestSubmissionByProblems(
+          currentUser,
+          problems.map((problem) => problem.problem_id),
+          true,
+          contest,
+        ),
       currentUser &&
-      this.submissionService.getUserLatestSubmissionByProblems(currentUser, problems.map(problem => problem.problem_id), false, contest)
+        this.submissionService.getUserLatestSubmissionByProblems(
+          currentUser,
+          problems.map((problem) => problem.problem_id),
+          false,
+          contest,
+        ),
     ]);
 
     const [acceptedSubmissionCount, allSubmissionCount] = await Promise.all([
@@ -378,59 +410,80 @@ export class ContestService {
         SubmissionStatus.Accepted,
         contest.startTime,
         frozenStatus ? contest.frozenStartTime : null,
-        problems.map(problem => problem.problem_id),
-        null),
+        problems.map((problem) => problem.problem_id),
+        null,
+      ),
       this.submissionService.getSubmissionCountFilterByStatus(
         contest.id,
         null,
         contest.startTime,
         null,
-        problems.map(problem => problem.problem_id),
-        null),
+        problems.map((problem) => problem.problem_id),
+        null,
+      ),
     ]);
 
-    return problems.map((problem) => (
-      <ProblemInContestMetaDto>{
-        orderId: problem.contest_problem_orderId,
-        problemId: problem.problem_id,
-        submissionCount: allSubmissionCount.get(problem.problem_id) ?? 0,
-        acceptedSubmissionCount: acceptedSubmissionCount.get(problem.problem_id) ?? 0,
-        title: problem.localizedContent_data,
-        submission: currentUser && (acceptedSubmissions.get(problem.problem_id) || nonAcceptedSubmissions.get(problem.problem_id))
-      }
-    ));
+    return problems.map(
+      (problem) =>
+        <ProblemInContestMetaDto>{
+          orderId: problem.contest_problem_orderId,
+          problemId: problem.problem_id,
+          submissionCount: allSubmissionCount.get(problem.problem_id) ?? 0,
+          acceptedSubmissionCount:
+            acceptedSubmissionCount.get(problem.problem_id) ?? 0,
+          title: problem.localizedContent_data,
+          submission:
+            currentUser &&
+            (acceptedSubmissions.get(problem.problem_id) ||
+              nonAcceptedSubmissions.get(problem.problem_id)),
+        },
+    );
   }
 
   async swapTwoProblemOrder(
     contestProblemOrigin: ContestProblemEntity,
     contestProblemNew: ContestProblemEntity,
   ): Promise<void> {
-    await this.connection.transaction("READ COMMITTED", async transactionalEntityManager => {
-      const tmp = contestProblemNew.orderId;
+    await this.connection.transaction(
+      "READ COMMITTED",
+      async (transactionalEntityManager) => {
+        const tmp = contestProblemNew.orderId;
 
-      await transactionalEntityManager
-      .createQueryBuilder()
-      .update(ContestProblemEntity)
-      .set({orderId: contestProblemOrigin.orderId})
-      .where("contestId = :contestId", {contestId: contestProblemNew.contest.id})
-      .andWhere("problemId = :problemId", {problemId: contestProblemNew.problem.id})
-      .execute();
+        await transactionalEntityManager
+          .createQueryBuilder()
+          .update(ContestProblemEntity)
+          .set({ orderId: contestProblemOrigin.orderId })
+          .where("contestId = :contestId", {
+            contestId: contestProblemNew.contest.id,
+          })
+          .andWhere("problemId = :problemId", {
+            problemId: contestProblemNew.problem.id,
+          })
+          .execute();
 
-      await transactionalEntityManager
-      .createQueryBuilder()
-      .update(ContestProblemEntity)
-      .set({orderId: tmp})
-      .where("contestId = :contestId", {contestId: contestProblemOrigin.contest.id})
-      .andWhere("problemId = :problemId", {problemId: contestProblemOrigin.problem.id})
-      .execute();
-    });
+        await transactionalEntityManager
+          .createQueryBuilder()
+          .update(ContestProblemEntity)
+          .set({ orderId: tmp })
+          .where("contestId = :contestId", {
+            contestId: contestProblemOrigin.contest.id,
+          })
+          .andWhere("problemId = :problemId", {
+            problemId: contestProblemOrigin.problem.id,
+          })
+          .execute();
+      },
+    );
   }
 
   private async hashPassword(password: string): Promise<string> {
     return await bcrypt.hash(password, 10);
   }
 
-  async registerContestUser(contest: ContestEntity, user: UserEntity): Promise<void> {
+  async registerContestUser(
+    contest: ContestEntity,
+    user: UserEntity,
+  ): Promise<void> {
     const now = new Date();
     const contestUser = new ContestUserEntity();
     contestUser.contest = contest;
@@ -444,66 +497,72 @@ export class ContestService {
     contest: ContestEntity,
   ): Promise<void> {
     const now = new Date();
-    await this.connection.transaction("READ COMMITTED", async transactionalEntityManager => {
-      await Promise.all(
-        contestUserList.map(async (_contestUser) => {
-          const { username, nickname, password, organization, location } = _contestUser;
-          const user = new UserEntity();
-          user.username = username;
-          user.email = `${username}@hznuoj.com`;
-          user.publicEmail = false;
-          user.nickname = nickname;
-          user.bio = "";
-          user.avatarInfo = "gravatar:";
-          user.isAdmin = false;
-          user.submissionCount = 0;
-          user.acceptedProblemCount = 0;
-          user.rating = 0;
-          user.registrationTime = now;
-          user.isContestUser = true;
-          user.contestId = contest.id;
-          user.contestUserPassword = password;
-          user.notificationEmail = _contestUser.notificationEmail;
-          await transactionalEntityManager.save(user);
+    await this.connection.transaction(
+      "READ COMMITTED",
+      async (transactionalEntityManager) => {
+        await Promise.all(
+          contestUserList.map(async (_contestUser) => {
+            const { username, nickname, password, organization, location } =
+              _contestUser;
+            const user = new UserEntity();
+            user.username = username;
+            user.email = `${username}@hznuoj.com`;
+            user.publicEmail = false;
+            user.nickname = nickname;
+            user.bio = "";
+            user.avatarInfo = "gravatar:";
+            user.isAdmin = false;
+            user.submissionCount = 0;
+            user.acceptedProblemCount = 0;
+            user.rating = 0;
+            user.registrationTime = now;
+            user.isContestUser = true;
+            user.contestId = contest.id;
+            user.contestUserPassword = password;
+            user.notificationEmail = _contestUser.notificationEmail;
+            await transactionalEntityManager.save(user);
 
-          const userAuth = new UserAuthEntity();
-          userAuth.userId = user.id;
-          userAuth.password = await this.hashPassword(password);
-          await transactionalEntityManager.save(userAuth);
+            const userAuth = new UserAuthEntity();
+            userAuth.userId = user.id;
+            userAuth.password = await this.hashPassword(password);
+            await transactionalEntityManager.save(userAuth);
 
-          const userInformation = new UserInformationEntity();
-          userInformation.userId = user.id;
-          userInformation.organization = organization;
-          userInformation.location = location;
-          userInformation.url = "";
-          userInformation.telegram = "";
-          userInformation.qq = "";
-          userInformation.github = "";
-          await transactionalEntityManager.save(userInformation);
+            const userInformation = new UserInformationEntity();
+            userInformation.userId = user.id;
+            userInformation.organization = organization;
+            userInformation.location = location;
+            userInformation.url = "";
+            userInformation.telegram = "";
+            userInformation.qq = "";
+            userInformation.github = "";
+            await transactionalEntityManager.save(userInformation);
 
-          const contestUser = new ContestUserEntity();
-          contestUser.contest = contest;
-          contestUser.user = user;
-          contestUser.registrationTime = now;
-          await transactionalEntityManager.save(contestUser);
+            const contestUser = new ContestUserEntity();
+            contestUser.contest = contest;
+            contestUser.user = user;
+            contestUser.registrationTime = now;
+            await transactionalEntityManager.save(contestUser);
 
-          return {};
-        }))
-    });
+            return {};
+          }),
+        );
+      },
+    );
   }
 
   async deleteContestUser(
     user: UserEntity,
-    contest: ContestEntity
-  ) : Promise<void> {
+    contest: ContestEntity,
+  ): Promise<void> {
     await this.contestUserRepository.delete({
       contest: contest,
       user: user,
     });
   }
 
-  async getContestUserList(contest: ContestEntity): Promise<ContestUserMetaDto[]> {
-
+  async getContestUserList(
+    contest: ContestEntity,
+  ): Promise<ContestUserMetaDto[]> {
     const userList = await this.contestUserRepository
       .createQueryBuilder("contest_user")
       .where("contest_user.contest = :contestId", { contestId: contest.id })
@@ -515,25 +574,28 @@ export class ContestService {
       )
       .orderBy("contest_user.registrationTime", "DESC")
       .addOrderBy("contest_user.userId", "DESC")
-      .getRawMany()
+      .getRawMany();
 
-    return userList.map((user) => (
-      <ContestUserMetaDto>{
-        id: user.user_id,
-        username: user.user_username,
-        email: user.user_email,
-        nickname: user.user_nickname,
-        organization: user.userInformation_organization,
-        location: user.userInformation_location,
-        registrationTime: user.contest_user_registrationTime,
-        notificationEmail: user.user_notificationEmail,
-      }
-    ));
+    return userList.map(
+      (user) =>
+        <ContestUserMetaDto>{
+          id: user.user_id,
+          username: user.user_username,
+          email: user.user_email,
+          nickname: user.user_nickname,
+          organization: user.userInformation_organization,
+          location: user.userInformation_location,
+          registrationTime: user.contest_user_registrationTime,
+          notificationEmail: user.user_notificationEmail,
+        },
+    );
   }
 
-  async getContestUserListAll(contest: ContestEntity, usernames?: string[]): Promise<ContestUserMetaDto[]> {
-
-    var userList = await this.contestUserRepository
+  async getContestUserListAll(
+    contest: ContestEntity,
+    usernames?: string[],
+  ): Promise<ContestUserMetaDto[]> {
+    let userList = await this.contestUserRepository
       .createQueryBuilder("contest_user")
       .where("contest_user.contest = :contestId", { contestId: contest.id })
       .leftJoinAndSelect("contest_user.user", "user")
@@ -544,25 +606,28 @@ export class ContestService {
       )
       .orderBy("contest_user.registrationTime", "DESC")
       .addOrderBy("contest_user.userId", "DESC")
-      .getRawMany()
+      .getRawMany();
 
     // TODO: high performance
     if (usernames) {
-      userList = userList.filter((user) => usernames.includes(user.user_username));
+      userList = userList.filter((user) =>
+        usernames.includes(user.user_username),
+      );
     }
 
-    return userList.map((user) => (
-      <ContestUserMetaDto>{
-        id: user.user_id,
-        username: user.user_username,
-        email: user.user_email,
-        nickname: user.user_nickname,
-        organization: user.userInformation_organization,
-        registrationTime: user.contest_user_registrationTime,
-        notificationEmail: user.user_notificationEmail,
-        contestUserPassword: user.user_contestUserPassword,
-      }
-    ));
+    return userList.map(
+      (user) =>
+        <ContestUserMetaDto>{
+          id: user.user_id,
+          username: user.user_username,
+          email: user.user_email,
+          nickname: user.user_nickname,
+          organization: user.userInformation_organization,
+          registrationTime: user.contest_user_registrationTime,
+          notificationEmail: user.user_notificationEmail,
+          contestUserPassword: user.user_contestUserPassword,
+        },
+    );
   }
 
   async createClarification(
@@ -571,38 +636,45 @@ export class ContestService {
     content: string,
     replyId: number,
   ) {
+    await this.connection.transaction(
+      "READ COMMITTED",
+      async (transactionalEntityManager) => {
+        const clarification = new ClarificationEntity();
+        clarification.publisherId = user.id;
+        clarification.contestId = contest.id;
+        clarification.content = content;
+        clarification.publishTime = new Date();
+        clarification.replyId = replyId;
 
-    await this.connection.transaction("READ COMMITTED", async transactionalEntityManager => {
+        await transactionalEntityManager.save(clarification);
 
-      const clarification = new ClarificationEntity();
-      clarification.publisherId = user.id;
-      clarification.contestId = contest.id;
-      clarification.content = content;
-      clarification.publishTime = new Date();
-      clarification.replyId = replyId;
+        if (clarification.replyId == null) {
+          clarification.replyId = clarification.id;
+        }
 
-      await transactionalEntityManager.save(clarification);
-
-      if (clarification.replyId == null) {
-        clarification.replyId = clarification.id;
-      }
-
-      await transactionalEntityManager.save(clarification);
-
-    });
+        await transactionalEntityManager.save(clarification);
+      },
+    );
   }
 
-  async getClarifications(contest: ContestEntity, currentUser: UserEntity): Promise<ClarificationMetaDto[]> {
+  async getClarifications(
+    contest: ContestEntity,
+    currentUser: UserEntity,
+  ): Promise<ClarificationMetaDto[]> {
+    const queryBuilder =
+      this.clarificationRepository.createQueryBuilder("clarification");
 
-    const queryBuilder = this.clarificationRepository.createQueryBuilder("clarification");
-
-    queryBuilder.where("clarification.contest = :contestId", {contestId: contest.id});
+    queryBuilder.where("clarification.contest = :contestId", {
+      contestId: contest.id,
+    });
 
     queryBuilder.leftJoinAndSelect("clarification.publisher", "user");
 
     if (!currentUser || currentUser.isAdmin === false) {
       if (currentUser) {
-        queryBuilder.andWhere("user.isAdmin = 1 OR user.id = :id", {id: currentUser.id});
+        queryBuilder.andWhere("user.isAdmin = 1 OR user.id = :id", {
+          id: currentUser.id,
+        });
       } else {
         queryBuilder.andWhere("user.isAdmin = 1");
       }
@@ -613,22 +685,30 @@ export class ContestService {
 
     const result = await queryBuilder.getRawMany();
 
-    return result.map((item) => (
-      <ClarificationMetaDto>{
-        id: item.clarification_id,
-        publishTime: item.clarification_publishTime,
-        content: item.clarification_content,
-        publisherId: item.clarification_publisherId,
-        username: item.user_username,
-        nickname: item.user_nickname,
-        replyId: item.clarification_replyId,
-      }
-    ));
+    return result.map(
+      (item) =>
+        <ClarificationMetaDto>{
+          id: item.clarification_id,
+          publishTime: item.clarification_publishTime,
+          content: item.clarification_content,
+          publisherId: item.clarification_publisherId,
+          username: item.user_username,
+          nickname: item.user_nickname,
+          replyId: item.clarification_replyId,
+        },
+    );
   }
 
-  async isSubmissionFrozen(submission: SubmissionMetaDto, contest: ContestEntity): Promise<boolean> {
+  async isSubmissionFrozen(
+    submission: SubmissionMetaDto,
+    contest: ContestEntity,
+  ): Promise<boolean> {
     if (!(await this.getContestFrozenStatus(contest))) return false;
-    if (submission.submitTime >= contest.frozenStartTime && submission.submitTime <= contest.frozenEndTime) return true;
+    if (
+      submission.submitTime >= contest.frozenStartTime &&
+      submission.submitTime <= contest.frozenEndTime
+    )
+      return true;
   }
 
   async getContestSubmissions(
@@ -640,9 +720,8 @@ export class ContestService {
     minId: number,
     maxId: number,
     publicOnly: boolean,
-    takeCount: number
+    takeCount: number,
   ): Promise<SubmissionMetaDto[]> {
-
     const queryResult = await this.submissionService.querySubmissions(
       problemId,
       submitterId,
@@ -654,17 +733,25 @@ export class ContestService {
       publicOnly,
       takeCount,
     );
-    const submissionMetas: SubmissionMetaDto[] = new Array(queryResult.result.length);
+    const submissionMetas: SubmissionMetaDto[] = new Array(
+      queryResult.result.length,
+    );
     const [problems, submitters] = await Promise.all([
-      this.problemService.findProblemsByExistingIds(queryResult.result.map(submission => submission.problemId)),
-      this.userService.findUsersByExistingIds(queryResult.result.map(submission => submission.submitterId))
+      this.problemService.findProblemsByExistingIds(
+        queryResult.result.map((submission) => submission.problemId),
+      ),
+      this.userService.findUsersByExistingIds(
+        queryResult.result.map((submission) => submission.submitterId),
+      ),
     ]);
 
     const pendingSubmissionIds: number[] = [];
     await Promise.all(
       queryResult.result.map(async (_, i) => {
         const submission = queryResult.result[i];
-        const titleLocale = problems[i].locales.includes(Locale.en_US) ? Locale.en_US : problems[i].locales[0];
+        const titleLocale = problems[i].locales.includes(Locale.en_US)
+          ? Locale.en_US
+          : problems[i].locales[0];
 
         submissionMetas[i] = {
           id: submission.id,
@@ -675,15 +762,21 @@ export class ContestService {
           status: submission.status,
           submitTime: submission.submitTime,
           problem: await this.problemService.getProblemMeta(problems[i]),
-          problemTitle: await this.problemService.getProblemLocalizedTitle(problems[i], titleLocale),
+          problemTitle: await this.problemService.getProblemLocalizedTitle(
+            problems[i],
+            titleLocale,
+          ),
           submitter: await this.userService.getUserMeta(submitters[i], null),
           timeUsed: submission.timeUsed,
-          memoryUsed: submission.memoryUsed
+          memoryUsed: submission.memoryUsed,
         };
 
         // For progress reporting
-        const progress = submission.status === SubmissionStatus.Pending &&
-          (await this.submissionProgressService.getPendingSubmissionProgress(submission.id));
+        const progress =
+          submission.status === SubmissionStatus.Pending &&
+          (await this.submissionProgressService.getPendingSubmissionProgress(
+            submission.id,
+          ));
 
         if (progress) {
           submissionMetas[i].progressType = progress.progressType;
@@ -692,7 +785,7 @@ export class ContestService {
         if (submission.status === SubmissionStatus.Pending) {
           pendingSubmissionIds.push(submission.id);
         }
-      })
+      }),
     );
 
     return submissionMetas;

@@ -5,7 +5,7 @@ import { UserInformationDto } from "./user-information.dto";
 
 export enum GetUserProfileResponseError {
   NO_SUCH_USER = "NO_SUCH_USER",
-  PERMISSION_DENIED = "PERMISSION_DENIED"
+  PERMISSION_DENIED = "PERMISSION_DENIED",
 }
 
 export class GetUserProfileResponseDto {

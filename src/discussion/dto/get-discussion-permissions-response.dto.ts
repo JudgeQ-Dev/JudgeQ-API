@@ -6,14 +6,18 @@ import { UserMetaDto } from "@/user/dto";
 
 export enum GetDiscussionPermissionsResponseError {
   PERMISSION_DENIED = "PERMISSION_DENIED",
-  NO_SUCH_DISCUSSION = "NO_SUCH_DISCUSSION"
+  NO_SUCH_DISCUSSION = "NO_SUCH_DISCUSSION",
 }
 
 class DiscussionUserPermissionDto {
   @ApiProperty()
   user: UserMetaDto;
 
-  @ApiProperty({ enum: Object.values(DiscussionPermissionLevel).filter(x => typeof x === "number") })
+  @ApiProperty({
+    enum: Object.values(DiscussionPermissionLevel).filter(
+      (x) => typeof x === "number",
+    ),
+  })
   permissionLevel: DiscussionPermissionLevel;
 }
 

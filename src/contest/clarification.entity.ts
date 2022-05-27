@@ -1,4 +1,11 @@
-import { Entity, PrimaryGeneratedColumn, Index, Column, ManyToOne, JoinColumn, OneToOne } from "typeorm";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Index,
+  Column,
+  ManyToOne,
+  JoinColumn,
+} from "typeorm";
 
 import { UserEntity } from "@/user/user.entity";
 import { ContestEntity } from "@/contest/contest.entity";
@@ -17,7 +24,7 @@ export class ClarificationEntity {
   publishTime: Date;
 
   @ManyToOne(() => UserEntity, {
-    onDelete: "CASCADE"
+    onDelete: "CASCADE",
   })
   @JoinColumn()
   publisher: Promise<UserEntity>;
@@ -27,7 +34,7 @@ export class ClarificationEntity {
   publisherId: number;
 
   @ManyToOne(() => ContestEntity, {
-    onDelete: "CASCADE"
+    onDelete: "CASCADE",
   })
   @JoinColumn()
   contest: Promise<ContestEntity>;

@@ -7,16 +7,22 @@ import { ConfigService } from "@/config/config.service";
 import { CurrentUser } from "@/common/user.decorator";
 import { UserEntity } from "@/user/user.entity";
 import { UserService } from "@/user/user.service";
-import { UserPrivilegeService, UserPrivilegeType } from "@/user/user-privilege.service";
+import {
+  UserPrivilegeService,
+  UserPrivilegeType,
+} from "@/user/user-privilege.service";
 import { AuditLogObjectType, AuditService } from "@/audit/audit.service";
-import { ProblemPermissionType, ProblemService } from "@/problem/problem.service";
+import {
+  ProblemPermissionType,
+  ProblemService,
+} from "@/problem/problem.service";
 import { isEmoji } from "@/common/validators";
 
 import {
   DiscussionPermissionType,
   DiscussionReactionType,
   DiscussionService,
-  DiscussionPermissionLevel
+  DiscussionPermissionLevel,
 } from "./discussion.service";
 import { DiscussionReplyEntity } from "./discussion-reply.entity";
 
@@ -66,7 +72,7 @@ import {
   GetDiscussionAndRepliesResponseProblemDto,
   GetDiscussionPermissionsRequestDto,
   GetDiscussionPermissionsResponseDto,
-  GetDiscussionPermissionsResponseError
+  GetDiscussionPermissionsResponseError,
 } from "./dto";
 
 @ApiTags("Discussion")
@@ -80,13 +86,18 @@ export class DiscussionController {
     private readonly configService: ConfigService,
     private readonly userService: UserService,
     private readonly userPrivilegeService: UserPrivilegeService,
-    private readonly auditService: AuditService
+    private readonly auditService: AuditService,
   ) {
     this.reactionEmojisBlacklist = [
-      this.configService.config.preference.serverSideOnly.discussionReactionCustomEmojisBlacklist
+      this.configService.config.preference.serverSideOnly
+        .discussionReactionCustomEmojisBlacklist,
     ]
       .flat()
-      .map((value: string) => (value.startsWith("/") && value.endsWith("/") ? new RegExp(value.slice(1, -1)) : value));
+      .map((value: string) =>
+        value.startsWith("/") && value.endsWith("/")
+          ? new RegExp(value.slice(1, -1))
+          : value,
+      );
   }
 
   @Recaptcha()
@@ -94,28 +105,40 @@ export class DiscussionController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: "Create a new discussion.",
-    description: "Recaptcha required."
+    description: "Recaptcha required.",
   })
   async createDiscussion(
     @CurrentUser() currentUser: UserEntity,
-    @Body() request: CreateDiscussionRequestDto
+    @Body() request: CreateDiscussionRequestDto,
   ): Promise<CreateDiscussionResponseDto> {
-    if (!(await this.discussionService.userHasCreateDiscussionPermission(currentUser)))
+    if (
+      !(await this.discussionService.userHasCreateDiscussionPermission(
+        currentUser,
+      ))
+    )
       return {
-        error: CreateDiscussionResponseError.PERMISSION_DENIED
+        error: CreateDiscussionResponseError.PERMISSION_DENIED,
       };
 
-    const problem = request.problemId && (await this.problemService.findProblemById(request.problemId));
+    const problem =
+      request.problemId &&
+      (await this.problemService.findProblemById(request.problemId));
     if (request.problemId) {
       if (!problem)
         return {
-          error: CreateDiscussionResponseError.NO_SUCH_PROBLEM
+          error: CreateDiscussionResponseError.NO_SUCH_PROBLEM,
         };
 
       // Should we add a permission type "publish discussion"?
-      if (!(await this.problemService.userHasPermission(currentUser, problem, ProblemPermissionType.View)))
+      if (
+        !(await this.problemService.userHasPermission(
+          currentUser,
+          problem,
+          ProblemPermissionType.View,
+        ))
+      )
         return {
-          error: CreateDiscussionResponseError.PERMISSION_DENIED
+          error: CreateDiscussionResponseError.PERMISSION_DENIED,
         };
     }
 
@@ -128,7 +151,7 @@ export class DiscussionController {
     );
 
     return {
-      discussionId: discussion.id
+      discussionId: discussion.id,
     };
   }
 
@@ -137,40 +160,54 @@ export class DiscussionController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: "Create a new discussion.",
-    description: "Recaptcha required."
+    description: "Recaptcha required.",
   })
   async createDiscussionReply(
     @CurrentUser() currentUser: UserEntity,
-    @Body() request: CreateDiscussionReplyRequestDto
+    @Body() request: CreateDiscussionReplyRequestDto,
   ): Promise<CreateDiscussionReplyResponseDto> {
-    if (!(await this.discussionService.userHasCreateDiscussionPermission(currentUser))) {
+    if (
+      !(await this.discussionService.userHasCreateDiscussionPermission(
+        currentUser,
+      ))
+    ) {
       return {
         error: CreateDiscussionReplyResponseError.PERMISSION_DENIED,
-      }
+      };
     }
 
-    const discussion = await this.discussionService.findDiscussionById(request.discussionId);
+    const discussion = await this.discussionService.findDiscussionById(
+      request.discussionId,
+    );
 
     if (!discussion)
       return {
-        error: CreateDiscussionReplyResponseError.NO_SUCH_DISCUSSION
+        error: CreateDiscussionReplyResponseError.NO_SUCH_DISCUSSION,
       };
 
     // Should we add a permission type "reply/reaction"?
     if (
       !currentUser ||
-      !(await this.discussionService.userHasPermission(currentUser, discussion, DiscussionPermissionType.View))
+      !(await this.discussionService.userHasPermission(
+        currentUser,
+        discussion,
+        DiscussionPermissionType.View,
+      ))
     )
       return {
-        error: CreateDiscussionReplyResponseError.PERMISSION_DENIED
+        error: CreateDiscussionReplyResponseError.PERMISSION_DENIED,
       };
 
     const hasPrivilege = await this.userPrivilegeService.userHasPrivilege(
       currentUser,
-      UserPrivilegeType.ManageDiscussion
+      UserPrivilegeType.ManageDiscussion,
     );
 
-    const reply = await this.discussionService.addReply(currentUser, discussion, request.content);
+    const reply = await this.discussionService.addReply(
+      currentUser,
+      discussion,
+      request.content,
+    );
 
     return {
       reply: {
@@ -182,65 +219,94 @@ export class DiscussionController {
         publisher: await this.userService.getUserMeta(currentUser, currentUser),
         reactions: {
           count: {},
-          currentUserReactions: []
+          currentUserReactions: [],
         },
-        permissions: await this.discussionService.getUserPermissionsOfReply(currentUser, reply, hasPrivilege)
-      }
+        permissions: await this.discussionService.getUserPermissionsOfReply(
+          currentUser,
+          reply,
+          hasPrivilege,
+        ),
+      },
     };
   }
 
   @Post("toggleReaction")
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "Add or remove a reaction emoji to/from a discussion or reply."
+    summary: "Add or remove a reaction emoji to/from a discussion or reply.",
   })
   async toggleReaction(
     @CurrentUser() currentUser: UserEntity,
-    @Body() request: ToggleReactionRequestDto
+    @Body() request: ToggleReactionRequestDto,
   ): Promise<ToggleReactionResponseDto> {
     const discussionReply =
       request.type === DiscussionReactionType.DiscussionReply &&
       (await this.discussionService.findDiscussionReplyById(request.id));
-    if (request.type === DiscussionReactionType.DiscussionReply && !discussionReply)
+    if (
+      request.type === DiscussionReactionType.DiscussionReply &&
+      !discussionReply
+    )
       return {
-        error: ToggleReactionResponseError.NO_SUCH_DISCUSSION_REPLY
+        error: ToggleReactionResponseError.NO_SUCH_DISCUSSION_REPLY,
       };
 
     const discussion = await this.discussionService.findDiscussionById(
-      request.type === DiscussionReactionType.DiscussionReply ? discussionReply.discussionId : request.id
+      request.type === DiscussionReactionType.DiscussionReply
+        ? discussionReply.discussionId
+        : request.id,
     );
 
     if (!discussion)
       return {
-        error: ToggleReactionResponseError.NO_SUCH_DISCUSSION
+        error: ToggleReactionResponseError.NO_SUCH_DISCUSSION,
       };
 
     // Should we add a permission type "reply/reaction"?
     if (
       !currentUser ||
-      !(await this.discussionService.userHasPermission(currentUser, discussion, DiscussionPermissionType.View))
+      !(await this.discussionService.userHasPermission(
+        currentUser,
+        discussion,
+        DiscussionPermissionType.View,
+      ))
     )
       return {
-        error: ToggleReactionResponseError.PERMISSION_DENIED
+        error: ToggleReactionResponseError.PERMISSION_DENIED,
       };
 
     if (
       !(
-        (this.configService.config.preference.misc.discussionReactionAllowCustomEmojis &&
-          this.reactionEmojisBlacklist.every(value =>
-            value instanceof RegExp ? !value.test(request.emoji) : value !== request.emoji
+        (this.configService.config.preference.misc
+          .discussionReactionAllowCustomEmojis &&
+          this.reactionEmojisBlacklist.every((value) =>
+            value instanceof RegExp
+              ? !value.test(request.emoji)
+              : value !== request.emoji,
           )) ||
-        this.configService.config.preference.misc.discussionReactionEmojis.includes(request.emoji)
+        this.configService.config.preference.misc.discussionReactionEmojis.includes(
+          request.emoji,
+        )
       ) ||
       !isEmoji(request.emoji)
     )
       return {
-        error: ToggleReactionResponseError.INVALID_EMOJI
+        error: ToggleReactionResponseError.INVALID_EMOJI,
       };
 
     if (request.reaction)
-      await this.discussionService.addReaction(request.type, request.id, currentUser, request.emoji);
-    else await this.discussionService.removeReaction(request.type, request.id, currentUser, request.emoji);
+      await this.discussionService.addReaction(
+        request.type,
+        request.id,
+        currentUser,
+        request.emoji,
+      );
+    else
+      await this.discussionService.removeReaction(
+        request.type,
+        request.id,
+        currentUser,
+        request.emoji,
+      );
 
     return {};
   }
@@ -248,35 +314,40 @@ export class DiscussionController {
   @Post("queryDiscussion")
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "Get a list of specfied discussions."
+    summary: "Get a list of specfied discussions.",
   })
   @HttpCode(200)
   async queryDiscussions(
     @CurrentUser() currentUser: UserEntity,
-    @Body() request: QueryDiscussionsRequestDto
+    @Body() request: QueryDiscussionsRequestDto,
   ): Promise<QueryDiscussionsResponseDto> {
     if (request.takeCount > this.configService.config.queryLimit.discussions)
       return {
-        error: QueryDiscussionsResponseError.TAKE_TOO_MANY
+        error: QueryDiscussionsResponseError.TAKE_TOO_MANY,
       };
 
     const hasPrivilege = await this.userPrivilegeService.userHasPrivilege(
       currentUser,
-      UserPrivilegeType.ManageDiscussion
+      UserPrivilegeType.ManageDiscussion,
     );
 
-    const filterProblem = !request.problemId ? null : await this.problemService.findProblemById(request.problemId);
-    const filterPublisher = !request.publisherId ? null : await this.userService.findUserById(request.publisherId);
-    const [discussions, count] = await this.discussionService.queryDiscussionsAndCount(
-      currentUser,
-      hasPrivilege,
-      request.keyword,
-      filterProblem || request.problemId === -1 ? request.problemId : null,
-      filterPublisher ? request.publisherId : null,
-      request.nonpublic,
-      request.skipCount,
-      request.takeCount
-    );
+    const filterProblem = !request.problemId
+      ? null
+      : await this.problemService.findProblemById(request.problemId);
+    const filterPublisher = !request.publisherId
+      ? null
+      : await this.userService.findUserById(request.publisherId);
+    const [discussions, count] =
+      await this.discussionService.queryDiscussionsAndCount(
+        currentUser,
+        hasPrivilege,
+        request.keyword,
+        filterProblem || request.problemId === -1 ? request.problemId : null,
+        filterPublisher ? request.publisherId : null,
+        request.nonpublic,
+        request.skipCount,
+        request.takeCount,
+      );
 
     const problems: Record<number, QueryDiscussionsResponseProblemDto> =
       !request.titleOnly &&
@@ -285,23 +356,30 @@ export class DiscussionController {
           [
             filterProblem,
             ...(await this.problemService.findProblemsByExistingIds(
-              discussions.map(discussion => discussion.problemId).filter(id => id && id !== filterProblem?.id)
-            ))
+              discussions
+                .map((discussion) => discussion.problemId)
+                .filter((id) => id && id !== filterProblem?.id),
+            )),
           ]
-            .filter(problem => problem)
-            .map(async problem => {
-              const titleLocale = problem.locales.includes(request.locale) ? request.locale : problem.locales[0];
-              const title = await this.problemService.getProblemLocalizedTitle(problem, titleLocale);
+            .filter((problem) => problem)
+            .map(async (problem) => {
+              const titleLocale = problem.locales.includes(request.locale)
+                ? request.locale
+                : problem.locales[0];
+              const title = await this.problemService.getProblemLocalizedTitle(
+                problem,
+                titleLocale,
+              );
               return [
                 problem.id,
                 <QueryDiscussionsResponseProblemDto>{
                   meta: problem,
                   title,
-                  titleLocale
-                }
+                  titleLocale,
+                },
               ];
-            })
-        )
+            }),
+        ),
       );
 
     const publishers: Record<number, UserMetaDto> =
@@ -311,120 +389,146 @@ export class DiscussionController {
           [
             filterPublisher,
             ...(await this.userService.findUsersByExistingIds(
-              discussions.map(discussion => discussion.publisherId).filter(id => id && id !== filterPublisher?.id)
-            ))
+              discussions
+                .map((discussion) => discussion.publisherId)
+                .filter((id) => id && id !== filterPublisher?.id),
+            )),
           ]
-            .filter(user => user)
-            .map(async user => [user.id, await this.userService.getUserMeta(user, currentUser)])
-        )
+            .filter((user) => user)
+            .map(async (user) => [
+              user.id,
+              await this.userService.getUserMeta(user, currentUser),
+            ]),
+        ),
       );
 
     return {
       discussions: await Promise.all(
-        discussions.map(async discussion => ({
+        discussions.map(async (discussion) => ({
           meta: discussion,
           problem: !request.titleOnly && problems[discussion.problemId],
-          publisher: publishers[discussion.publisherId]
-        }))
+          publisher: publishers[discussion.publisherId],
+        })),
       ),
       permissions: !request.titleOnly && {
-        createDiscussion: await this.discussionService.userHasCreateDiscussionPermission(currentUser),
-        filterNonpublic: hasPrivilege
+        createDiscussion:
+          await this.discussionService.userHasCreateDiscussionPermission(
+            currentUser,
+          ),
+        filterNonpublic: hasPrivilege,
       },
       count,
       filterPublisher:
-        !request.titleOnly && filterPublisher && (await this.userService.getUserMeta(filterPublisher, currentUser)),
-      filterProblem: !request.titleOnly && problems[filterProblem?.id]
+        !request.titleOnly &&
+        filterPublisher &&
+        (await this.userService.getUserMeta(filterPublisher, currentUser)),
+      filterProblem: !request.titleOnly && problems[filterProblem?.id],
     };
   }
 
   @Post("getDiscussionPermissions")
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "Get which users and groups which permissions of the discussion."
+    summary: "Get which users and groups which permissions of the discussion.",
   })
   @HttpCode(200)
   async getDiscussionPermissions(
     @CurrentUser() currentUser: UserEntity,
-    @Body() request: GetDiscussionPermissionsRequestDto
+    @Body() request: GetDiscussionPermissionsRequestDto,
   ): Promise<GetDiscussionPermissionsResponseDto> {
-    const discussion = await this.discussionService.findDiscussionById(request.id);
+    const discussion = await this.discussionService.findDiscussionById(
+      request.id,
+    );
     if (!discussion)
       return {
-        error: GetDiscussionPermissionsResponseError.NO_SUCH_DISCUSSION
+        error: GetDiscussionPermissionsResponseError.NO_SUCH_DISCUSSION,
       };
 
-    if (!(await this.discussionService.userHasPermission(currentUser, discussion, DiscussionPermissionType.View)))
+    if (
+      !(await this.discussionService.userHasPermission(
+        currentUser,
+        discussion,
+        DiscussionPermissionType.View,
+      ))
+    )
       return {
-        error: GetDiscussionPermissionsResponseError.PERMISSION_DENIED
+        error: GetDiscussionPermissionsResponseError.PERMISSION_DENIED,
       };
 
-    const userPermissions = await this.discussionService.getDiscussionPermissions(discussion);
+    const userPermissions =
+      await this.discussionService.getDiscussionPermissions(discussion);
 
     return {
       permissions: {
         userPermissions: await Promise.all(
           userPermissions.map(async ([user, permissionLevel]) => ({
             user: await this.userService.getUserMeta(user, currentUser),
-            permissionLevel
-          }))
+            permissionLevel,
+          })),
         ),
       },
-      haveManagePermissionsPermission: await this.discussionService.userHasPermission(
-        currentUser,
-        discussion,
-        DiscussionPermissionType.ManagePermission
-      )
+      haveManagePermissionsPermission:
+        await this.discussionService.userHasPermission(
+          currentUser,
+          discussion,
+          DiscussionPermissionType.ManagePermission,
+        ),
     };
   }
 
   @Post("getDiscussionAndReplies")
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "Get a discussion or/and some of its replies."
+    summary: "Get a discussion or/and some of its replies.",
   })
   @HttpCode(200)
   async getDiscussionAndReplies(
     @CurrentUser() currentUser: UserEntity,
-    @Body() request: GetDiscussionAndRepliesRequestDto
+    @Body() request: GetDiscussionAndRepliesRequestDto,
   ): Promise<GetDiscussionAndRepliesResponseDto> {
     const headTakeCount = request.headTakeCount || 0;
     const tailTakeCount = request.tailTakeCount || 0;
     const idRangeTakeCount = request.idRangeTakeCount || 0;
 
     const realTakeCount =
-      request.queryRepliesType === GetDiscussionAndRepliesRequestQueryRepliesType.HeadTail
+      request.queryRepliesType ===
+      GetDiscussionAndRepliesRequestQueryRepliesType.HeadTail
         ? headTakeCount + tailTakeCount
-        : request.queryRepliesType === GetDiscussionAndRepliesRequestQueryRepliesType.IdRange
+        : request.queryRepliesType ===
+          GetDiscussionAndRepliesRequestQueryRepliesType.IdRange
         ? idRangeTakeCount
         : 0;
     if (realTakeCount > this.configService.config.queryLimit.discussionReplies)
       return {
-        error: GetDiscussionAndRepliesResponseError.TAKE_TOO_MANY
+        error: GetDiscussionAndRepliesResponseError.TAKE_TOO_MANY,
       };
 
-    const discussion = await this.discussionService.findDiscussionById(request.discussionId);
+    const discussion = await this.discussionService.findDiscussionById(
+      request.discussionId,
+    );
     if (!discussion)
       return {
-        error: GetDiscussionAndRepliesResponseError.NO_SUCH_DISCUSSION
+        error: GetDiscussionAndRepliesResponseError.NO_SUCH_DISCUSSION,
       };
 
-    const discussionProblem = discussion.problemId && (await this.problemService.findProblemById(discussion.problemId));
+    const discussionProblem =
+      discussion.problemId &&
+      (await this.problemService.findProblemById(discussion.problemId));
     if (
       !(await this.discussionService.userHasPermission(
         currentUser,
         discussion,
         DiscussionPermissionType.View,
-        discussionProblem
+        discussionProblem,
       ))
     )
       return {
-        error: GetDiscussionAndRepliesResponseError.PERMISSION_DENIED
+        error: GetDiscussionAndRepliesResponseError.PERMISSION_DENIED,
       };
 
     const hasPrivilege = await this.userPrivilegeService.userHasPrivilege(
       currentUser,
-      UserPrivilegeType.ManageDiscussion
+      UserPrivilegeType.ManageDiscussion,
     );
 
     const result: GetDiscussionAndRepliesResponseDto = {};
@@ -433,31 +537,45 @@ export class DiscussionController {
     await Promise.all([
       // Query replies
       (async () => {
-        const getRepliesInfo = async (replyEntities: DiscussionReplyEntity[]) => {
+        const getRepliesInfo = async (
+          replyEntities: DiscussionReplyEntity[],
+        ) => {
           // For parallel
           const [publishers, reactions, permissions] = await Promise.all([
             // publishers
             (async () =>
               Object.fromEntries(
                 await Promise.all(
-                  (await this.userService.findUsersByExistingIds(replyEntities.map(reply => reply.publisherId))).map(
-                    async user =>
-                      [user.id, await this.userService.getUserMeta(user, currentUser)] as [number, UserMetaDto]
-                  )
-                )
+                  (
+                    await this.userService.findUsersByExistingIds(
+                      replyEntities.map((reply) => reply.publisherId),
+                    )
+                  ).map(
+                    async (user) =>
+                      [
+                        user.id,
+                        await this.userService.getUserMeta(user, currentUser),
+                      ] as [number, UserMetaDto],
+                  ),
+                ),
               ))(),
             // reactions
             this.discussionService.getReactions(
               DiscussionReactionType.DiscussionReply,
-              replyEntities.map(reply => reply.id),
-              currentUser
+              replyEntities.map((reply) => reply.id),
+              currentUser,
             ),
             // permissions
             Promise.all(
               replyEntities.map(
-                async reply => await this.discussionService.getUserPermissionsOfReply(currentUser, reply, hasPrivilege)
-              )
-            )
+                async (reply) =>
+                  await this.discussionService.getUserPermissionsOfReply(
+                    currentUser,
+                    reply,
+                    hasPrivilege,
+                  ),
+              ),
+            ),
           ]);
 
           return replyEntities.map((reply, i) => {
@@ -471,35 +589,43 @@ export class DiscussionController {
               publisher: publishers[reply.publisherId],
               reactions: {
                 count: reactionsCount,
-                currentUserReactions
+                currentUserReactions,
               },
-              permissions: permissions[i]
+              permissions: permissions[i],
             };
           });
         };
 
-        if (request.queryRepliesType === GetDiscussionAndRepliesRequestQueryRepliesType.HeadTail) {
-          const [head, tail, count] = await this.discussionService.queryDiscussionRepliesByHeadTail(
-            currentUser,
-            discussion,
-            hasPrivilege,
-            headTakeCount,
-            tailTakeCount
-          );
+        if (
+          request.queryRepliesType ===
+          GetDiscussionAndRepliesRequestQueryRepliesType.HeadTail
+        ) {
+          const [head, tail, count] =
+            await this.discussionService.queryDiscussionRepliesByHeadTail(
+              currentUser,
+              discussion,
+              hasPrivilege,
+              headTakeCount,
+              tailTakeCount,
+            );
           const headCount = head.length;
           const replies = await getRepliesInfo([...head, ...tail]);
           result.repliesHead = replies.slice(0, headCount);
           result.repliesTail = replies.slice(headCount);
           result.repliesTotalCount = count;
-        } else if (request.queryRepliesType === GetDiscussionAndRepliesRequestQueryRepliesType.IdRange) {
-          const [replyEntities, count] = await this.discussionService.queryDiscussionRepliesInIdRange(
-            currentUser,
-            discussion,
-            hasPrivilege,
-            request.beforeId || 0,
-            request.afterId || 0,
-            idRangeTakeCount
-          );
+        } else if (
+          request.queryRepliesType ===
+          GetDiscussionAndRepliesRequestQueryRepliesType.IdRange
+        ) {
+          const [replyEntities, count] =
+            await this.discussionService.queryDiscussionRepliesInIdRange(
+              currentUser,
+              discussion,
+              hasPrivilege,
+              request.beforeId || 0,
+              request.afterId || 0,
+              idRangeTakeCount,
+            );
           result.repliesInRange = await getRepliesInfo(replyEntities);
           result.repliesCountInRange = count;
         }
@@ -507,46 +633,67 @@ export class DiscussionController {
       // Query discussion
       (async () => {
         if (request.getDiscussion) {
-          result.permissionCreateNewDiscussion = await this.discussionService.userHasCreateDiscussionPermission(
-            currentUser,
-            hasPrivilege
-          );
+          result.permissionCreateNewDiscussion =
+            await this.discussionService.userHasCreateDiscussionPermission(
+              currentUser,
+              hasPrivilege,
+            );
 
           // For parallel
-          const [meta, content, problem, publisher, reactions, permissions] = await Promise.all([
-            // meta
-            this.discussionService.getDiscussionMeta(discussion),
-            // content
-            this.discussionService.getDiscussionContent(discussion),
-            // problem
-            discussionProblem &&
-              (async () => {
-                const titleLocale = discussionProblem.locales.includes(request.locale)
-                  ? request.locale
-                  : discussionProblem.locales[0];
-                const title = await this.problemService.getProblemLocalizedTitle(discussionProblem, titleLocale);
+          const [meta, content, problem, publisher, reactions, permissions] =
+            await Promise.all([
+              // meta
+              this.discussionService.getDiscussionMeta(discussion),
+              // content
+              this.discussionService.getDiscussionContent(discussion),
+              // problem
+              discussionProblem &&
+                (async () => {
+                  const titleLocale = discussionProblem.locales.includes(
+                    request.locale,
+                  )
+                    ? request.locale
+                    : discussionProblem.locales[0];
+                  const title =
+                    await this.problemService.getProblemLocalizedTitle(
+                      discussionProblem,
+                      titleLocale,
+                    );
 
-                return <GetDiscussionAndRepliesResponseProblemDto>{
-                  meta: await this.problemService.getProblemMeta(discussionProblem),
-                  title,
-                  titleLocale
-                };
-              })(),
-            // publisher
-            this.userService
-              .findUserById(discussion.publisherId)
-              .then(user => this.userService.getUserMeta(user, currentUser)),
-            // reactions
-            this.discussionService.getReactions(DiscussionReactionType.Discussion, discussion.id, currentUser).then(
-              ([reactionsCount, currentUserReactions]) =>
-                <DiscussionOrReplyReactionsDto>{
-                  count: reactionsCount,
-                  currentUserReactions
-                }
-            ),
-            // permissions
-            this.discussionService.getUserPermissionsOfDiscussion(currentUser, discussion)
-          ]);
+                  return <GetDiscussionAndRepliesResponseProblemDto>{
+                    meta: await this.problemService.getProblemMeta(
+                      discussionProblem,
+                    ),
+                    title,
+                    titleLocale,
+                  };
+                })(),
+              // publisher
+              this.userService
+                .findUserById(discussion.publisherId)
+                .then((user) =>
+                  this.userService.getUserMeta(user, currentUser),
+                ),
+              // reactions
+              this.discussionService
+                .getReactions(
+                  DiscussionReactionType.Discussion,
+                  discussion.id,
+                  currentUser,
+                )
+                .then(
+                  ([reactionsCount, currentUserReactions]) =>
+                    <DiscussionOrReplyReactionsDto>{
+                      count: reactionsCount,
+                      currentUserReactions,
+                    },
+                ),
+              // permissions
+              this.discussionService.getUserPermissionsOfDiscussion(
+                currentUser,
+                discussion,
+              ),
+            ]);
 
           result.discussion = {
             meta,
@@ -554,10 +701,10 @@ export class DiscussionController {
             problem,
             publisher,
             reactions,
-            permissions
+            permissions,
           };
         }
-      })()
+      })(),
     ]);
 
     return result;
@@ -566,37 +713,54 @@ export class DiscussionController {
   @Post("updateDiscussion")
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "Update the title and content of a existing discussion."
+    summary: "Update the title and content of a existing discussion.",
   })
   async updateDiscussion(
     @CurrentUser() currentUser: UserEntity,
-    @Body() request: UpdateDiscussionRequestDto
+    @Body() request: UpdateDiscussionRequestDto,
   ): Promise<UpdateDiscussionResponseDto> {
-    const discussion = await this.discussionService.findDiscussionById(request.discussionId);
+    const discussion = await this.discussionService.findDiscussionById(
+      request.discussionId,
+    );
     if (!discussion)
       return {
-        error: UpdateDiscussionResponseError.NO_SUCH_DISCUSSION
+        error: UpdateDiscussionResponseError.NO_SUCH_DISCUSSION,
       };
 
-    if (!(await this.discussionService.userHasPermission(currentUser, discussion, DiscussionPermissionType.Modify)))
+    if (
+      !(await this.discussionService.userHasPermission(
+        currentUser,
+        discussion,
+        DiscussionPermissionType.Modify,
+      ))
+    )
       return {
-        error: UpdateDiscussionResponseError.PERMISSION_DENIED
+        error: UpdateDiscussionResponseError.PERMISSION_DENIED,
       };
 
     const old = {
       title: discussion.title,
-      content: await this.discussionService.getDiscussionContent(discussion)
+      content: await this.discussionService.getDiscussionContent(discussion),
     };
 
-    await this.discussionService.updateDiscussionTitleAndContent(discussion, request.title, request.content);
+    await this.discussionService.updateDiscussionTitleAndContent(
+      discussion,
+      request.title,
+      request.content,
+    );
 
-    await this.auditService.log("discussion.update", AuditLogObjectType.Discussion, discussion.id, {
-      old,
-      new: {
-        title: request.title,
-        content: request.content
-      }
-    });
+    await this.auditService.log(
+      "discussion.update",
+      AuditLogObjectType.Discussion,
+      discussion.id,
+      {
+        old,
+        new: {
+          title: request.title,
+          content: request.content,
+        },
+      },
+    );
 
     return {};
   }
@@ -604,26 +768,37 @@ export class DiscussionController {
   @Post("updateDiscussionReply")
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "Update the content of a existing discussion reply."
+    summary: "Update the content of a existing discussion reply.",
   })
   async updateDiscussionReply(
     @CurrentUser() currentUser: UserEntity,
-    @Body() request: UpdateDiscussionReplyRequestDto
+    @Body() request: UpdateDiscussionReplyRequestDto,
   ): Promise<UpdateDiscussionReplyResponseDto> {
-    const discussionReply = await this.discussionService.findDiscussionReplyById(request.discussionReplyId);
+    const discussionReply =
+      await this.discussionService.findDiscussionReplyById(
+        request.discussionReplyId,
+      );
     if (!discussionReply)
       return {
-        error: UpdateDiscussionReplyResponseError.NO_SUCH_DISCUSSION_REPLY
+        error: UpdateDiscussionReplyResponseError.NO_SUCH_DISCUSSION_REPLY,
       };
 
-    if (!(await this.discussionService.userHasModifyDiscussionReplyPermission(currentUser, discussionReply)))
+    if (
+      !(await this.discussionService.userHasModifyDiscussionReplyPermission(
+        currentUser,
+        discussionReply,
+      ))
+    )
       return {
-        error: UpdateDiscussionReplyResponseError.PERMISSION_DENIED
+        error: UpdateDiscussionReplyResponseError.PERMISSION_DENIED,
       };
 
     const oldContent = discussionReply.content;
 
-    await this.discussionService.updateReplyContent(discussionReply, request.content);
+    await this.discussionService.updateReplyContent(
+      discussionReply,
+      request.content,
+    );
 
     await this.auditService.log(
       "discussion.update_reply",
@@ -633,33 +808,41 @@ export class DiscussionController {
       discussionReply.id,
       {
         oldContent,
-        newContent: request.content
-      }
+        newContent: request.content,
+      },
     );
 
     return {
-      editTime: discussionReply.editTime
+      editTime: discussionReply.editTime,
     };
   }
 
   @Post("deleteDiscussion")
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "Delete a discussion and all its replies."
+    summary: "Delete a discussion and all its replies.",
   })
   async deleteDiscussion(
     @CurrentUser() currentUser: UserEntity,
-    @Body() request: DeleteDiscussionRequestDto
+    @Body() request: DeleteDiscussionRequestDto,
   ): Promise<DeleteDiscussionResponseDto> {
-    const discussion = await this.discussionService.findDiscussionById(request.discussionId);
+    const discussion = await this.discussionService.findDiscussionById(
+      request.discussionId,
+    );
     if (!discussion)
       return {
-        error: DeleteDiscussionResponseError.NO_SUCH_DISCUSSION
+        error: DeleteDiscussionResponseError.NO_SUCH_DISCUSSION,
       };
 
-    if (!(await this.discussionService.userHasPermission(currentUser, discussion, DiscussionPermissionType.Delete)))
+    if (
+      !(await this.discussionService.userHasPermission(
+        currentUser,
+        discussion,
+        DiscussionPermissionType.Delete,
+      ))
+    )
       return {
-        error: DeleteDiscussionResponseError.PERMISSION_DENIED
+        error: DeleteDiscussionResponseError.PERMISSION_DENIED,
       };
 
     // Lock the discussion after permission check to avoid DDoS attacks.
@@ -667,49 +850,64 @@ export class DiscussionController {
       request.discussionId,
       "Write",
       // eslint-disable-next-line @typescript-eslint/no-shadow
-      async discussion => {
+      async (discussion) => {
         if (!discussion)
           return {
-            error: DeleteDiscussionResponseError.NO_SUCH_DISCUSSION
+            error: DeleteDiscussionResponseError.NO_SUCH_DISCUSSION,
           };
 
-        const content = await this.discussionService.getDiscussionContent(discussion);
+        const content = await this.discussionService.getDiscussionContent(
+          discussion,
+        );
 
         await this.discussionService.deleteDiscussion(discussion);
 
-        await this.auditService.log("discussion.delete", AuditLogObjectType.Discussion, discussion.id, {
-          title: discussion.title,
-          content,
-          publishTime: discussion.publishTime,
-          replyCount: discussion.replyCount,
-          isPublic: discussion.isPublic,
-          publisherId: discussion.publisherId,
-          problemId: discussion.problemId
-        });
+        await this.auditService.log(
+          "discussion.delete",
+          AuditLogObjectType.Discussion,
+          discussion.id,
+          {
+            title: discussion.title,
+            content,
+            publishTime: discussion.publishTime,
+            replyCount: discussion.replyCount,
+            isPublic: discussion.isPublic,
+            publisherId: discussion.publisherId,
+            problemId: discussion.problemId,
+          },
+        );
 
         return {};
-      }
+      },
     );
   }
 
   @Post("deleteDiscussionReply")
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "Delete a discussion reply."
+    summary: "Delete a discussion reply.",
   })
   async deleteDiscussionReply(
     @CurrentUser() currentUser: UserEntity,
-    @Body() request: DeleteDiscussionReplyRequestDto
+    @Body() request: DeleteDiscussionReplyRequestDto,
   ): Promise<DeleteDiscussionReplyResponseDto> {
-    const discussionReply = await this.discussionService.findDiscussionReplyById(request.discussionReplyId);
+    const discussionReply =
+      await this.discussionService.findDiscussionReplyById(
+        request.discussionReplyId,
+      );
     if (!discussionReply)
       return {
-        error: DeleteDiscussionReplyResponseError.NO_SUCH_DISCUSSION_REPLY
+        error: DeleteDiscussionReplyResponseError.NO_SUCH_DISCUSSION_REPLY,
       };
 
-    if (!(await this.discussionService.userHasModifyDiscussionReplyPermission(currentUser, discussionReply)))
+    if (
+      !(await this.discussionService.userHasModifyDiscussionReplyPermission(
+        currentUser,
+        discussionReply,
+      ))
+    )
       return {
-        error: DeleteDiscussionReplyResponseError.PERMISSION_DENIED
+        error: DeleteDiscussionReplyResponseError.PERMISSION_DENIED,
       };
 
     const oldContent = discussionReply.content;
@@ -723,8 +921,8 @@ export class DiscussionController {
       AuditLogObjectType.DiscussionReply,
       discussionReply.id,
       {
-        content: oldContent
-      }
+        content: oldContent,
+      },
     );
 
     return {};
@@ -733,35 +931,40 @@ export class DiscussionController {
   @Post("setDiscussionPublic")
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "Set if a discussion is public."
+    summary: "Set if a discussion is public.",
   })
   async setDiscussionPublic(
     @CurrentUser() currentUser: UserEntity,
-    @Body() request: SetDiscussionPublicRequestDto
+    @Body() request: SetDiscussionPublicRequestDto,
   ): Promise<SetDiscussionPublicResponseDto> {
-    const discussion = await this.discussionService.findDiscussionById(request.discussionId);
+    const discussion = await this.discussionService.findDiscussionById(
+      request.discussionId,
+    );
     if (!discussion)
       return {
-        error: SetDiscussionPublicResponseError.NO_SUCH_DISCUSSION
+        error: SetDiscussionPublicResponseError.NO_SUCH_DISCUSSION,
       };
 
     if (
       !(await this.discussionService.userHasPermission(
         currentUser,
         discussion,
-        DiscussionPermissionType.ManagePublicness
+        DiscussionPermissionType.ManagePublicness,
       ))
     )
       return {
-        error: SetDiscussionPublicResponseError.PERMISSION_DENIED
+        error: SetDiscussionPublicResponseError.PERMISSION_DENIED,
       };
 
-    await this.discussionService.setDiscussionPublic(discussion, request.isPublic);
+    await this.discussionService.setDiscussionPublic(
+      discussion,
+      request.isPublic,
+    );
 
     await this.auditService.log(
       request.isPublic ? "discussion.set_public" : "discussion.set_non_public",
       AuditLogObjectType.Discussion,
-      discussion.id
+      discussion.id,
     );
 
     return {};
@@ -770,37 +973,45 @@ export class DiscussionController {
   @Post("setDiscussionReplyPublic")
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "Set if a discussion reply is public."
+    summary: "Set if a discussion reply is public.",
   })
   async setDiscussionReplyPublic(
     @CurrentUser() currentUser: UserEntity,
-    @Body() request: SetDiscussionReplyPublicRequestDto
+    @Body() request: SetDiscussionReplyPublicRequestDto,
   ): Promise<SetDiscussionReplyPublicResponseDto> {
-    const discussionReply = await this.discussionService.findDiscussionReplyById(request.discussionReplyId);
+    const discussionReply =
+      await this.discussionService.findDiscussionReplyById(
+        request.discussionReplyId,
+      );
     if (!discussionReply)
       return {
-        error: SetDiscussionReplyPublicResponseError.NO_SUCH_DISCUSSION_REPLY
+        error: SetDiscussionReplyPublicResponseError.NO_SUCH_DISCUSSION_REPLY,
       };
 
     if (
       !(await this.discussionService.userHasPermission(
         currentUser,
         await this.discussionService.findDiscussionById(discussionReply.id),
-        DiscussionPermissionType.ManagePublicness
+        DiscussionPermissionType.ManagePublicness,
       ))
     )
       return {
-        error: SetDiscussionReplyPublicResponseError.PERMISSION_DENIED
+        error: SetDiscussionReplyPublicResponseError.PERMISSION_DENIED,
       };
 
-    await this.discussionService.setReplyPublic(discussionReply, request.isPublic);
+    await this.discussionService.setReplyPublic(
+      discussionReply,
+      request.isPublic,
+    );
 
     await this.auditService.log(
-      request.isPublic ? "discussion.set_reply_public" : "discussion.set_reply_non_public",
+      request.isPublic
+        ? "discussion.set_reply_public"
+        : "discussion.set_reply_non_public",
       AuditLogObjectType.Discussion,
       discussionReply.discussionId,
       AuditLogObjectType.DiscussionReply,
-      discussionReply.id
+      discussionReply.id,
     );
 
     return {};
@@ -809,40 +1020,42 @@ export class DiscussionController {
   @Post("setDiscussionPermissions")
   @ApiBearerAuth()
   @ApiOperation({
-    summary: "Set who have permission to read / write this discussion."
+    summary: "Set who have permission to read / write this discussion.",
   })
   async setDiscussionPermissions(
     @CurrentUser() currentUser: UserEntity,
-    @Body() request: SetDiscussionPermissionsRequestDto
+    @Body() request: SetDiscussionPermissionsRequestDto,
   ): Promise<SetDiscussionPermissionsResponseDto> {
     if (!currentUser)
       return {
-        error: SetDiscussionPermissionsResponseError.PERMISSION_DENIED
+        error: SetDiscussionPermissionsResponseError.PERMISSION_DENIED,
       };
 
     return await this.discussionService.lockDiscussionById<SetDiscussionPermissionsResponseDto>(
       request.discussionId,
       "Read",
-      async discussion => {
+      async (discussion) => {
         if (!discussion)
           return {
             error: SetDiscussionPermissionsResponseError.NO_SUCH_DISCUSSION,
-            errorObjectId: request.discussionId
+            errorObjectId: request.discussionId,
           };
 
         if (
           !(await this.discussionService.userHasPermission(
             currentUser,
             discussion,
-            DiscussionPermissionType.ManagePermission
+            DiscussionPermissionType.ManagePermission,
           ))
         )
           return {
-            error: SetDiscussionPermissionsResponseError.PERMISSION_DENIED
+            error: SetDiscussionPermissionsResponseError.PERMISSION_DENIED,
           };
 
         const users = await this.userService.findUsersByExistingIds(
-          request.userPermissions.map(userPermission => userPermission.userId)
+          request.userPermissions.map(
+            (userPermission) => userPermission.userId,
+          ),
         );
         const userPermissions: [UserEntity, DiscussionPermissionLevel][] = [];
         for (const i of request.userPermissions.keys()) {
@@ -850,30 +1063,43 @@ export class DiscussionController {
           if (!users[i])
             return {
               error: SetDiscussionPermissionsResponseError.NO_SUCH_USER,
-              errorObjectId: userId
+              errorObjectId: userId,
             };
 
           userPermissions.push([users[i], permissionLevel]);
         }
 
-        const oldPermissions = await this.discussionService.getDiscussionPermissionsWithId(discussion);
+        const oldPermissions =
+          await this.discussionService.getDiscussionPermissionsWithId(
+            discussion,
+          );
 
-        await this.discussionService.setDiscussionPermissions(discussion, userPermissions);
+        await this.discussionService.setDiscussionPermissions(
+          discussion,
+          userPermissions,
+        );
 
-        await this.auditService.log("discussion.set_permissions", AuditLogObjectType.Discussion, discussion.id, {
-          oldPermissions: {
-            userPermissions: oldPermissions.map(([userId, permissionLevel]) => ({
-              userId,
-              permissionLevel
-            }))
+        await this.auditService.log(
+          "discussion.set_permissions",
+          AuditLogObjectType.Discussion,
+          discussion.id,
+          {
+            oldPermissions: {
+              userPermissions: oldPermissions.map(
+                ([userId, permissionLevel]) => ({
+                  userId,
+                  permissionLevel,
+                }),
+              ),
+            },
+            newPermissions: {
+              userPermissions: request.userPermissions,
+            },
           },
-          newPermissions: {
-            userPermissions: request.userPermissions
-          }
-        });
+        );
 
         return {};
-      }
+      },
     );
   }
 }

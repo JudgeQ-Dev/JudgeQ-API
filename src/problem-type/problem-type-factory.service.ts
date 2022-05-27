@@ -15,24 +15,32 @@ import { ProblemTypeSubmitAnswerService } from "./types/submit-answer/problem-ty
 export class ProblemTypeFactoryService {
   private readonly typeServices: Record<
     ProblemType,
-    ProblemTypeServiceInterface<ProblemJudgeInfo, SubmissionContent, SubmissionTestcaseResult>
+    ProblemTypeServiceInterface<
+      ProblemJudgeInfo,
+      SubmissionContent,
+      SubmissionTestcaseResult
+    >
   >;
 
   constructor(
     private readonly problemTypeTraditionalService: ProblemTypeTraditionalService,
     private readonly problemTypeInteractionService: ProblemTypeInteractionService,
-    private readonly problemTypeSubmitAnswerService: ProblemTypeSubmitAnswerService
+    private readonly problemTypeSubmitAnswerService: ProblemTypeSubmitAnswerService,
   ) {
     this.typeServices = {
       [ProblemType.Traditional]: this.problemTypeTraditionalService,
       [ProblemType.Interaction]: this.problemTypeInteractionService,
-      [ProblemType.SubmitAnswer]: this.problemTypeSubmitAnswerService
+      [ProblemType.SubmitAnswer]: this.problemTypeSubmitAnswerService,
     };
   }
 
   type(
-    problemType: ProblemType
-  ): ProblemTypeServiceInterface<ProblemJudgeInfo, SubmissionContent, SubmissionTestcaseResult> {
+    problemType: ProblemType,
+  ): ProblemTypeServiceInterface<
+    ProblemJudgeInfo,
+    SubmissionContent,
+    SubmissionTestcaseResult
+  > {
     return this.typeServices[problemType];
   }
 }

@@ -7,7 +7,7 @@ import { SubmissionProgress } from "../submission-progress.interface";
 
 export enum GetSubmissionDetailResponseError {
   NO_SUCH_SUBMISSION = "NO_SUCH_SUBMISSION",
-  PERMISSION_DENIED = "PERMISSION_DENIED"
+  PERMISSION_DENIED = "PERMISSION_DENIED",
 }
 
 export class GetSubmissionDetailResponseDto {
