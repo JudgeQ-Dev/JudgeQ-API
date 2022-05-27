@@ -1,8 +1,9 @@
 # JudgeQ API
 
-[![Build Status](https://img.shields.io/github/workflow/status/JudgeQ-Dev/JudgeQ-API/Build?style=flat-square)](https://github.com/JudgeQ-Dev/JudgeQ-API/actions?query=workflow%3ACI)
+[![Build](https://github.com/judgeq-dev/server/actions/workflows/build.yml/badge.svg)](https://github.com/judgeq-dev/server/actions/workflows/build.yml)
+[![Lint](https://github.com/judgeq-dev/server/actions/workflows/lint.yml/badge.svg)](https://github.com/judgeq-dev/server/actions/workflows/lint.yml)
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
-[![License](https://img.shields.io/github/license/JudgeQ-Dev/JudgeQ-API?style=flat-square)](LICENSE)
+[![License](https://img.shields.io/github/license/JudgeQ-Dev/server?style=flat-square)](LICENSE)
 
 # Deploying
 
@@ -60,7 +61,7 @@ $ JUDGEQ_LOG_SQL=1 JUDGEQ_CONFIG_FILE=./config.yaml yarn start
 Add `:debug` to enable Hot Module Replacement.
 
 ```bash
-$ JUDGEQ_LOG_SQL=1 JUDGEQ_CONFIG_FILE=./config.yaml yarn start:debug 
+$ JUDGEQ_LOG_SQL=1 JUDGEQ_CONFIG_FILE=./config.yaml yarn start:debug
 ```
 
 ## Migration DB
