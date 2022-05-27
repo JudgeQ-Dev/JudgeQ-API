@@ -67,13 +67,13 @@ $ JUDGEQ_LOG_SQL=1 JUDGEQ_CONFIG_FILE=./config.yaml yarn start:debug
 ## Migration DB
 
 ```bash
-yarn typeorm migration:generate -n ${name}
+pnpm typeorm migration:generate -n ${name}
 
 # up
-yarn typeorm migration:run
+pnpm typeorm migration:run
 
 # down
-yarn typeorm migration:revert
+pnpm typeorm migration:revert
 ```
 
 ## Use Docker
