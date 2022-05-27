@@ -5,18 +5,19 @@
   "files.trimTrailingWhitespace": true,
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,
-  "cSpell.words": ["judgeq", "minio", "nestjs", "ormconfig", "pnpm", "typeorm"],
+  "cSpell.words": [
+    "judgeq",
+    "minio",
+    "nestjs",
+    "ormconfig",
+    "pnpm",
+    "typeorm"
+  ],
   "typescript.tsdk": "node_modules/typescript/lib",
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   },
   "[javascript]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[json]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
-  },
-  "[jsonc]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
   }
 }
