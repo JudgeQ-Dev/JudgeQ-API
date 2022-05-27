@@ -9,22 +9,23 @@
     "node": ">=16.11.0"
   },
   "scripts": {
+    "postinstall": "patch-package",
+    "dev": "cross-env JUDGEQ_LOG_SQL=1 JUDGEQ_CONFIG_FILE=./config.yaml nest start --debug --watch",
+    "start": "node dist/main",
     "prebuild": "rimraf dist",
     "build": "nest build",
-    "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
-    "check-style": "prettier --check \"src/**/*.ts\" \"test/**/*.ts\"",
-    "start": "nest start",
-    "start:dev": "cross-env JUDGEQ_LOG_SQL=1 JUDGEQ_CONFIG_FILE=./config.yaml nest start --watch",
-    "start:debug": "cross-env JUDGEQ_LOG_SQL=1 JUDGEQ_CONFIG_FILE=./config.yaml nest start --debug --watch",
-    "start:prod": "node dist/main",
-    "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
+    "lint": "run-p lint:*",
+    "lint:eslint": "eslint .",
+    "lint:style": "prettier --check src/",
+    "format": "run-p format:*",
+    "format:eslint": "eslint --fix .",
+    "format:style": "prettier --write src/",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
-    "typeorm": "ts-node -r tsconfig-paths/register --files ./node_modules/typeorm/cli -f ./ormconfig.js",
-    "postinstall": "patch-package"
+    "typeorm": "ts-node -r tsconfig-paths/register --files ./node_modules/typeorm/cli -f ./ormconfig.js"
   },
   "dependencies": {
     "@nestjs/common": "^7.6.6",
