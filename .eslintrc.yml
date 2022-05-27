@@ -115,8 +115,8 @@ rules:
   # Airbnb uses it to disallow for...in, for...of, with and labels.
   # But I use for...of since it's clearer than `Array.prototype.forEach()`.
   no-restricted-syntax: off # Disable this ruleset
-  guard-for-in: error       # Disallow for...in
-  no-with: error            # Disallow with
-  no-labels: error          # Disallow labels
+  guard-for-in: error # Disallow for...in
+  no-with: error # Disallow with
+  no-labels: error # Disallow labels
 
   no-return-assign: [error, except-parens]
