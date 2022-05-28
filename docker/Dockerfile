@@ -11,6 +11,8 @@ RUN cd judgeq \
   && rm -rf node_modules \
   && pnpm i --production \
   && cp docker/docker_entry.sh /app/docker_entry.sh \
+  && mkdir /app/bin \
+  && cp ./docker/bin/* /app/bin/ \
   && cp -a dist /app/ \
   && cp -a node_modules /app/ \
   && cp package.json /app/ \
@@ -24,8 +26,10 @@ WORKDIR /app
 
 COPY --from=build /app ./
 
-RUN chmod +x docker_entry.sh \
-  && apk add tzdata
+RUN apk add tzdata \
+  && apk add curl
+
+HEALTHCHECK --interval=10s --timeout=10s --start-period=30s --retries=3 CMD [ "/app/bin/healthcheck" ]
 
 ENTRYPOINT ["/app/docker_entry.sh"]
 
