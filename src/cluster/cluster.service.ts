@@ -32,6 +32,7 @@ export class ClusterService {
     this.isWorker = cluster.isWorker || !this.enabled;
   }
 
+  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
   async initialization(workerCallback: () => Promise<void>) {
     if (this.isWorker) {
       await workerCallback();
@@ -58,6 +59,7 @@ export class ClusterService {
   /**
    * If cluster is not enabled, the channel's callback will be called directly.
    */
+  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
   postMessageToMaster<T>(channel: string, data: T) {
     const message = {
       channel,
@@ -68,6 +70,7 @@ export class ClusterService {
     else process.send(message);
   }
 
+  // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
   onMessageFromWorker<T>(channel: string, callback: (data: T) => void) {
     if (!this.messageListeners.has(channel))
       this.messageListeners.set(channel, []);
