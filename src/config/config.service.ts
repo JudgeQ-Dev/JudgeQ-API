@@ -24,7 +24,8 @@ export class ConfigService {
     const config = yaml.load(fs.readFileSync(filePath).toString());
     this.config = this.validateInput(config);
 
-    this.preferenceConfigToBeSentToUser = this.getPreferenceConfigToBeSentToUser();
+    this.preferenceConfigToBeSentToUser =
+      this.getPreferenceConfigToBeSentToUser();
   }
 
   private validateInput(inputConfig: unknown): AppConfig {
@@ -41,7 +42,7 @@ export class ConfigService {
       );
     }
 
-    checkConfigRelation((appConfig as unknown) as Record<string, unknown>);
+    checkConfigRelation(appConfig as unknown as Record<string, unknown>);
 
     return appConfig;
   }
