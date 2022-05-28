@@ -13,7 +13,7 @@ DIR_LIST=(
 
 # ensure that the required resource files are copied
 for dir in "${DIR_LIST[@]}"; do
-  if [[ ! -d "${SRC_DIR}/${dir}" ]]; then
+  if [[ ! -d "${DIST_DIR}/${dir}" ]]; then
     mkdir -p "${DIST_DIR}/${dir}"
   fi
 
