@@ -24,7 +24,8 @@ WORKDIR /app
 
 COPY --from=build /app ./
 
-RUN apk add tzdata
+RUN chmod +x docker_entry.sh \
+  && apk add tzdata
 
 ENTRYPOINT ["/app/docker_entry.sh"]
 
