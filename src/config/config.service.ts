@@ -24,8 +24,7 @@ export class ConfigService {
     const config = yaml.load(fs.readFileSync(filePath).toString());
     this.config = this.validateInput(config);
 
-    this.preferenceConfigToBeSentToUser =
-      this.getPreferenceConfigToBeSentToUser();
+    this.preferenceConfigToBeSentToUser = this.getPreferenceConfigToBeSentToUser();
   }
 
   private validateInput(inputConfig: unknown): AppConfig {
@@ -42,7 +41,7 @@ export class ConfigService {
       );
     }
 
-    checkConfigRelation(appConfig as unknown as Record<string, unknown>);
+    checkConfigRelation((appConfig as unknown) as Record<string, unknown>);
 
     return appConfig;
   }
@@ -50,7 +49,7 @@ export class ConfigService {
   private getPreferenceConfigToBeSentToUser(): PreferenceConfig {
     const preference = classToClass(this.config.preference);
 
-    // Delete some properties unnessesary to send to user to save bandwidth
+    // Delete some properties unnecessary to send to user to save bandwidth
     delete preference.serverSideOnly;
 
     return preference;

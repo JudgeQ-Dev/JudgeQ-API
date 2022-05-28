@@ -91,7 +91,6 @@ function checkConfigRelationRecursively(
   });
 }
 
-// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
-export function checkConfigRelation(config: Record<string, unknown>) {
+export function checkConfigRelation(config: Record<string, unknown>): void {
   checkConfigRelationRecursively(config, "", config);
 }
