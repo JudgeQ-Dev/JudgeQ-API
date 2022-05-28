@@ -7,6 +7,8 @@
   "files.trimFinalNewlines": true,
   "cSpell.words": [
     "antfu",
+    "Buildx",
+    "DOCKERHUB",
     "judgeq",
     "minio",
     "nestjs",
