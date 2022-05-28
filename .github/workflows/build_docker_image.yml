@@ -5,7 +5,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  release-npm-packages-and-docker-image:
+  build-docker-image:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
