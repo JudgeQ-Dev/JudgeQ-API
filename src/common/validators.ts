@@ -42,7 +42,7 @@ export function IsPortNumber(validationOptions?: ValidationOptions) {
 // A username is a string of 3 ~ 24 ASCII characters, and each character
 // is a uppercase / lowercase letter or a number or any of '-_.#$' and is
 // NOT '%'.
-export function isUsername(str: string) {
+export function isUsername(str: string): boolean {
   return /^[a-zA-Z0-9\-_.#$]{3,24}$/.test(str);
 }
 
@@ -56,10 +56,13 @@ export function IsUsername(validationOptions?: ValidationOptions) {
 // A group name is a string of 1 ~ 48 ASCII characters, and each character
 // is a uppercase / lowercase letter or a number or any of ' :@~-_.#$/'
 // and is NOT '%'.
+export function isGroupName(str: string): boolean {
+  return /^[a-zA-Z0-9 :@~\-_.#$/]{1,48}$/.test(str);
+}
+
 export function IsGroupName(validationOptions?: ValidationOptions) {
   return If(
-    (value) =>
-      typeof value === "string" && /^[a-zA-Z0-9 :@~\-_.#$/]{1,48}$/.test(value),
+    (value) => typeof value === "string" && isGroupName(value),
     validationOptions,
   );
 }
@@ -81,7 +84,7 @@ export function IsValidFilename(validationOptions?: ValidationOptions) {
 }
 
 export const MAX_EMOJI_LENGTH = 28;
-export function isEmoji(str: string) {
+export function isEmoji(str: string): boolean {
   return (
     emojiRegex().test(str) &&
     str.length >= 1 &&
