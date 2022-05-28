@@ -21,5 +21,11 @@ describe("should", () => {
     test.each(emojiList)("", (emoji) => {
       expect(isEmoji(emoji)).toBe(true);
     });
+
+    const invalidEmojiList = ["1", "a", "#", "@", '"'];
+
+    test.each(invalidEmojiList)("", (emoji) => {
+      expect(isEmoji(emoji)).toBe(false);
+    });
   });
 });
