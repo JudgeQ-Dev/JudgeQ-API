@@ -129,7 +129,6 @@ dependencies:
   randomstring: 1.2.2
   rate-limiter-flexible: 2.3.7
   reflect-metadata: 0.1.13
-  rimraf: 3.0.2
   rxjs: 6.6.7
   serialize-javascript: 5.0.1
   socket.io-msgpack-parser: 2.2.1
@@ -180,6 +179,7 @@ devDependencies:
   patch-package: 6.4.7
   pnpm: 7.1.6
   prettier: 2.6.2
+  rimraf: 3.0.2
   supertest: 6.2.3
   ts-jest: 26.5.6_f76bpxtbiaefn23m64irtgzxbe
   ts-loader: 8.4.0_d3ofjbjbkerjqvgldod72xzm2y
