@@ -24,17 +24,17 @@ CREATE DATABASE `judgeq` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_c
 
 ### Create User
 
-In MySQL 5.7:
+In MariaDB/MySQL 5.7:
 
 ```sql
-GRANT ALL PRIVILEGES ON `acnow`.* TO "acnow"@"localhost" IDENTIFIED BY "acnow-password";
+GRANT ALL PRIVILEGES ON `judgeq`.* TO "judgeq"@"localhost" IDENTIFIED BY "PASSWORD";
 ```
 
 In MySQL 8.0:
 
 ```sql
-CREATE USER 'acnow'@'localhost' IDENTIFIED BY 'acnow-password';
-GRANT ALL PRIVILEGES ON `acnow`.* TO 'acnow'@'localhost';
+CREATE USER 'judgeq'@'localhost' IDENTIFIED BY 'PASSWORD';
+GRANT ALL PRIVILEGES ON `judgeq`.* TO 'judgeq'@'localhost';
 ```
 
 After granting permission, remember to refresh:
@@ -50,19 +50,19 @@ Then fill the database connection information in the configuration file.
 By default this app listens on `127.0.0.1:3000`. You can change this in the configuration file. You can use nginx as reversed proxy to access the app with a domain name like `judgeq.ac`.
 
 ```bash
-$ JUDGEQ_CONFIG_FILE=./config.yaml yarn start
+$ JUDGEQ_CONFIG_FILE=./config.yaml pnpm start
 ```
 
 Add `JUDGEQ_LOG_SQL` to enable TypeORM logging:
 
 ```bash
-$ JUDGEQ_LOG_SQL=1 JUDGEQ_CONFIG_FILE=./config.yaml yarn start
+$ JUDGEQ_LOG_SQL=1 JUDGEQ_CONFIG_FILE=./config.yaml pnpm start
 ```
 
 Add `:debug` to enable Hot Module Replacement.
 
 ```bash
-$ JUDGEQ_LOG_SQL=1 JUDGEQ_CONFIG_FILE=./config.yaml yarn start:debug
+$ JUDGEQ_LOG_SQL=1 JUDGEQ_CONFIG_FILE=./config.yaml pnpm start:debug
 ```
 
 ## Migration DB
@@ -82,7 +82,7 @@ pnpm typeorm migration:revert
 ### Build
 
 ```bash
-docker build -t judgeq-api:latest -f docker/Dockerfile ./
+docker build -t judgeq/server:latest -f docker/Dockerfile ./
 ```
 
 ### Run
@@ -91,8 +91,8 @@ docker build -t judgeq-api:latest -f docker/Dockerfile ./
 docker run \
   -d \
   --restart=always \
-  --name=judgeq-api \
+  --name=judgeq-server \
   -p 3000:3000 \
   -v "${PWD}"/config.yaml:/root/config.yaml \
-  judgeq-api
+  judgeq/server
 ```
