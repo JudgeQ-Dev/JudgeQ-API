@@ -2,6 +2,7 @@
 
 [![Build](https://github.com/judgeq-dev/server/actions/workflows/build.yml/badge.svg)](https://github.com/judgeq-dev/server/actions/workflows/build.yml)
 [![Lint](https://github.com/judgeq-dev/server/actions/workflows/lint.yml/badge.svg)](https://github.com/judgeq-dev/server/actions/workflows/lint.yml)
+[![Test](https://github.com/judgeq-dev/server/actions/workflows/test.yml/badge.svg)](https://github.com/judgeq-dev/server/actions/workflows/test.yml)
 [![code style: prettier](https://img.shields.io/badge/code_style-prettier-ff69b4.svg?style=flat-square)](https://github.com/prettier/prettier)
 [![License](https://img.shields.io/github/license/JudgeQ-Dev/server?style=flat-square)](LICENSE)
 
