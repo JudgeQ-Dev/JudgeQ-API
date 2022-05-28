@@ -40,6 +40,7 @@ const CONFIG_RELATION_METADATA_KEY = "config-relation";
  * @param referencedValuePath
  * @param type
  */
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export function ConfigRelation(
   referencedValuePath: string,
   relationType: ConfigRelationType,
@@ -90,6 +91,7 @@ function checkConfigRelationRecursively(
   });
 }
 
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export function checkConfigRelation(config: Record<string, unknown>) {
   checkConfigRelationRecursively(config, "", config);
 }

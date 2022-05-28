@@ -12,7 +12,8 @@
     "ormconfig",
     "pnpm",
     "Testcase",
-    "typeorm"
+    "typeorm",
+    "vitest"
   ],
   "typescript.tsdk": "node_modules/typescript/lib",
   "[typescript]": {
