@@ -14,7 +14,6 @@
     "dist"
   ],
   "scripts": {
-    "postinstall": "patch-package",
     "dev": "cross-env JUDGEQ_LOG_SQL=1 JUDGEQ_CONFIG_FILE=./config.yaml nest start --debug --watch",
     "start": "node dist/main",
     "build": "rimraf dist && nest build && bash post_build.sh",
