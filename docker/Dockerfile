@@ -1,19 +1,31 @@
-FROM node:16
+FROM node:16 AS build
 
 USER root
-WORKDIR /root
+WORKDIR /app
 COPY ./ ./judgeq
 
-RUN cd ./judgeq \
+RUN cd judgeq \
   && npm i -g pnpm \
-  && pnpm \
+  && pnpm i \
   && pnpm build \
-  && cp docker/docker_entry.sh /root/docker_entry.sh \
-  && cp -a dist /root/ \
-  && cp -a node_modules /root/ \
-  && cp package.json /root/ \
-  && rm -rf /root/judgeq
+  && rm -rf node_modules \
+  && pnpm i --production \
+  && cp docker/docker_entry.sh /app/docker_entry.sh \
+  && cp -a dist /app/ \
+  && cp -a node_modules /app/ \
+  && cp package.json /app/ \
+  && cp config-example.yaml /app/ \
+  && rm -rf /app/judgeq
 
-ENTRYPOINT ["/root/docker_entry.sh"]
+FROM node:16-alpine
 
-CMD ["judgeq-server"]
+USER root
+WORKDIR /app
+
+COPY --from=build /app ./
+
+RUN apk add tzdata
+
+ENTRYPOINT ["/app/docker_entry.sh"]
+
+CMD ["primary"]
