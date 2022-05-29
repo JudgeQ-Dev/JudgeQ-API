@@ -10,6 +10,7 @@
     "Buildx",
     "DOCKERHUB",
     "judgeq",
+    "longtext",
     "minio",
     "nestjs",
     "ormconfig",
