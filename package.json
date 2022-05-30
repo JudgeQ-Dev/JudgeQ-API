@@ -1,7 +1,7 @@
 {
   "name": "@judgeq/server",
   "version": "0.0.43",
-  "packageManager": "pnpm@7.1.6",
+  "packageManager": "pnpm@7.1.7",
   "description": "JudgeQ API Server",
   "repository": "https://github.com/JudgeQ-Dev/server",
   "author": "Dup4",
@@ -114,7 +114,7 @@
     "eslint": "^8.16.0",
     "jest": "^28.1.0",
     "npm-run-all": "^4.1.5",
-    "pnpm": "^7.1.6",
+    "pnpm": "^7.1.7",
     "prettier": "^2.6.2",
     "rimraf": "^3.0.2",
     "supertest": "^6.2.3",
