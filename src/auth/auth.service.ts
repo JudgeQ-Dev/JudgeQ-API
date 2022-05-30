@@ -58,6 +58,7 @@ export class AuthService {
     ) {
       // Delay for security
       await delay(DELAY_FOR_SECURITY);
+
       if (
         !(await this.authEmailVerificationCodeService.verify(
           email,

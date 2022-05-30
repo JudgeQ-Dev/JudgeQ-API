@@ -176,7 +176,8 @@ export class SubmissionProgressGateway
       const lastMessage = lastMessageBySubmissionId.get(submissionId);
       const delta = diff(lastMessage, message);
       lastMessageBySubmissionId.set(submissionId, message);
-      if (delta) this.server.to(clientId).send(submissionId, delta);
+
+      if (delta) this.server.to(clientId).emit("message", submissionId, delta);
     };
 
     logger.log(
@@ -202,7 +203,7 @@ export class SubmissionProgressGateway
 
   async handleConnection(client: Socket): Promise<void> {
     const subscription = this.decodeSubscription(
-      client.handshake.query.subscriptionKey,
+      client.handshake.query.subscriptionKey as string,
     );
     if (!subscription) {
       client.disconnect(true);

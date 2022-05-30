@@ -6,7 +6,7 @@ import {
   Logger,
 } from "@nestjs/common";
 
-import { Response } from "express"; // eslint-disable-line import/no-extraneous-dependencies
+import { Response } from "express";
 
 import { RequestWithSession } from "./auth/auth.middleware";
 
@@ -14,12 +14,14 @@ const logger = new Logger("ErrorFilter");
 
 @Catch()
 export class ErrorFilter implements ExceptionFilter {
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
   constructor() {}
 
   catch(error: Error, host: ArgumentsHost) {
     const contextType = host.getType();
     let request: RequestWithSession;
     if (contextType === "http") {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       request = host.switchToHttp().getRequest<RequestWithSession>();
       const response = host.switchToHttp().getResponse<Response>();
       if (error instanceof HttpException)
@@ -33,14 +35,14 @@ export class ErrorFilter implements ExceptionFilter {
 
     if (!(error instanceof HttpException)) {
       if (error instanceof Error) {
-        if (this.isignoredError(error)) return;
+        if (this.isIgnoredError(error)) return;
 
         logger.error(error.message, error.stack);
       } else logger.error(error);
     }
   }
 
-  isignoredError(error: Error) {
+  isIgnoredError(error: Error) {
     if (error.message.includes("Too many connections")) return true;
     if (error.message === "connect ETIMEDOUT") return true;
     if (error.message === "Connection lost: The server closed the connection.")

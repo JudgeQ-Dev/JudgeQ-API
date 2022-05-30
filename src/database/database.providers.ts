@@ -1,5 +1,4 @@
 import { TypeOrmModule } from "@nestjs/typeorm";
-
 import { ConfigService } from "@/config/config.service";
 import process from "process";
 

@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Get,
-  Redirect,
-  Query,
-  Param,
-  Post,
-  Body,
-} from "@nestjs/common";
+import { Controller, Get } from "@nestjs/common";
 
 import { ApiTags, ApiProperty } from "@nestjs/swagger";
 import { AppService } from "./app.service";

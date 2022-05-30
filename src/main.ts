@@ -3,7 +3,7 @@ import cluster from "cluster";
 
 import { NestFactory } from "@nestjs/core";
 import { NestExpressApplication } from "@nestjs/platform-express";
-import { Logger, ValidationPipe } from "@nestjs/common";
+import { Logger } from "@nestjs/common";
 import {
   SwaggerModule,
   DocumentBuilder,
@@ -12,7 +12,7 @@ import {
 
 import getGitRepoInfo from "git-repo-info";
 import moment from "moment";
-import { Request, Response, json } from "express"; // eslint-disable-line import/no-extraneous-dependencies
+import { Request, Response, json } from "express";
 
 import {
   RateLimiterClusterMaster,
@@ -69,11 +69,12 @@ async function initialize(): Promise<
       ).format("YYYY-MM-DD H:mm:ss")})`
     : "";
 
-  if (cluster.isMaster)
+  if (cluster.isMaster) {
     Logger.log(
       `Starting ${packageInfo.name} version ${appVersion}${gitRepoVersion}`,
       "Bootstrap",
     );
+  }
 
   // Create nestjs app
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {

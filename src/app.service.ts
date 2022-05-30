@@ -1,6 +1,4 @@
 import { Injectable } from "@nestjs/common";
-import fs from "fs";
-import path from "path";
 import packageInfo from "./package.json";
 
 @Injectable()

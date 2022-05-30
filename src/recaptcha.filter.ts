@@ -1,7 +1,7 @@
 import { ArgumentsHost, Catch, ExceptionFilter } from "@nestjs/common";
 
 import { GoogleRecaptchaException } from "@nestlab/google-recaptcha";
-import { Response } from "express"; // eslint-disable-line import/no-extraneous-dependencies
+import { Response } from "express";
 
 @Catch(GoogleRecaptchaException)
 export class RecaptchaFilter implements ExceptionFilter {
