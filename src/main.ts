@@ -69,7 +69,7 @@ async function initialize(): Promise<
       ).format("YYYY-MM-DD H:mm:ss")})`
     : "";
 
-  if (cluster.isMaster) {
+  if (cluster.isPrimary) {
     Logger.log(
       `Starting ${packageInfo.name} version ${appVersion}${gitRepoVersion}`,
       "Bootstrap",
@@ -79,7 +79,7 @@ async function initialize(): Promise<
   // Create nestjs app
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     ...(process.env.NODE_ENV === "production"
-      ? { logger: ["warn", "error"] }
+      ? { logger: ["log", "warn", "error"] }
       : {}),
   });
 
@@ -135,6 +135,7 @@ async function startApp(
     configService.config.server.port,
     configService.config.server.hostname,
   );
+
   Logger.log(
     `${packageInfo.name} is listening on ${configService.config.server.hostname}:${configService.config.server.port}`,
     "Bootstrap",
@@ -143,7 +144,6 @@ async function startApp(
 
 async function bootstrap() {
   const [configService, app] = await initialize();
-
   const clusterService = app.get(ClusterService);
   await clusterService.initialization(
     async () => await startApp(configService, app),

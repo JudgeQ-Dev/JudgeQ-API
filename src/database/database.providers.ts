@@ -12,7 +12,7 @@ export const databaseProviders = [
       password: configService.config.services.database.password,
       database: configService.config.services.database.database,
       entities: [`${__dirname}/../**/*.entity{.ts,.js}`],
-      logging: !!process.env.JUDGEQ_LOG_SQL,
+      logging: Boolean(process.env.JUDGEQ_LOG_SQL),
       synchronize: true,
       timezone: configService.config.services.database.timezone,
     }),

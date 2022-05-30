@@ -51,7 +51,7 @@ export class EventReportService {
 
   constructor(
     private readonly configService: ConfigService,
-    private readonly clusterSerivce: ClusterService,
+    private readonly clusterService: ClusterService,
   ) {
     const eventReportConfig = this.configService.config.eventReport;
     this.enabled = !!eventReportConfig.telegramBotToken;
@@ -59,7 +59,7 @@ export class EventReportService {
 
     // A telegram bot could only be logged-in on one client
     // So login only on master process
-    if (this.clusterSerivce.isMaster) {
+    if (this.clusterService.isPrimary) {
       this.telegramBot = eventReportConfig.telegramBotToken
         ? new Telegraf(eventReportConfig.telegramBotToken, {
             telegram: {
@@ -80,7 +80,7 @@ export class EventReportService {
       if (this.telegramBot) this.telegramBot.launch();
 
       // Listen worker process's message
-      this.clusterSerivce.onMessageFromWorker<EventMessage>(
+      this.clusterService.onMessageFromWorker<EventMessage>(
         IPC_CHANNEL,
         (message) => this.doReport(message),
       );
@@ -132,7 +132,7 @@ export class EventReportService {
       if (message) finalMessage += `\n${message}\n`;
       if (errorDisplayMessage) finalMessage += `\n${errorDisplayMessage}`;
 
-      this.clusterSerivce.postMessageToMaster(IPC_CHANNEL, <EventMessage>{
+      this.clusterService.postMessageToMaster(IPC_CHANNEL, <EventMessage>{
         message: finalMessage,
         filename: requestBody && `RequestBody_${eventId}.json`,
         fileContent: requestBody,

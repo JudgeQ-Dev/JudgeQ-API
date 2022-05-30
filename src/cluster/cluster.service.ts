@@ -14,6 +14,8 @@ interface IpcMessage {
 export class ClusterService {
   readonly enabled: boolean;
 
+  readonly isPrimary: boolean;
+
   readonly isMaster: boolean;
 
   readonly isWorker: boolean;
@@ -28,7 +30,8 @@ export class ClusterService {
     private readonly configService: ConfigService,
   ) {
     this.enabled = this.configService.config.server.clusters != null;
-    this.isMaster = cluster.isMaster;
+    this.isPrimary = cluster.isPrimary;
+    this.isMaster = cluster.isPrimary;
     this.isWorker = cluster.isWorker || !this.enabled;
   }
 
@@ -66,14 +69,19 @@ export class ClusterService {
       data,
     };
 
-    if (this.isMaster) this.callMessageListeners(message);
-    else process.send(message);
+    if (this.isPrimary) {
+      this.callMessageListeners(message);
+    } else {
+      process.send(message);
+    }
   }
 
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
   onMessageFromWorker<T>(channel: string, callback: (data: T) => void) {
-    if (!this.messageListeners.has(channel))
+    if (!this.messageListeners.has(channel)) {
       this.messageListeners.set(channel, []);
+    }
+
     this.messageListeners.get(channel).push(callback);
   }
 }
